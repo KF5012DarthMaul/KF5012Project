@@ -8,20 +8,12 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.ResultSet;
-import javax.swing.JFileChooser;
-import java.io.File;   
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 /**
  *
  * @author supad
  */
-public class DBAbstraction {
+public final class DBAbstraction 
+{
     private final DBConnection db;
     private String error;
     
@@ -41,12 +33,15 @@ public class DBAbstraction {
     {
         if(!doesUserExist(username))
         {
-            try {
+            try 
+            {
                 db.prepareStatement("INSERT INTO tblUsers (username, hashpass) VALUES (?, ?)");
                 db.add(username);
                 db.add(hashedPassword);
                 db.executePrepared();
-            } catch (SQLException ex) {
+            } 
+            catch (SQLException ex) 
+            {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -60,132 +55,148 @@ public class DBAbstraction {
     
     public boolean doesUserExist(String username)
     {
-        return false;
+        try 
+        {
+            db.prepareStatement("SELECT username FROM tblUsers WHERE username = ?");
+            db.add(username);
+            ResultSet res =  db.executePreparedQuery();
+            return !res.isClosed();
+        } 
+        catch (SQLException ex)
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return false;
+        }
     }
     
     private void createTables()
     {
-        try 
-        {
-            URI uri = getClass().getResource("db.sql").toURI();
-            String mainPath = Paths.get(uri).toString();
-            Path path = Paths.get(mainPath);
-            db.execute(Files.readString(path));
-        } 
-        catch (FileNotFoundException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-        catch (IOException | URISyntaxException ex) 
-        {
-                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        db.execute("""
+                           CREATE TABLE IF NOT EXISTS tblUsers(
+                               username TEXT PRIMARY KEY,
+                               hashpass TEXT NOT NULL,
+                               permission_flags INTEGER
+                           );
+                                CREATE TABLE IF NOT EXISTS tblTasks(
+                               task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                               task_type INTEGER NOT NULL,
+                               caretaker TEXT,
+                               execution_day INTEGER,
+                               FOREIGN KEY(task_type) REFERENCES tblTaskType (type_id) ON DELETE CASCADE,
+                               FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
+                           );
+                                CREATE TABLE IF NOT EXISTS tblTaskType(
+                               type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                               task_name TEXT NOT NULL,
+                               task_descr TEXT
+                           );
+                                -- Tasks could ref log_id instead of log referencing task_id
+                           -- That would require updating the task row instead of just adding to taskLog.
+                           CREATE TABLE IF NOT EXISTS tblTaskLog(
+                               log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                               task_id INTEGER NOT NULL,
+                               log_time INTEGER NOT NULL,
+                               completion_time INTEGER,
+                               FOREIGN KEY(task_id) REFERENCES tblTasks(task_id) ON DELETE CASCADE,
+                           );"""); 
         /*while(true)
         {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
-            int result = fileChooser.showOpenDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                try {
-                    File selectedFile = fileChooser.getSelectedFile();
-                    System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
-                    db.execute(Files.readString(selectedFile.toPath()));
-                            } catch (FileNotFoundException ex) {
-                    Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                break;
-            }
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) 
+        {
+        try
+        {
+        File selectedFile = fileChooser.getSelectedFile();
+        System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
+        db.execute(Files.readString(selectedFile.toPath()));
+        }
+        catch (FileNotFoundException ex)
+        {
+        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        catch (IOException ex)
+        {
+        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        break;
+        }
+        }*/ /*while(true)
+        {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION)
+        {
+        try
+        {
+        File selectedFile = fileChooser.getSelectedFile();
+        System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
+        db.execute(Files.readString(selectedFile.toPath()));
+        }
+        catch (FileNotFoundException ex)
+        {
+        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        catch (IOException ex)
+        {
+        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        break;
+        }
         }*/
     }
     
     public String getHashedPassword(String username)
     {
-        try {
-            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE username LIKE ?");
+        try 
+        {
+            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE username = ?");
             db.add(username);
-            ResultSet pass =  db.executePreparedQuery();
-            if(pass.first())
-                return pass.getString(1);
-            else 
-                return null;
+            ResultSet res =  db.executePreparedQuery();
+            if(!res.isClosed())
+                return res.getString(1);
+            else return null;
         } 
-        catch (SQLException ex) {
+        catch (SQLException ex)
+        {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
             return null;
         }
     }
     
-    public String getHashedPassword(int uid)
+    public void changeUserPassword(String username, String password)
     {
-        try {
-            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE user_id LIKE ?");
-            db.add(uid);
-            ResultSet pass =  db.executePreparedQuery();
-            if(pass.first())
-                return pass.getString(1);
-            else 
-                return null;
-        } 
-        catch (SQLException ex) {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
-            return null;
-        }
-    }
-    
-    private int getUIDFromUsername(String username)
-    {
-        try {
-                db.prepareStatement("SELECT user_id FROM tblUsers WHERE username LIKE ?");
-                db.add(username);
-                ResultSet uid =  db.executePreparedQuery();
-                if(uid.first())
-                    return uid.getInt(1);
-                else 
-                    return -1;
-            } 
-            catch (SQLException ex) {
-                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                error = ex.getLocalizedMessage();
-                return -1;
-            }
-    }
-    
-    public void resetUserPassword(String username, String newHashedPassword)
-    {
-       int uID = getUIDFromUsername(username);
-       changeUserPassword(uID, newHashedPassword);
-    }
-    
-    public void changeUserPassword(int uID, String password)
-    {
-        try {
-            db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE user_id LIKE ?");
+        try 
+        {
+            db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
             db.add(password);
-            db.add(uID);
+            db.add(username);
             db.executePrepared();
         } 
-        catch (SQLException ex) {
+        catch (SQLException ex) 
+        {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
         }
     }
     
-    public int getPermissionsFromUID(int uid)
+    public int getPermissionsFromUsername(String username)
     {
-        try {
-            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE user_id LIKE ?");
-            db.add(uid);
-            ResultSet perms =  db.executePreparedQuery();
-            if(perms.first())
-                return perms.getInt(1);
-            else 
-                return -1;
+        try 
+        {
+            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE username = ?");
+            db.add(username);
+            ResultSet res =  db.executePreparedQuery();
+            if(!res.isClosed())
+                return res.getInt(1);
+            else return -1;
         } 
-        catch (SQLException ex) {
+        catch (SQLException ex) 
+        {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
             return -1;

@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 /**
  *
  * @author Emanuel Oliveira W19029581
@@ -14,7 +13,8 @@ import java.util.ArrayList;
 /**
  * Singleton DB connection handler
  */
-public class DBConnection {
+public class DBConnection 
+{
     static private DBConnection instance;
     private Connection conn;
     private int cursor;
@@ -70,16 +70,16 @@ public class DBConnection {
     
     public boolean executePrepared()
     {
+        PreparedStatement stmt = prepStmt;
+        prepStmt = null;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
-            prepStmt = null;
             return false;
         }
         try
         {
-            prepStmt.execute();
-            prepStmt = null;
+            stmt.execute();
         }
         catch(SQLException e)
         {
@@ -93,16 +93,16 @@ public class DBConnection {
     public ResultSet executePreparedQuery()
     {
         ResultSet result;
+        PreparedStatement stmt = prepStmt;
+        prepStmt = null;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
-            prepStmt = null;
             return null;
         }
         try
         {
-            result = prepStmt.executeQuery();
-            prepStmt = null;
+            result = stmt.executeQuery();
         }
         catch(SQLException e)
         {
