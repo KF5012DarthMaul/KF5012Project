@@ -23,18 +23,18 @@ import java.nio.file.Paths;
  */
 public class DBAbstraction {
     private final DBConnection db;
-    private String Error;
+    private String error;
     
     public DBAbstraction()
     {
         db = DBConnection.getInstance();
-        Error = "";
+        error = "";
         createTables();
     }
     
     public String getError()
     {
-        return Error;
+        return error;
     }
     
     public boolean createUser(String username, String hashedPassword)
@@ -42,7 +42,7 @@ public class DBAbstraction {
         if(!doesUserExist(username))
         {
             try {
-                db.prepareStatement("INSERT INTO tblUsers (username, hashpass) values (?, ?)");
+                db.prepareStatement("INSERT INTO tblUsers (username, hashpass) VALUES (?, ?)");
                 db.add(username);
                 db.add(hashedPassword);
                 db.executePrepared();
@@ -52,7 +52,7 @@ public class DBAbstraction {
         }
         else
         {
-            Error = "Username already exists";
+            error = "Username already exists";
             return false;
         }
         return true;
@@ -103,7 +103,7 @@ public class DBAbstraction {
     public String getHashedPassword(String username)
     {
         try {
-            db.prepareStatement("SELECT hashpass from tblUsers where username like ?");
+            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE username LIKE ?");
             db.add(username);
             ResultSet pass =  db.executePreparedQuery();
             if(pass.first())
@@ -113,7 +113,7 @@ public class DBAbstraction {
         } 
         catch (SQLException ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            Error = ex.getLocalizedMessage();
+            error = ex.getLocalizedMessage();
             return null;
         }
     }
@@ -121,7 +121,7 @@ public class DBAbstraction {
     public String getHashedPassword(int uid)
     {
         try {
-            db.prepareStatement("SELECT hashpass from tblUsers where user_id like ?");
+            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE user_id LIKE ?");
             db.add(uid);
             ResultSet pass =  db.executePreparedQuery();
             if(pass.first())
@@ -131,7 +131,7 @@ public class DBAbstraction {
         } 
         catch (SQLException ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            Error = ex.getLocalizedMessage();
+            error = ex.getLocalizedMessage();
             return null;
         }
     }
@@ -139,7 +139,7 @@ public class DBAbstraction {
     private int getUIDFromUsername(String username)
     {
         try {
-                db.prepareStatement("SELECT user_id from tblUsers where username like ?");
+                db.prepareStatement("SELECT user_id FROM tblUsers WHERE username LIKE ?");
                 db.add(username);
                 ResultSet uid =  db.executePreparedQuery();
                 if(uid.first())
@@ -149,7 +149,7 @@ public class DBAbstraction {
             } 
             catch (SQLException ex) {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                Error = ex.getLocalizedMessage();
+                error = ex.getLocalizedMessage();
                 return -1;
             }
     }
@@ -163,21 +163,21 @@ public class DBAbstraction {
     public void changeUserPassword(int uID, String password)
     {
         try {
-            db.prepareStatement("UPDATE tblUsers SET hashpass = ? where user_id like ?");
+            db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE user_id LIKE ?");
             db.add(password);
             db.add(uID);
             db.executePrepared();
         } 
         catch (SQLException ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            Error = ex.getLocalizedMessage();
+            error = ex.getLocalizedMessage();
         }
     }
     
     public int getPermissionsFromUID(int uid)
     {
         try {
-            db.prepareStatement("SELECT permission_flags from tblUsers where user_id like ?");
+            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE user_id LIKE ?");
             db.add(uid);
             ResultSet perms =  db.executePreparedQuery();
             if(perms.first())
@@ -187,7 +187,7 @@ public class DBAbstraction {
         } 
         catch (SQLException ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            Error = ex.getLocalizedMessage();
+            error = ex.getLocalizedMessage();
             return -1;
         }
     }
