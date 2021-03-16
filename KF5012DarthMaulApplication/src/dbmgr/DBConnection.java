@@ -29,7 +29,7 @@ public class DBConnection
     
     private DBConnection()
     {
-        connect("C:\\unrestricted_dir\\db.sq3");
+        connect("..\\db.sq3");
     }
     
     private boolean connect(String filename)

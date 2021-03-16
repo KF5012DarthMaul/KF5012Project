@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import java.sql.ResultSet;
 /**
  *
- * @author supad
+ * @author Emanuel Oliveira W19029581
  */
 public final class DBAbstraction 
 {
