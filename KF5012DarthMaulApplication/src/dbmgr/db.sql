@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS tblUsers(
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
+    username TEXT PRIMARY KEY,
     hashpass TEXT NOT NULL,
     permission_flags INTEGER
 );
@@ -8,10 +7,10 @@ CREATE TABLE IF NOT EXISTS tblUsers(
 CREATE TABLE IF NOT EXISTS tblTasks(
     task_id INTEGER PRIMARY KEY AUTOINCREMENT,
     task_type INTEGER NOT NULL,
-    caretaker INTEGER,
+    caretaker TEXT,
     execution_day INTEGER,
     FOREIGN KEY(task_type) REFERENCES tblTaskType (type_id) ON DELETE CASCADE,
-    FOREIGN KEY(caretaker) REFERENCES tblUsers (user_id) ON DELETE CASCADE,
+    FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
 );
 
 CREATE TABLE IF NOT EXISTS tblTaskType(
