@@ -70,16 +70,16 @@ public class DBConnection
     
     public boolean executePrepared()
     {
+        PreparedStatement stmt = prepStmt;
+        prepStmt = null;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
-            prepStmt = null;
             return false;
         }
         try
         {
-            prepStmt.execute();
-            prepStmt = null;
+            stmt.execute();
         }
         catch(SQLException e)
         {
@@ -93,16 +93,16 @@ public class DBConnection
     public ResultSet executePreparedQuery()
     {
         ResultSet result;
+        PreparedStatement stmt = prepStmt;
+        prepStmt = null;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
-            prepStmt = null;
             return null;
         }
         try
         {
-            result = prepStmt.executeQuery();
-            prepStmt = null;
+            result = stmt.executeQuery();
         }
         catch(SQLException e)
         {
