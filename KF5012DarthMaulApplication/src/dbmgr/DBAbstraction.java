@@ -25,7 +25,7 @@ public class DBAbstraction {
     private final DBConnection db;
     private String Error;
     
-    DBAbstraction()
+    public DBAbstraction()
     {
         db = DBConnection.getInstance();
         Error = "";
