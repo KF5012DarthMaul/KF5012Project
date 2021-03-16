@@ -25,13 +25,19 @@ import javax.swing.Box;
 import javax.swing.JPasswordField;
 import java.awt.Component;
 import java.awt.Window.Type;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class LoginForm extends JFrame {
 
 	private JPanel contentPane;
 	DBAbstraction db = new DBAbstraction();
-	private JPasswordField passwordField;
-	private JTextField textField;
+	
+	int loginAttempts = 0;
+	int loginAttemptsPermitted = 3;
+	
+	private JPasswordField txt_password;
+	private JTextField txt_username;
 
 	/**
 	 * Launch the application.
@@ -57,7 +63,7 @@ public class LoginForm extends JFrame {
 		setTitle("Login");
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 267, 163);
+		setBounds(100, 100, 225, 200);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -66,9 +72,6 @@ public class LoginForm extends JFrame {
 		JPanel panel = new JPanel();
 		contentPane.add(panel, BorderLayout.SOUTH);
 		panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-		
-		JButton btn_login = new JButton("Login");
-		panel.add(btn_login);
 		
 		JPanel panel_1 = new JPanel();
 		contentPane.add(panel_1, BorderLayout.CENTER);
@@ -86,9 +89,9 @@ public class LoginForm extends JFrame {
 		Component horizontalStrut_1 = Box.createHorizontalStrut(20);
 		horizontalBox.add(horizontalStrut_1);
 		
-		textField = new JTextField();
-		horizontalBox.add(textField);
-		textField.setColumns(10);
+		txt_username = new JTextField();
+		horizontalBox.add(txt_username);
+		txt_username.setColumns(10);
 		
 		Component verticalStrut = Box.createVerticalStrut(20);
 		verticalBox.add(verticalStrut);
@@ -102,7 +105,39 @@ public class LoginForm extends JFrame {
 		Component horizontalStrut = Box.createHorizontalStrut(20);
 		horizontalBox_1.add(horizontalStrut);
 		
-		passwordField = new JPasswordField();
-		horizontalBox_1.add(passwordField);
+		txt_password = new JPasswordField();
+		horizontalBox_1.add(txt_password);
+		
+		Component verticalStrut_1 = Box.createVerticalStrut(20);
+		verticalBox.add(verticalStrut_1);
+		
+		Box horizontalBox_2 = Box.createHorizontalBox();
+		verticalBox.add(horizontalBox_2);
+		
+		JLabel lbl_loginmessage = new JLabel("");
+		horizontalBox_2.add(lbl_loginmessage);
+		
+		
+		JButton btn_login = new JButton("Login");
+		btn_login.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String username = txt_username.getText();
+				String password = txt_password.getPassword().toString();
+				if(loginAttempts >= loginAttemptsPermitted) {
+					lbl_loginmessage.setText("Exeeded Maximum Attempts");
+					new ErrorDialog("Exeeded Maximum Login Attempts, Please try again later");
+					txt_username.setEnabled(false);
+					txt_password.setEnabled(false);
+					btn_login.setEnabled(false);
+					return;
+				}
+				if(!db.doesUserExist(username)) {
+					loginAttempts++;
+					lbl_loginmessage.setText("Username or Password Invalid");
+				}
+			}
+		});
+		panel.add(btn_login);
+
 	}
 }
