@@ -1,1 +1,8 @@
 /bin/
+/.settings/
+/.project
+/.classpath
+/build/
+/nbproject/
+/build.xml
+/manifest.mf
