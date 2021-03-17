@@ -10,6 +10,7 @@ public class PermissionManager {
 	public PermissionManager(PermissionManager.AccountType accountType) {
 		this.Permissions = this.generatePermissionsList(accountType);
 	}
+	public PermissionManager() {}
 	
 	public enum AccountType {
 		SYSADMIN(0b00111),
@@ -55,5 +56,9 @@ public class PermissionManager {
 			}else continue;
 		}
 		return permissionList;
+	}
+	public AccountType intToAccountType(int x) {
+		ArrayList<AccountType> AccountTypesAsArrayList = (ArrayList<AccountType>) Arrays.asList(AccountType.values());
+		return AccountTypesAsArrayList.get(x);
 	}
 }
