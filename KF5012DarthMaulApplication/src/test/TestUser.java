@@ -28,7 +28,7 @@ class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.GET_TASK);
 		try {
 			User user = new User("test", PermissionManager.AccountType.CARETAKER);
-			ArrayList<PermissionManager.Permission> actualPermissions = user.getPermissions();
+			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
 			
 			assertEquals(expectedPermissions, actualPermissions);
 		}catch(Exception ex) {

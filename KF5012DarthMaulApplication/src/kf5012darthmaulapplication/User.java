@@ -11,19 +11,18 @@ import java.util.ArrayList;
 public class User {
 	String username;
 	int encodedPermission;
-	PermissionManager pm;
+	public PermissionManager pm;
 	PermissionManager.AccountType accountType;
-	ArrayList<PermissionManager.Permission> Permissions = new ArrayList<>();
 	
 	/**
 	 * @param username
 	 * @param accountType
 	 * @throws Exception
 	 */
-	public User(String username, PermissionManager.AccountType accountType) throws Exception{
+	public User(String username, PermissionManager.AccountType accountType){
 		this.username = username;
 		this.accountType = accountType;
-		pm = new PermissionManager(accountType);
+		pm = new PermissionManager(this.accountType);
 	}
 	/**
 	 * Gets an ArrayList of permissions the User has
@@ -31,8 +30,5 @@ public class User {
 	 */
 	public String getUsername() {
 		return this.username;
-	}
-	public ArrayList<PermissionManager.Permission> getPermissions(){
-		return pm.getPermissions();
 	}
 }
