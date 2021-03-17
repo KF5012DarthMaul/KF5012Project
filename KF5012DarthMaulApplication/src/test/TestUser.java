@@ -25,8 +25,8 @@ class TestUser {
 	void testUserHasAllPermission() {		
 		try {
 			int allPermissionsValue = (int) ((Math.pow(2, permissionsEnum.values().length)) - 1);
-			User user2 = new User("test", allPermissionsValue);
-			ArrayList<User.permissionsEnum> ActualUserPermissions = user2.getPermissions();
+			User user1 = new User("test", allPermissionsValue);
+			ArrayList<User.permissionsEnum> ActualUserPermissions = user1.getPermissions();
 			List<permissionsEnum> ExpectedUserPermissions = new ArrayList<>(Arrays.asList(User.permissionsEnum.values()));
 			
 			assertEquals(ExpectedUserPermissions, ActualUserPermissions);
@@ -36,6 +36,7 @@ class TestUser {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	void testUserPermissionNumberTooBig() {
 		int biggestValue = (int) ((Math.pow(2, permissionsEnum.values().length)));
