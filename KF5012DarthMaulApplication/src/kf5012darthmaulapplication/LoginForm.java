@@ -136,18 +136,14 @@ public class LoginForm extends JFrame {
 				if(password.equals(tempPassword)) {
 					System.out.println("Login Successful");
 					try {
-						User authorisedUser = new User(username, 3);
+						User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
 						MainWindow MainWindow = new MainWindow(authorisedUser);
 						MainWindow.setVisible(true);
 						dispose();
 					}catch(Exception ex) {
 						new ExceptionDialog("An Error Occured", ex);
 					}
-
-
 				}
-				
-				
 			}
 		});
 		panel.add(btn_login);
