@@ -13,13 +13,17 @@ import java.sql.ResultSet;
 /**
  * Singleton DB connection handler
  */
-public class DBConnection 
+public final class DBConnection 
 {
     static private DBConnection instance;
     private Connection conn;
     private int cursor;
     private PreparedStatement prepStmt;
     
+    /**
+     * Get the singleton instance of this class.
+     * @return The singleton instance.
+     */
     static DBConnection getInstance()
     {
         if(instance == null)
@@ -49,6 +53,14 @@ public class DBConnection
         return true;
     }
     
+    /**
+     * Prepare a statement, avoiding SQL injection.<p>
+     * If an instance already exists, another won't be created.<p>
+     * Instance is cleared when executePrepated or executePreparedQuery are called.<p>
+     * After calling this function, add() should be called to populate the ? fields
+     * @param sql The SQL code to prepare with.
+     * @throws SQLException 
+     */
     public void prepareStatement(String sql) throws SQLException
     {
         if(prepStmt == null)
@@ -58,20 +70,41 @@ public class DBConnection
         }
     }
     
-    public void add(String s) throws SQLException
+    /** 
+     * Adds a string to the prepared statement.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * @param s The string to add to the statement.
+     * @throws SQLException 
+     * @throws NullPointerException
+     */
+    public void add(String s) throws SQLException, NullPointerException
     {
         prepStmt.setString(cursor++, s);
     }
     
-    public void add(Integer i)throws SQLException
+    /** 
+     * Adds an integer to the prepared statement.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * @param i The integer to add to the statement.
+     * @throws SQLException 
+     * @throws NullPointerException
+     */
+    public void add(Integer i)throws SQLException, NullPointerException
     {
         prepStmt.setInt(cursor++, i);
     }
     
-    public boolean executePrepared()
+    /**
+     * Executes the prepared statement.<p>
+     * If prepareStatement() was not called before this method, a NullPointerException will be thrown.<p>
+     * Will fail if the prepared statement's ? fields were not fully populated via add().
+     * @return True if sucessful, False if an error occured
+     * @throws NullPointerException 
+     */
+    public boolean executePrepared() throws NullPointerException
     {
-        PreparedStatement stmt = prepStmt;
-        prepStmt = null;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
@@ -79,6 +112,8 @@ public class DBConnection
         }
         try
         {
+            PreparedStatement stmt = prepStmt;
+            prepStmt = null;
             stmt.execute();
         }
         catch(SQLException e)
@@ -90,11 +125,17 @@ public class DBConnection
         return true;
     }
     
-    public ResultSet executePreparedQuery()
+    /**
+     * Executes the prepared statement.<p>
+     * If prepareStatement() was not called before this method, a NullPointerException will be thrown.<p>
+     * If the prepared statement's ? fields were not fully populated via add(), this method will fail.
+     * @return If succesful, a ResultSet containing all queried columns. NULL if an error occured.
+     * @throws NullPointerException 
+     */
+    public ResultSet executePreparedQuery() throws NullPointerException
     {
         ResultSet result;
-        PreparedStatement stmt = prepStmt;
-        prepStmt = null;
+
         if(conn == null)
         {
             System.out.println("There is no database connected.");
@@ -102,6 +143,8 @@ public class DBConnection
         }
         try
         {
+            PreparedStatement stmt = prepStmt;
+            prepStmt = null;
             result = stmt.executeQuery();
         }
         catch(SQLException e)

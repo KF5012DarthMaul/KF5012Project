@@ -11,12 +11,19 @@ import java.sql.ResultSet;
 /**
  *
  * @author Emanuel Oliveira W19029581
+ * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
+ * These methods utilize constructed SQL, preventing SQL injection.
  */
 public final class DBAbstraction 
 {
     private final DBConnection db;
     private String error;
     
+    
+    /** 
+     * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
+     * These methods utilize constructed SQL, preventing SQL injection.
+     */
     public DBAbstraction()
     {
         db = DBConnection.getInstance();
@@ -29,11 +36,26 @@ public final class DBAbstraction
         return error;
     }
     
+    /**
+     * Attempts to create a new user in the Database.
+     * If the user already exists, this function will return false.
+     * @param username The username of the new user.
+     * @param hashedPassword A password (encrypted)
+     * @return True if succesful, false if not.
+     */
     public boolean createUser(String username, String hashedPassword)
     {
        return createUser(username, hashedPassword, 0);
     }
     
+    /**
+     * Attempts to create a new user in the Database.
+     * If the user already exists, this function will return false.
+     * @param username The username of the new user.
+     * @param hashedPassword A password (encrypted).
+     * @param perms Permission flags expressed in bits for the new user. See User class for information on these.
+     * @return True if succesful, false if not.
+     */
     public boolean createUser(String username, String hashedPassword, int perms)
     {
         if(!doesUserExist(username))
@@ -49,6 +71,7 @@ public final class DBAbstraction
             catch (SQLException ex) 
             {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+                error = ex.getLocalizedMessage();
             }
         }
         else
@@ -58,7 +81,11 @@ public final class DBAbstraction
         }
         return true;
     }
-    
+    /**
+     * Tests whether a username exsits inside the database.
+     * @param username The username to test.
+     * @return Returns true if the username exists in the database, false if it doesn't.
+     */
     public boolean doesUserExist(String username)
     {
         try 
@@ -72,7 +99,7 @@ public final class DBAbstraction
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
-            return false;
+            return true;
         }
     }
     
@@ -107,54 +134,36 @@ public final class DBAbstraction
                                FOREIGN KEY(task_id) REFERENCES tblTasks(task_id) ON DELETE CASCADE,
                            );"""); 
         /*while(true)
-        {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
-        int result = fileChooser.showOpenDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION) 
-        {
-        try
-        {
-        File selectedFile = fileChooser.getSelectedFile();
-        System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
-        db.execute(Files.readString(selectedFile.toPath()));
-        }
-        catch (FileNotFoundException ex)
-        {
-        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        catch (IOException ex)
-        {
-        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        break;
-        }
-        }*/ /*while(true)
-        {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
-        int result = fileChooser.showOpenDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION)
-        {
-        try
-        {
-        File selectedFile = fileChooser.getSelectedFile();
-        System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
-        db.execute(Files.readString(selectedFile.toPath()));
-        }
-        catch (FileNotFoundException ex)
-        {
-        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        catch (IOException ex)
-        {
-        Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        break;
-        }
-        }*/
+            {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) 
+            {
+            try
+            {
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
+            db.execute(Files.readString(selectedFile.toPath()));
+            }
+            catch (FileNotFoundException ex)
+            {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            catch (IOException ex)
+            {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            break;
+            }
+        }*/ 
     }
     
+    /**
+     * Gets the password (encrpyted) for a key username from the database.
+     * @param username The username whose password to retrieve.
+     * @return A string containing the password (encrypted), or NULL if the username does not exist.
+     */
     public String getHashedPassword(String username)
     {
         try 
@@ -174,12 +183,18 @@ public final class DBAbstraction
         }
     }
     
-    public boolean setHashedPassword(String username, String password)
+    /**
+     * Sets a new password (encrypted) for a username, not regarding whether it actually exists in the database or not.
+     * @param username The username whose password (encrypted) to set.
+     * @param hashedPassword The password (encrypted) to set.
+     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
+     */
+    public boolean setHashedPassword(String username, String hashedPassword)
     {
         try 
         {
             db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
-            db.add(password);
+            db.add(hashedPassword);
             db.add(username);
             db.executePrepared();
             return true;
@@ -192,6 +207,11 @@ public final class DBAbstraction
         }
     }
     
+    /**
+     * Gets the permission flags as an integer for a key username from the database.
+     * @param username The username whose permissions to retrieve.
+     * @return A positive integer representing the permission flags, -1 if an error occured or the user does not exist.
+     */
     public int getPermissions(String username)
     {
         try 
@@ -211,6 +231,12 @@ public final class DBAbstraction
         }
     }
     
+    /**
+     * Sets new permission flags for a username, not regarding whether it actually exists in the database or not.
+     * @param username The username whose permissions to set.
+     * @param perms The permission flags to set.
+     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
+     */
     public boolean setPermissions(String username, int perms)
     {
         try 
