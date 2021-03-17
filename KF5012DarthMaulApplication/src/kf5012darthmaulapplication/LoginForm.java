@@ -10,21 +10,12 @@ import javax.swing.border.EmptyBorder;
 
 import dbmgr.*;
 import javax.swing.JButton;
-import javax.swing.JSplitPane;
-import net.miginfocom.swing.MigLayout;
-import javax.swing.SpringLayout;
 import javax.swing.JTextField;
 import java.awt.FlowLayout;
 import javax.swing.JLabel;
-import javax.swing.JSeparator;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.FormSpecs;
 import javax.swing.Box;
 import javax.swing.JPasswordField;
 import java.awt.Component;
-import java.awt.Window.Type;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
@@ -33,8 +24,8 @@ public class LoginForm extends JFrame {
 	private JPanel contentPane;
 	DBAbstraction db = new DBAbstraction();
 	
-	int loginAttempts = 0;
-	int loginAttemptsPermitted = 3;
+	private int loginAttempts = 0;
+	private final int MAX_LOGIN_ATTEMPTS = 3;
 	
 	private JPasswordField txt_password;
 	private JTextField txt_username;
@@ -122,22 +113,37 @@ public class LoginForm extends JFrame {
 		btn_login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String username = txt_username.getText();
-				String password = txt_password.getPassword().toString();
-				if(loginAttempts >= loginAttemptsPermitted) {
+				String password = new String( txt_password.getPassword() );
+				
+				String tempPassword = "test";
+				String tempUsername = "test";
+				
+				if(loginAttempts >= MAX_LOGIN_ATTEMPTS) {
 					lbl_loginmessage.setText("Exeeded Maximum Attempts");
-					new ErrorDialog("Exeeded Maximum Login Attempts, Please try again later");
 					txt_username.setEnabled(false);
 					txt_password.setEnabled(false);
 					btn_login.setEnabled(false);
+					new ErrorDialog("Exeeded Maximum Login Attempts, Please try again later");
 					return;
 				}
-				if(!db.doesUserExist(username)) {
+				//db.doesUserExist(username)
+				if(!username.equals(tempUsername)) {
 					loginAttempts++;
 					lbl_loginmessage.setText("Username or Password Invalid");
+					return;
 				}
+				
+				if(password.equals(tempPassword)) {
+					System.out.println("Login Successful");
+					User authorisedUser = new User(username, 3);
+					MainWindow MainWindow = new MainWindow(authorisedUser);
+					MainWindow.setVisible(true);
+					dispose();
+				}
+				
+				
 			}
 		});
 		panel.add(btn_login);
-
 	}
 }
