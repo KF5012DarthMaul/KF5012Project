@@ -135,10 +135,16 @@ public class LoginForm extends JFrame {
 				
 				if(password.equals(tempPassword)) {
 					System.out.println("Login Successful");
-					User authorisedUser = new User(username, 3);
-					MainWindow MainWindow = new MainWindow(authorisedUser);
-					MainWindow.setVisible(true);
-					dispose();
+					try {
+						User authorisedUser = new User(username, 3);
+						MainWindow MainWindow = new MainWindow(authorisedUser);
+						MainWindow.setVisible(true);
+						dispose();
+					}catch(Exception ex) {
+						new ExceptionDialog("An Error Occured", ex);
+					}
+
+
 				}
 				
 				

@@ -25,11 +25,11 @@ public class User {
 	 * Constructor for User, Takes permission number and gives user an ArrayList of Permissions from an Enum
 	 * @param username
 	 * @param permissionNumber
+	 * @throws Exception 
 	 */
-	public User(String username, int permissionNumber){
+	public User(String username, int permissionNumber) throws Exception{
 		if(permissionNumber > (int) (Math.pow(2, permissionsEnum.values().length)) - 1) {
-			new ErrorDialog("Given Permission Value exceeds scope", new Error("Permission value too big: Got " + permissionNumber));
-			return;
+			throw new Exception("Permission Value too big, got: " + permissionNumber);
 		}
 		
 		this.username = username;
@@ -40,31 +40,21 @@ public class User {
 	 * @param permissionNumber
 	 */
 	private void generatePermissionList(int permissionNumber) {
-		System.out.println(permissionNumber);
-		String binVal = (Integer.toBinaryString(permissionNumber));
-		System.out.println(binVal);
-		
-//		for(int i = 0; i <= binVal.length() - 1; i++) {
-//			System.out.println("Checking Index: " + i);
-//			System.out.println("Checking Value: " + binVal.charAt(i));
-//			System.out.println("Permission Value: " + permissionsEnum.values()[i]);
-//			if(binVal.charAt(i) == '1') {
-//				permissions.add(permissionsEnum.values()[i]); 
-//			}else continue;
-//		}
 		PermissionManager pm = new PermissionManager();
 		for(int i = 0; i < permissionsEnum.values().length; i++) {
 			if(pm.hasPermission(i, permissionNumber)) {
 				permissions.add(permissionsEnum.values()[i]);
 			};
 		}
-		
 	}
 	/**
 	 * Gets an ArrayList of permissions the User has
 	 * @return ArrayList<User.permissionsEnum>
 	 */
-	ArrayList<permissionsEnum> getPermissions(){
+	public ArrayList<permissionsEnum> getPermissions(){
 		return permissions;
+	}
+	public String getUsername() {
+		return this.username;
 	}
 }
