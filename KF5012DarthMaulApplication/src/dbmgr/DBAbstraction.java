@@ -31,13 +31,19 @@ public final class DBAbstraction
     
     public boolean createUser(String username, String hashedPassword)
     {
+       return createUser(username, hashedPassword, 0);
+    }
+    
+    public boolean createUser(String username, String hashedPassword, int perms)
+    {
         if(!doesUserExist(username))
         {
             try 
             {
-                db.prepareStatement("INSERT INTO tblUsers (username, hashpass) VALUES (?, ?)");
+                db.prepareStatement("INSERT INTO tblUsers (username, hashpass, permission_flags) VALUES (?, ?, ?)");
                 db.add(username);
                 db.add(hashedPassword);
+                db.add(perms);
                 db.executePrepared();
             } 
             catch (SQLException ex) 
@@ -168,7 +174,7 @@ public final class DBAbstraction
         }
     }
     
-    public void changeUserPassword(String username, String password)
+    public boolean setHashedPassword(String username, String password)
     {
         try 
         {
@@ -176,15 +182,17 @@ public final class DBAbstraction
             db.add(password);
             db.add(username);
             db.executePrepared();
+            return true;
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
+            return false;
         }
     }
     
-    public int getPermissionsFromUsername(String username)
+    public int getPermissions(String username)
     {
         try 
         {
@@ -200,6 +208,24 @@ public final class DBAbstraction
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
             return -1;
+        }
+    }
+    
+    public boolean setPermissions(String username, int perms)
+    {
+        try 
+        {
+            db.prepareStatement("UPDATE tblUsers SET perms = ? WHERE username = ?");
+            db.add(username);
+            db.add(perms);
+            db.executePrepared();
+            return true;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return false;
         }
     }
 }
