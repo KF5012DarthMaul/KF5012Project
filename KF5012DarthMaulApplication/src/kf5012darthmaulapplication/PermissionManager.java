@@ -42,11 +42,24 @@ public class PermissionManager {
 	public ArrayList<Permission> getPermissions(){
 		return Permissions;
 	}
+	/**
+	 * Returns True|False based on a PermissionManager.Permission and PermissionManager.AccountType
+	 * 
+	 * @param accountType
+	 * @param permission
+	 * @return
+	 */
 	public boolean hasPermission(AccountType accountType, Permission permission) {
 		int bitmask = (int) Math.pow(2, permission.ordinal());
 		boolean flag = (bitmask & accountType.value) == bitmask;
 		return flag;
 	}
+	/**
+	 * Generates an ArrayList of all the permissions a PermissionManager.AccountType can have. takes a PermissionManager.AccountType as an input
+	 *
+	 * @param Permission.AccountType
+	 * @return ArrayList<Permission>
+	 */
 	public ArrayList<Permission> generatePermissionsList(AccountType AccountType){
 		int permissionNumber = AccountType.value;
 		ArrayList<Permission> permissionList = new ArrayList<>();
@@ -57,6 +70,12 @@ public class PermissionManager {
 		}
 		return permissionList;
 	}
+	/**
+	 * Takes an Integer and returns an AccountType Enum Value
+	 * 
+	 * @param integer (permission value)
+	 * @return Enum PermissionManager.AccountType
+	 */
 	public AccountType intToAccountType(int x) {
 		ArrayList<AccountType> AccountTypesAsArrayList = (ArrayList<AccountType>) Arrays.asList(AccountType.values());
 		return AccountTypesAsArrayList.get(x);

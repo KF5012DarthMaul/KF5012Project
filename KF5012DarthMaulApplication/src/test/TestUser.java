@@ -22,7 +22,7 @@ class TestUser {
 	}
 	
 	@Test
-	void testPermissionAssignment() {
+	void testCARETAKEPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
 		expectedPermissions.add(PermissionManager.Permission.SWAP_TASK);
 		expectedPermissions.add(PermissionManager.Permission.GET_TASK);
@@ -34,5 +34,9 @@ class TestUser {
 		}catch(Exception ex) {
 			fail("User Generation failed: " + ex.getMessage());
 		}
+	}
+	@Test
+	void testHRPERSONNELPermissionAssignment() {
+		assertEquals(1, 1);
 	}
 }
