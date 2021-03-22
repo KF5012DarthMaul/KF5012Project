@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Date;
 /**
  *
  * @author Emanuel Oliveira W19029581
@@ -94,6 +95,19 @@ public final class DBConnection
     public void add(Integer i)throws SQLException, NullPointerException
     {
         prepStmt.setInt(cursor++, i);
+    }
+    
+        /** 
+     * Adds a long integer to the prepared statement.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * @param i The long integer to add to the statement.
+     * @throws SQLException 
+     * @throws NullPointerException
+     */
+    public void add(Long i)throws SQLException, NullPointerException
+    {
+        prepStmt.setLong(cursor++, i);
     }
     
     /**

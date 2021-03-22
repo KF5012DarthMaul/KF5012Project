@@ -8,6 +8,9 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 /**
  *
  * @author Emanuel Oliveira W19029581
@@ -23,6 +26,7 @@ public final class DBAbstraction
     /** 
      * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
      * These methods utilize constructed SQL, preventing SQL injection.
+     * If you retrieve an unexpected result, such as -1, call getError() or getError(true) to verify.
      */
     public DBAbstraction()
     {
@@ -31,9 +35,26 @@ public final class DBAbstraction
         createTables();
     }
     
+    /**
+     * Retrieve the latest error without clearing the error variable.
+     * @return A string containing the error.
+     */
     public String getError()
     {
         return error;
+    }
+    
+    /**
+     * Retrieve the latest error and optionally clear the error variable.
+     * @param clear Pass true as a parameter to clear the variable.
+     * @return A string containing the error.
+     */
+    public String getError(boolean clear)
+    {
+        String cpy = error;
+        if(clear)
+            error = "";
+        return cpy;
     }
     
     /**
@@ -81,8 +102,9 @@ public final class DBAbstraction
         }
         return true;
     }
+    
     /**
-     * Tests whether a username exsits inside the database.
+     * Tests whether a username exists inside the database.
      * @param username The username to test.
      * @return Returns true if the username exists in the database, false if it doesn't.
      */
@@ -173,8 +195,12 @@ public final class DBAbstraction
             ResultSet res =  db.executePreparedQuery();
             if(!res.isClosed())
                 return res.getString(1);
-            else return null;
-        } 
+            else
+            {
+                error = "User does not exist";
+                return null;
+            }
+        }
         catch (SQLException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
@@ -184,7 +210,7 @@ public final class DBAbstraction
     }
     
     /**
-     * Sets a new password (encrypted) for a username, not regarding whether it actually exists in the database or not.
+     * Sets a new password (encrypted) for a username, disregarding whether it actually exists in the database or not.
      * @param username The username whose password (encrypted) to set.
      * @param hashedPassword The password (encrypted) to set.
      * @return Always True, unless if an SQLException ocurred. If it did, returns False.
@@ -221,7 +247,11 @@ public final class DBAbstraction
             ResultSet res =  db.executePreparedQuery();
             if(!res.isClosed())
                 return res.getInt(1);
-            else return -1;
+            else 
+            {
+                error = "User does not exist";
+                return -1;
+            }
         } 
         catch (SQLException ex) 
         {
@@ -232,7 +262,7 @@ public final class DBAbstraction
     }
     
     /**
-     * Sets new permission flags for a username, not regarding whether it actually exists in the database or not.
+     * Sets new permission flags for a username, disregarding whether it actually exists in the database or not.
      * @param username The username whose permissions to set.
      * @param perms The permission flags to set.
      * @return Always True, unless if an SQLException ocurred. If it did, returns False.
@@ -254,4 +284,135 @@ public final class DBAbstraction
             return false;
         }
     }
+    
+    /**
+     * Adds a new task with name and description to the database. Allows for duplicates.
+     * @param taskName The string defining the name of the task
+     * @param taskDesc The string defining the description of the task.
+     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
+     */
+    public boolean createTask(String taskName, String taskDesc)
+    {
+        try 
+        {
+            db.prepareStatement("INSERT INTO tblTaskType (task_name, task_desc) VALUES (?, ?)");
+            db.add(taskName);
+            db.add(taskDesc);
+            db.executePrepared();
+            return true;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return false;
+        }
+    }
+    
+    /*public class WeekSchedule
+    {
+        int length;
+        boolean Monday;
+        boolean Tuesday;
+        boolean Wednesday;
+        boolean Thursday;
+        boolean Friday;
+        boolean Saturday;
+        boolean Sunday;
+        public void setWeekdays()
+        {
+            Monday = true;
+            Tuesday = true;
+            Wednesday = true;
+            Thursday = true;
+            Friday = true;
+        }
+        public void unsetWeekdays()
+        {
+            Monday = false;
+            Tuesday = false;
+            Wednesday = false;
+            Thursday = false;
+            Friday = false;
+        }
+        public void setWeekend()
+        {
+            Saturday = true;
+            Sunday = true;
+        }
+        public void unsetWeekend()
+        {
+            Saturday = false;
+            Sunday = false;
+        }
+    }*/
+    
+    // Date functions need to be checked for validity
+    /*public boolean scheduleTaskOnce(int taskID, Date day)
+    {
+        try 
+        {
+            db.prepareStatement("INSERT INTO tblTasks (task_type, execution_day) VALUES (?, ?)");
+            db.add(taskID);
+            db.add(day.getTime());
+            db.executePrepared();
+            return true;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return false;
+        }
+    }*/
+    
+    public class CaretakerTask
+    {
+        Integer taskid;
+        //String username;
+        String taskname;
+        String taskdesc;
+        public CaretakerTask(int tid, String tname, String tdesc)
+        {
+            taskid = tid;
+            taskname = tname;
+            taskdesc = tdesc;
+        }
+    }
+    
+    // Retrieve today's task list
+    // Untested
+    // Probably creates 4 new Strings per result, instead of reusing String objects
+    // Could be optimized for that case if necessary.
+    public ArrayList<CaretakerTask> retrieveTodayTaskList(String username)
+    {
+        try 
+        {
+            db.prepareStatement("SELECT (task_id, task_name, task_desc) FROM tblTasks WHERE username = ? AND execution_day = date('now')"
+                    + "JOIN tblTaskTypes ON tblTaskTypes.type_id = tblTasks.task_type");
+            db.add(username);
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<CaretakerTask> tasks = new ArrayList();
+                do{
+                    tasks.add(new CaretakerTask(res.getInt(1), res.getString(2), res.getString(3)));
+                }
+                while(res.next());
+                return tasks;
+            }
+            else 
+            {
+                error = "No tasks are available";
+                return null;
+            }
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return null;
+        }
+    }
+    
 }
