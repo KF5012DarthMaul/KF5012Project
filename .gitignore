@@ -1,2 +1,5 @@
 /.metadata/
 /*.sq3
+/bin/
+/.classpath
+/.project
