@@ -5,20 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ChartableTemporalMap<T extends ChartableEvent>
-		implements TemporalMap<Integer, T>
-{
+public class TemporalList<T extends Event> implements TemporalMap<Integer, T> {
 	private final List<T> events;
 
-	/**
-	 * Creates a ChartableTemporalMap.
-	 * 
-	 * Note that this method sorts the events list, and that the
-	 * list should not be modified after being given.
-	 * 
-	 * @param events An list of ChartableEvents.
-	 */
-	public ChartableTemporalMap(List<T> events) {
+	public TemporalList(List<T> events) {
 		this.events = events;
 		Collections.sort(this.events);
 	}
@@ -233,5 +223,4 @@ public class ChartableTemporalMap<T extends ChartableEvent>
 	public LocalDateTime getLatestEndDate() {
 		return this.events.get(this.size() - 1).getPeriod().end();
 	}
-
 }
