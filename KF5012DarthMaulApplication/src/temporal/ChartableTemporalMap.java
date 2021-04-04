@@ -222,10 +222,6 @@ public class ChartableTemporalMap<T extends ChartableEvent>
 	/* Other utilities for a fixed-length temporal map
 	 * -------------------------------------------------- */
 	
-	public List<T> getAll() {
-		return this.events;
-	}
-
 	public int size() {
 		return this.events.size();
 	}
