@@ -3,58 +3,49 @@ package temporal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * A TemporalMap that can only store chartable events, so can itself be charted.
- * 
- * Unofficially, see TimelinePanel.
- * 
- * @author William Taylor
- *
- * @param <T> The type of chartable event this map stores.
- */
-public class ChartableTemporalList<T extends ChartableEvent>
-		implements TemporalMap<Integer, T>
+public class ExclusiveTemporalMap<I extends Comparable<I>, T extends Event>
+		implements TemporalMap<I, T>
 {
-	private TemporalMap<Integer, T> map;
+	private TemporalMap<I, T> map;
 	
-	public ChartableTemporalList(TemporalMap<Integer, T> map) {
+	public ExclusiveTemporalMap(TemporalMap<I, T> map) {
 		this.map = map;
 	}
 	
 	// Delegate to map for everything
 
 	@Override
-	public Integer indexBefore(LocalDateTime time) {
+	public I indexBefore(LocalDateTime time) {
 		return this.map.indexBefore(time);
 	}
 
 	@Override
-	public List<Integer> indexesAt(LocalDateTime time) {
+	public List<I> indexesAt(LocalDateTime time) {
 		return this.map.indexesAt(time);
 	}
 
 	@Override
-	public Integer indexAfter(LocalDateTime time) {
+	public I indexAfter(LocalDateTime time) {
 		return this.map.indexAfter(time);
 	}
 
 	@Override
-	public T get(Integer index) {
+	public T get(I index) {
 		return this.map.get(index);
 	}
 
 	@Override
-	public List<T> getBefore(Integer index) {
+	public List<T> getBefore(I index) {
 		return this.map.getBefore(index);
 	}
 
 	@Override
-	public List<T> getAfter(Integer index) {
+	public List<T> getAfter(I index) {
 		return this.map.getAfter(index);
 	}
 
 	@Override
-	public List<T> getBetween(Integer start, Integer end) {
+	public List<T> getBetween(I start, I end) {
 		return this.map.getBetween(start, end);
 	}
 

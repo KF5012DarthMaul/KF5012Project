@@ -11,7 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import temporal.ChartableEvent;
-import temporal.ChartableTemporalList;
+import temporal.ChartableTemporalMap;
 import temporal.Period;
 import temporal.TemporalList;
 import temporal.TemporalMap;
@@ -58,7 +58,7 @@ public class TimelineDemo implements Runnable {
 		));
 		
 		TemporalMap<Integer, ChartableEvent> map1 =
-			new ChartableTemporalList<ChartableEvent>(
+			new ChartableTemporalMap<ChartableEvent>(
 				new TemporalList<ChartableEvent>(events));
 		
 		// ----------
@@ -85,7 +85,7 @@ public class TimelineDemo implements Runnable {
 		));
 		
 		TemporalMap<Integer, ChartableEvent> map2 =
-			new ChartableTemporalList<ChartableEvent>(
+			new ChartableTemporalMap<ChartableEvent>(
 				new TemporalList<ChartableEvent>(events));
 		
 		// ----------
