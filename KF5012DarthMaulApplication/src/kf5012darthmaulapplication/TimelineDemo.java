@@ -10,6 +10,9 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import domain.TaskExecution;
+import domain.VerificationExecution;
+
 import temporal.ChartableEvent;
 import temporal.ChartableTemporalMap;
 import temporal.Period;

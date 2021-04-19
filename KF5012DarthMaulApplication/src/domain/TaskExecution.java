@@ -1,4 +1,4 @@
-package kf5012darthmaulapplication;
+package domain;
 
 import java.awt.Color;
 
