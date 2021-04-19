@@ -30,7 +30,8 @@ public interface TemporalMap<I extends Comparable<? super I>, T extends Event> {
 	 * results for any call of indexAfter() with the same state of the map. For
 	 * example, where the horizontal axis represents time and the <code>V</code>
 	 * represents the LocalDateTime argument, the following would return the
-	 * index of event 11 (where the vertical axis is used as a minor ordering):
+	 * index of event 11 (where the downward-increasing vertical axis is used as
+	 * a minor ordering):
 	 * <pre>
 	 * ----------------------------------------
 	 *                     V
@@ -91,7 +92,8 @@ public interface TemporalMap<I extends Comparable<? super I>, T extends Event> {
 	 * any call of indexAfter() with the same state of the map. For example,
 	 * where the horizontal axis represents time and the <code>V</code>
 	 * represents the LocalDateTime argument, the following would return the
-	 * index of event 12 (where the vertical axis is used as a minor ordering):
+	 * index of event 12 (where the downward-increasing vertical axis is used as
+	 * a minor ordering):
 	 * <pre>
 	 * ----------------------------------------
 	 *                        V
