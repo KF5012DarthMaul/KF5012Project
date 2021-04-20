@@ -154,7 +154,7 @@ public class TimelinePanel extends JPanel {
 		
 		// TODO: Er ... https://stackoverflow.com/q/1590831 ... ¯\_(ツ)_/¯
 		numTicks = (int) durationSnapped.dividedBy(tickInterval) + 1;
-		hangingStartTick = !hangingEndTickInterval.isZero();
+		hangingStartTick = !hangingStartTickInterval.isZero();
 		hangingEndTick = !hangingEndTickInterval.isZero();
 		
 		int numHangingTicks = 0;
@@ -262,8 +262,9 @@ public class TimelinePanel extends JPanel {
 		for (int t = 0; t < numTicks; t += 1, i += 1, x += tickIntervalPx) {
 			drawTick(g2d, x, y, tickLength, xAxis[i]);
 		}
+		x -= tickIntervalPx;
 		if (hangingEndTick) {
-			x = x - tickIntervalPx + hangingEndTickIntervalPx;
+			x += hangingEndTickIntervalPx;
 			drawTick(g2d, x, y, hangingTickLength, xAxis[i]);
 		}
 		
