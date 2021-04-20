@@ -314,7 +314,13 @@ public class TimelinePanel extends JPanel {
 		LocalDateTime endTime = event.getPeriod().end();
 		String label = event.getName();
 
+		boolean startTruncated = false;
 		boolean endTruncated = false;
+		if (startTime.isBefore(start)) {
+			// Truncate to the start, but show this has been done
+			startTime = start;
+			startTruncated = true;
+		}
 		if (endTime.isAfter(end)) {
 			// Truncate to the end, but show this has been done
 			endTime = end;
@@ -340,17 +346,19 @@ public class TimelinePanel extends JPanel {
 		int labelx = startx;
 		int labely = y - metrics.getHeight() / 2;
 
+		// Draw
 		g2d.setColor(event.getColor());
-		if (endTruncated) {
-			g2d.drawLine(startx, y, endx - 1, y);
-			
-			g2d.setColor(Color.BLACK);
-			g2d.drawLine(endx, y - 5, endx, y + 5);
-			g2d.setColor(event.getColor());
-
-		} else {
-			g2d.drawLine(startx, y, endx, y);
+		g2d.drawLine(startx, y, endx - 1, y);
+		
+		g2d.setColor(Color.BLACK);
+		if (startTruncated) {
+			g2d.drawLine(startx, y - 5, startx, y + 5);
 		}
+		if (endTruncated) {
+			g2d.drawLine(endx, y - 5, endx, y + 5);
+		}
+		
+		g2d.setColor(event.getColor());
 		g2d.drawString(label, labelx, labely);
 	}
 }

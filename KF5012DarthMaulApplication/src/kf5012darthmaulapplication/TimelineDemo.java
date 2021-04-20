@@ -111,7 +111,7 @@ public class TimelineDemo implements Runnable {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		TimelinePanel timelinePanel = new TimelinePanel(timeline, 1000, 300);
-		timelinePanel.showBetween(dt("9:00am 5/2/2021"), dt("5:00pm 5/2/2021"));
+		timelinePanel.showBetween(dt("9:50am 5/2/2021"), dt("4:30pm 5/2/2021"));
 		
 		frame.add(timelinePanel, BorderLayout.CENTER);
 
