@@ -17,6 +17,7 @@ import java.util.List;
 import javax.swing.JPanel;
 
 import temporal.ChartableEvent;
+import temporal.Event;
 import temporal.TemporalMap;
 import temporal.Timeline;
 
@@ -296,7 +297,9 @@ public class TimelinePanel extends JPanel {
 		int x = margin;
 		int y = margin;
 		for (TemporalMap<Integer, ChartableEvent> map : allMaps) {
-			List<ChartableEvent> events = map.getBetween(start, end);
+			List<ChartableEvent> events = map.getBetween(
+				start, end, Event.byPeriodDefaultZero, true, true
+			);
 			for (ChartableEvent event : events) {
 				drawChartableEvent(g2d, x, y, event);
 			}

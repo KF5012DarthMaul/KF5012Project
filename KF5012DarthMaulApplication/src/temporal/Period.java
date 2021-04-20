@@ -12,7 +12,12 @@ public class Period {
 		this.end = end;
 	}
 	public Period(LocalDateTime start, Duration length) {
-		this(start, start.plus(length));
+		this.start = start;
+		if (length.isNegative()) {
+			this.end = start;
+		} else {
+			this.end = start.plus(length);
+		}
 	}
 	public Period(LocalDateTime start) {
 		this.start = start;
