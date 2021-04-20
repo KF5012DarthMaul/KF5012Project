@@ -61,7 +61,7 @@ public class TimelineDemo implements Runnable {
 		));
 		
 		TemporalMap<Integer, ChartableEvent> map1 =
-			new ChartableTemporalMap<ChartableEvent>(
+			new ChartableTemporalMap<Integer, ChartableEvent>(
 				new TemporalList<ChartableEvent>(events));
 		
 		// ----------
@@ -88,7 +88,7 @@ public class TimelineDemo implements Runnable {
 		));
 		
 		TemporalMap<Integer, ChartableEvent> map2 =
-			new ChartableTemporalMap<ChartableEvent>(
+			new ChartableTemporalMap<Integer, ChartableEvent>(
 				new TemporalList<ChartableEvent>(events));
 		
 		// ----------
