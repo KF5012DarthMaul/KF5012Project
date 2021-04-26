@@ -73,7 +73,7 @@ public class TimelineDemo implements Runnable {
 		));
 		
 		TaskExecution repairBasinTask = new TaskExecution("Repair basin",
-			new Period(dt("9:31am 5/2/2021"), dt("12:00pm 5/2/2021"))
+			new Period(dt("9:30am 5/2/2021"), dt("12:00pm 5/2/2021"))
 		);
 		events.add(repairBasinTask);
 		events.add(new VerificationExecution(
