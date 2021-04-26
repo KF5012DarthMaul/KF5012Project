@@ -1,7 +1,5 @@
 package kf5012darthmaulapplication;
 
-import java.util.ArrayList;
-
 /**
  * 
  * @author Scrub
