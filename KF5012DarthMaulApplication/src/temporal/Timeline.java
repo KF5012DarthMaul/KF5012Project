@@ -2,6 +2,7 @@ package temporal;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,28 +20,45 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 	 * -------------------------------------------------- */
 
 	@Override
-	public Index indexBefore(LocalDateTime time) {
-		I latestIndex = null;
+	public Index indexBefore(
+			LocalDateTime time, Comparator<Event> eventOrder, boolean inclusive
+	) {
+		T latestEvent = null;
 		Index latestTimelineIndex = null;
+		
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
+
+			I indexBefore = map.indexBefore(time, eventOrder, inclusive);
+			if (indexBefore == null) continue; // Nothing before in this map
 			
-			I indexBefore = map.indexBefore(time);
-			if (latestIndex == null || indexBefore.compareTo(latestIndex) > 0) {
-				latestIndex = indexBefore;
-				latestTimelineIndex = new IndexImpl(mapIndex, latestIndex);
+			T eventBefore = map.get(indexBefore);
+			
+			int compEventOrder = eventOrder.compare(eventBefore, latestEvent);
+			int compNaturalOrder = eventBefore.compareTo(latestEvent);
+
+			if (
+					latestTimelineIndex == null ||
+					compEventOrder > 0 ||
+					compEventOrder == 0 && compNaturalOrder > 0
+			) {
+				latestEvent = eventBefore;
+				latestTimelineIndex = new IndexImpl(mapIndex, indexBefore);
 			}
 		}
+		
 		return latestTimelineIndex;
 	}
 
 	@Override
-	public List<Index> indexesAt(LocalDateTime time) {
+	public List<Index> indexesAt(
+			LocalDateTime time, Comparator<Event> eventOrder
+	) {
 		List<List<Index>> indexLists = new ArrayList<>();
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
 			
-			List<I> indexesInMap = map.indexesAt(time); // Sorted
+			List<I> indexesInMap = map.indexesAt(time, eventOrder); // Sorted
 			List<Index> indexesInTimeline = new ArrayList<>();
 			for (I indexInMap : indexesInMap) {
 				indexesInTimeline.add(new IndexImpl(mapIndex, indexInMap));
@@ -51,21 +69,33 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 	}
 	
 	@Override
-	public Index indexAfter(LocalDateTime time) {
-		I earliestIndex = null;
+	public Index indexAfter(
+			LocalDateTime time, Comparator<Event> eventOrder, boolean inclusive
+	) {
+		T earliestEvent = null;
 		Index earliestTimelineIndex = null;
+		
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
 			
-			I indexAfter = map.indexAfter(time);
+			I indexAfter = map.indexAfter(time, eventOrder, inclusive);
+			if (indexAfter == null) continue; // Nothing after in this map
+			
+			T eventAfter = map.get(indexAfter);
+
+			int compEventOrder = eventOrder.compare(eventAfter, earliestEvent);
+			int compNaturalOrder = eventAfter.compareTo(earliestEvent);
+
 			if (
-					earliestIndex == null ||
-					indexAfter.compareTo(earliestIndex) < 0
+					earliestTimelineIndex == null ||
+					compEventOrder < 0 ||
+					compEventOrder == 0 && compNaturalOrder < 0
 			) {
-				earliestIndex = indexAfter;
-				earliestTimelineIndex = new IndexImpl(mapIndex, earliestIndex);
+				earliestEvent = eventAfter;
+				earliestTimelineIndex = new IndexImpl(mapIndex, indexAfter);
 			}
 		}
+		
 		return earliestTimelineIndex;
 	}
 	
@@ -74,35 +104,40 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 		IndexImpl indexImpl = (IndexImpl) index; // See NOTE 1
 		return maps.get(indexImpl.mapIndex).get(indexImpl.eventIndexInMap);
 	}
-
+	
 	@Override
-	public List<T> getBefore(Index index) {
-		// I'd rather not have to hard-code start() as *the* time of the event,
-		// but I couldn't think of any way around this.
+	public List<T> getBefore(Index index, boolean inclusive) {
+		// All TMs are sorted by start time? That's quite an assumption, but it
+		// is the default sort order of Events ...
 		LocalDateTime time = this.get(index).getPeriod().start();
-		return this.getBefore(time);
+		return this.getBefore(time, Event.byStartTime, inclusive);
 	}
 	
 	@Override
-	public List<T> getAfter(Index index) {
+	public List<T> getAfter(Index index, boolean inclusive) {
+		// Same as getBefore about being sorted by start time ...
 		LocalDateTime time = this.get(index).getPeriod().start();
-		return this.getAfter(time);
+		return this.getAfter(time, Event.byStartTime, inclusive);
 	}
-
+	
 	@Override
-	public List<T> getBetween(Index start, Index end) {
-		// if start and end are the same, then skip the rest
-		if (start.equals(end)) {
-			return new ArrayList<>();
-		}
-
+	public List<T> getBetween(
+			Index start, Index end, boolean includeStart, boolean includeEnd
+	) {
 		List<List<T>> eventLists = new ArrayList<>();
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
-			
-			RangeIndex mapStart = getStartRangeIndexExclusive(mapIndex, start);
-			RangeIndex mapEnd = getEndRangeIndexExclusive(mapIndex, end);
 
+			RangeIndex mapStart = getStartRangeIndex(
+				mapIndex, start, includeStart);
+			RangeIndex mapEnd = getEndRangeIndex(mapIndex, end, includeEnd);
+			
+			int startComp = (new IndexImpl(mapIndex, mapStart.index))
+				.compareTo(end);
+			int endComp = (new IndexImpl(mapIndex, mapEnd.index))
+				.compareTo(start);
+			
+			List<T> events;
 			if (
 					// If the map is empty
 					// Note: Neither or both of these will be null, as the map
@@ -110,27 +145,22 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 					// anyway.
 					mapStart == null || mapEnd == null ||
 					
-					// If the found start index is >= end
-					(new IndexImpl(mapIndex, mapStart.index))
-						.compareTo(end) >= 0 ||
+					// If the found start index is > end, or == if not inclusive
+					startComp > 0 || (!includeStart && startComp == 0) ||
 					
-					// If the found end index is <= start
-					(new IndexImpl(mapIndex, mapEnd.index))
-						.compareTo(start) <= 0
+					// If the found end index is < start, or == if not inclusive
+					endComp < 0 || (!includeEnd && endComp == 0)
 			) {
-				eventLists.add(new ArrayList<>());
+				events = new ArrayList<>(); // Nothing to add
 				
 			} else {
 				// Add events between (adding start and end as needed)
-				List<T> events = map.getBetween(mapStart.index, mapEnd.index);
-				if (mapStart.inclusive) {
-					events.add(0, map.get(mapStart.index));
-				}
-				if (mapEnd.inclusive) {
-					events.add(map.get(mapEnd.index));
-				}
-				eventLists.add(events);
+				events = map.getBetween(
+					mapStart.index, mapEnd.index,
+					mapStart.inclusive, mapEnd.inclusive
+				);
 			}
+			eventLists.add(events);
 		}
 		
 		return mergeSortedLists(eventLists);
@@ -139,84 +169,49 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 	/* Retrieve items by time
 	 * -------------------- */
 
-	public List<T> getBefore(LocalDateTime time) {
+	@Override
+	public List<T> getBefore(
+			LocalDateTime time, Comparator<Event> eventOrder, boolean inclusive
+	) {
 		List<List<T>> eventsBefore = new ArrayList<>();
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
 			
-			RangeIndex end = this.getEndRangeIndexExclusive(mapIndex, time);
-			if (end == null) { // Map empty
-				eventsBefore.add(new ArrayList<>());
-			} else {
-				List<T> eventsBeforeInMap = map.getBefore(end.index);
-				if (end.inclusive) {
-					eventsBeforeInMap.add(map.get(end.index));
-				}
-				eventsBefore.add(eventsBeforeInMap);
-			}
+			List<T> eventsBeforeInMap = map.getBefore(
+				time, eventOrder, inclusive);
+			eventsBefore.add(eventsBeforeInMap);
 		}
 		return mergeSortedLists(eventsBefore);
 	}
 
-	public List<T> getAfter(LocalDateTime time) {
+	@Override
+	public List<T> getAfter(
+			LocalDateTime time, Comparator<Event> eventOrder, boolean inclusive
+	) {
 		List<List<T>> eventsAfter = new ArrayList<>();
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
 			
-			RangeIndex start = this.getStartRangeIndexExclusive(mapIndex, time);
-			if (start == null) { // Map empty
-				eventsAfter.add(new ArrayList<>());
-			} else {
-				List<T> eventsAfterInMap = map.getAfter(start.index);
-				if (start.inclusive) {
-					eventsAfterInMap.add(0, map.get(start.index));
-				}
-				eventsAfter.add(eventsAfterInMap);
-			}
+			List<T> eventsAfterInMap = map.getAfter(
+				time, eventOrder, inclusive);
+			eventsAfter.add(eventsAfterInMap);
 		}
 		return mergeSortedLists(eventsAfter);
 	}
 
-	public List<T> getBetween(LocalDateTime start, LocalDateTime end) {
-		// if start and end are the same, then skip the rest
-		if (start.equals(end)) {
-			return new ArrayList<>();
-		}
-		
+	@Override
+	public List<T> getBetween(
+			LocalDateTime start, LocalDateTime end,
+			Comparator<Event> eventOrder,
+			boolean includeStart, boolean includeEnd
+	) {
 		List<List<T>> eventLists = new ArrayList<>();
 		for (int mapIndex = 0; mapIndex < this.maps.size(); mapIndex++) {
 			TemporalMap<I, T> map = this.maps.get(mapIndex);
 			
-			RangeIndex mapStart = this.getStartRangeIndexExclusive(
-				mapIndex, start);
-			RangeIndex mapEnd = this.getEndRangeIndexExclusive(mapIndex, end);
-			
-			if (
-					// If the map is empty
-					// Note: Neither or both of these will be null, as the map
-					// cannot be both empty and non-empty, but I'm checking
-					// anyway.
-					mapStart == null || mapEnd == null ||
-
-					// If the found start index is >= end
-					!map.get(mapStart.index).getPeriod().start().isBefore(end)
-
-					// If the found end index is <= start
-					|| !map.get(mapEnd.index).getPeriod().start().isAfter(start)
-			) {
-				eventLists.add(new ArrayList<>());
-				
-			} else {
-				// Add events between (adding start and end as needed)
-				List<T> events = map.getBetween(mapStart.index, mapEnd.index);
-				if (mapStart.inclusive) {
-					events.add(0, map.get(mapStart.index));
-				}
-				if (mapEnd.inclusive) {
-					events.add(map.get(mapEnd.index));
-				}
-				eventLists.add(events);
-			}
+			List<T> events = map.getBetween(
+				start, end, eventOrder, includeStart, includeEnd);
+			eventLists.add(events);
 		}
 		return mergeSortedLists(eventLists);
 	}
@@ -327,22 +322,32 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 		}
 	}
 	
-	private RangeIndex getStartRangeIndexExclusive(
-			int mapIndex, LocalDateTime time
+	private RangeIndex getStartRangeIndex(
+			int mapIndex, LocalDateTime time,
+			Comparator<Event> eventOrder,
+			boolean inclusive
 	) {
 		TemporalMap<I, T> map = this.maps.get(mapIndex);
-		
-		List<I> indexesAt = map.indexesAt(time);
-		if (indexesAt.size() > 0) {
-			return new RangeIndex(indexesAt.get(indexesAt.size() - 1), false);
-		}
-		
-		I indexBefore = map.indexBefore(time);
+
+		// Anything < time will be exclusive
+		I indexBefore = map.indexBefore(time, eventOrder, false);
 		if (indexBefore != null) {
 			return new RangeIndex(indexBefore, false);
 		}
 		
-		I indexAfter = map.indexAfter(time);
+		// Anything == time may be included or not depending in 'inclusive'
+		List<I> indexesAt = map.indexesAt(time, eventOrder);
+		if (indexesAt.size() > 0) {
+			if (inclusive) {
+				return new RangeIndex(indexesAt.get(0), true);
+			} else {
+				return new RangeIndex(
+					indexesAt.get(indexesAt.size() - 1), false);
+			}
+		}
+		
+		// If none, anything > time will be inclusive
+		I indexAfter = map.indexAfter(time, eventOrder, false);
 		if (indexAfter != null) {
 			return new RangeIndex(indexAfter, true);
 		}
@@ -350,68 +355,32 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 		return null; // empty map
 	}
 
-	private RangeIndex getEndRangeIndexExclusive(
-			int mapIndex, LocalDateTime time
+	private RangeIndex getEndRangeIndex(
+			int mapIndex, LocalDateTime time,
+			Comparator<Event> eventOrder,
+			boolean inclusive
 	) {
 		TemporalMap<I, T> map = this.maps.get(mapIndex);
-		
-		List<I> indexesAt = map.indexesAt(time);
-		if (indexesAt.size() > 0) {
-			return new RangeIndex(indexesAt.get(0), false);
-		}
 
-		I indexAfter = map.indexAfter(time);
+		// Anything > time will be exclusive
+		I indexAfter = map.indexAfter(time, eventOrder, false);
 		if (indexAfter != null) {
 			return new RangeIndex(indexAfter, false);
 		}
-		
-		I indexBefore = map.indexBefore(time);
-		if (indexBefore != null) {
-			return new RangeIndex(indexBefore, true);
-		}
-		
-		return null; // empty map
-	}
 
-	private RangeIndex getStartRangeIndexInclusive(
-			int mapIndex, LocalDateTime time
-	) {
-		TemporalMap<I, T> map = this.maps.get(mapIndex);
-
-		I indexBefore = map.indexBefore(time);
-		if (indexBefore != null) {
-			return new RangeIndex(indexBefore, false);
-		}
-		
-		List<I> indexesAt = map.indexesAt(time);
+		// Anything == time may be included or not depending in 'inclusive'
+		List<I> indexesAt = map.indexesAt(time, eventOrder);
 		if (indexesAt.size() > 0) {
-			return new RangeIndex(indexesAt.get(0), true);
-		}
-		
-		I indexAfter = map.indexAfter(time);
-		if (indexAfter != null) {
-			return new RangeIndex(indexAfter, true);
-		}
-		
-		return null; // empty map
-	}
-
-	private RangeIndex getEndRangeIndexInclusive(
-			int mapIndex, LocalDateTime time
-	) {
-		TemporalMap<I, T> map = this.maps.get(mapIndex);
-
-		I indexAfter = map.indexAfter(time);
-		if (indexAfter != null) {
-			return new RangeIndex(indexAfter, false);
-		}
-		
-		List<I> indexesAt = map.indexesAt(time);
-		if (indexesAt.size() > 0) {
-			return new RangeIndex(indexesAt.get(indexesAt.size() - 1), true);
+			if (inclusive) {
+				return new RangeIndex(
+					indexesAt.get(indexesAt.size() - 1), true);
+			} else {
+				return new RangeIndex(indexesAt.get(0), false);
+			}
 		}
 
-		I indexBefore = map.indexBefore(time);
+		// If none, anything < time will be inclusive
+		I indexBefore = map.indexBefore(time, eventOrder, false);
 		if (indexBefore != null) {
 			return new RangeIndex(indexBefore, true);
 		}
@@ -420,7 +389,9 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 	}
 
 	// may return null (ie. map with given index is empty)
-	private RangeIndex getStartRangeIndexExclusive(int mapIndex, Index index) {
+	private RangeIndex getStartRangeIndex(
+			int mapIndex, Index index, boolean inclusive
+	) {
 		IndexImpl indexImpl = (IndexImpl) index; // See NOTE 1
 		LocalDateTime time = this.get(indexImpl).getPeriod().start();
 		
@@ -428,19 +399,23 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 		// at the time of that index (times after the time of the given index
 		// would still sort after all maps at the time of the given index).
 		if (mapIndex < indexImpl.mapIndex) {
-			return this.getStartRangeIndexExclusive(mapIndex, time);
+			return this.getStartRangeIndex(
+				mapIndex, time, Event.byStartTime, false);
 			
 		// If mapIndex is at the given map index, include what was requested
 		} else if (mapIndex == indexImpl.mapIndex) {
-			return new RangeIndex(indexImpl.eventIndexInMap, false);
+			return new RangeIndex(indexImpl.eventIndexInMap, inclusive);
 
 		// If mapIndex is after the start, include all events at the start
 		} else {
-			return this.getStartRangeIndexInclusive(mapIndex, time);
+			return this.getStartRangeIndex(
+				mapIndex, time, Event.byStartTime, true);
 		}
 	}
 
-	private RangeIndex getEndRangeIndexExclusive(int mapIndex, Index index) {
+	private RangeIndex getEndRangeIndex(
+			int mapIndex, Index index, boolean inclusive
+	) {
 		IndexImpl indexImpl = (IndexImpl) index; // See NOTE 1
 		LocalDateTime time = this.get(indexImpl).getPeriod().start();
 		
@@ -448,15 +423,17 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 		// at the time of that index (times before the time of the given index
 		// would still sort before all maps at the time of the given index).
 		if (mapIndex < indexImpl.mapIndex) {
-			return this.getEndRangeIndexInclusive(mapIndex, time);
+			return this.getEndRangeIndex(
+				mapIndex, time, Event.byStartTime, true);
 			
 		// If mapIndex is at the given map index, include what was requested
 		} else if (mapIndex == indexImpl.mapIndex) {
-			return new RangeIndex(indexImpl.eventIndexInMap, false);
+			return new RangeIndex(indexImpl.eventIndexInMap, inclusive);
 
 		// If mapIndex is after the end, exclude all events at the end
 		} else {
-			return this.getEndRangeIndexExclusive(mapIndex, time);
+			return this.getEndRangeIndex(
+				mapIndex, time, Event.byStartTime, false);
 		}
 	}
 	
@@ -476,6 +453,8 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 			List<C> listWithLatestC = null;
 			for (int i = 0; i < lists.size(); i++) {
 				List<C> list = lists.get(i);
+				if (list.size() == 0) continue;
+				
 				C lastC = list.get(list.size() - 1);
 				
 				if (
