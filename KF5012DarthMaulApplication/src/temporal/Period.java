@@ -3,6 +3,17 @@ package temporal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+/**
+ * A start time and possibly an end time that represents a period of time.
+ * 
+ * The interpretation of a period with no end time (where end is null), is up to
+ * the client. Common interpretations include: no duration (end time == start
+ * time), or as infinite duration (start time onwards). Making an explicit zero
+ * duration (with no room for interpretation) is possible by setting the end
+ * time equal to the start time. This is not possible for infinite duration.
+ * 
+ * @author William Taylor
+ */
 public class Period {
 	private final LocalDateTime start;
 	private final LocalDateTime end; // Nullable

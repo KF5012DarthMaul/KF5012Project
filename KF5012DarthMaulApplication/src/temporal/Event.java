@@ -7,7 +7,7 @@ import java.util.Comparator;
  * An event (whether actual, expected, theoretical, etc.) executed over a period
  * of time.
  * 
- * @author music
+ * @author William Taylor
  */
 public interface Event extends Comparable<Event> {
 	public Period getPeriod();

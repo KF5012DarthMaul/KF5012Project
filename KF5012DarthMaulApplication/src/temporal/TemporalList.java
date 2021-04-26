@@ -7,13 +7,15 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * A simple TemporalMap by Integer index.
+ * A simple TemporalMap with Integer indexes.
  * 
- * It cannot contain overlapping events.
+ * A TemporalList cannot contain events with identical start times, whether or
+ * not the class generates an explicit error. It may contain otherwise
+ * overlapping events.
  * 
- * @author music
+ * @author William Taylor
  *
- * @param <T> The Event type this list stores.
+ * @param <T> The type of the events in this list.
  */
 public class TemporalList<T extends Event> implements TemporalMap<Integer, T> {
 	private final List<T> events;

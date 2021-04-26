@@ -2,6 +2,11 @@ package temporal;
 
 import java.time.Duration;
 
+/**
+ * A Period that may be repeated at fixed intervals.
+ * 
+ * @author William Taylor
+ */
 public class IntervaledPeriodSet {
 	private final Period referencePeriod;
 	private final Duration interval; // Nullable

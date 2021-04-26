@@ -1,5 +1,10 @@
 package temporal;
 
+/**
+ * An intervaled period set with another intervaled period set used as a mask.
+ * 
+ * @author William Taylor
+ */
 public class ConstrainedIntervaledPeriodSet {
 	private final IntervaledPeriodSet periodSet;
 	private final IntervaledPeriodSet periodSetConstraint; // Nullable

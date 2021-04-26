@@ -6,6 +6,14 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * An aggregation of TemporalMaps.
+ * 
+ * @author William Taylor
+ *
+ * @param <I>
+ * @param <T>
+ */
 @SuppressWarnings("unchecked")
 public class Timeline<I extends Comparable<? super I>, T extends Event>
 		implements TemporalMap<Timeline.Index, T>

@@ -5,7 +5,7 @@ package temporal;
  * is, how often the event takes place, and over what (possibly recurring)
  * periods the event takes place.
  * 
- * @author music
+ * @author William Taylor
  */
 public interface EventDescriptor {
 	public ConstrainedIntervaledPeriodSet getCIPC();

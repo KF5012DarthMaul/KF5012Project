@@ -4,6 +4,14 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * A TemporalMap that can be verified to hold only non-overlapping events.
+ * 
+ * @author William Taylor
+ *
+ * @param <I> The type of the indexes of this map.
+ * @param <T> The type of the events in this map.
+ */
 public class ExclusiveTemporalMap<I extends Comparable<I>, T extends Event>
 		implements TemporalMap<I, T>
 {

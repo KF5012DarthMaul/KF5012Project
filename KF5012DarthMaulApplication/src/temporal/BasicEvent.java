@@ -5,7 +5,7 @@ package temporal;
  * 
  * Useful to implement comparators, etc. that require an Event.
  * 
- * @author music
+ * @author William Taylor
  */
 final class BasicEvent implements Event {
 	private Period period;

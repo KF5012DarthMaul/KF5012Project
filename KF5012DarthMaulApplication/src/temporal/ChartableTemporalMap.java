@@ -7,11 +7,15 @@ import java.util.List;
 /**
  * A TemporalMap that can only store chartable events, so can itself be charted.
  * 
- * Unofficially, see TimelinePanel.
+ * This is a wrapper for any other TemporalMap that delegates to the underlying
+ * TemporalMap for all operations. It simply puts an additional constraint on
+ * the T type parameter (the Event type of the map), which the underlying map
+ * must satisfy.
  * 
  * @author William Taylor
  *
- * @param <T> The type of chartable event this map stores.
+ * @param <I> The type of the indexes of this (and the underlying) map.
+ * @param <T> The type of the events in this (and the underlying) map.
  */
 public class ChartableTemporalMap
 		<I extends Comparable<I>, T extends ChartableEvent>
@@ -24,7 +28,7 @@ public class ChartableTemporalMap
 	}
 	
 	// Delegate to map for everything
-
+	
 	@Override
 	public I indexBefore(
 			LocalDateTime time, Comparator<Event> eventOrder, boolean inclusive
