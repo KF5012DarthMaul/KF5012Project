@@ -20,7 +20,7 @@ public final class DBConnection
     private Connection conn;
     private int cursor;
     private PreparedStatement prepStmt;
-    
+    private int batchCount;
     /**
      * Get the singleton instance of this class.
      * @return The singleton instance.
@@ -71,10 +71,57 @@ public final class DBConnection
         }
     }
     
+    /**
+     * Adds a batch to the statement, allowing for multiple insertions in one go.<p>
+     * @throws SQLException 
+     */
+    public void batch() throws SQLException
+    {
+        prepStmt.addBatch();
+        cursor = 1;
+        batchCount++;
+        if (batchCount % 100 == 0) // Every 100 rows
+        {
+            prepStmt.executeBatch();
+            batchCount = 0;
+        }
+    }
+    
+    /**
+     * Executes any batches remaining.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * @return True if sucessful, False if an error occured
+     * @throws NullPointerException 
+     */
+    public boolean executeBatch() throws NullPointerException
+    {
+         if(conn == null)
+        {
+            System.out.println("There is no database connected.");
+            return false;
+        }
+        try
+        {
+            if(batchCount > 0)
+            {
+                prepStmt.executeBatch();
+                batchCount = 0;
+            }
+            prepStmt = null;
+        }
+        catch(SQLException e)
+        {
+            System.out.println("Failed to execute");
+            System.out.println(e.getMessage());
+            return false;
+        }
+        return true;
+    }
+    
     /** 
      * Adds a string to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
-     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * Will fail if called more than there are ? fields available in the prepared statement.
      * @param s The string to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
@@ -87,7 +134,7 @@ public final class DBConnection
     /** 
      * Adds an integer to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
-     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * Will fail if called more than there are ? fields available in the prepared statement.
      * @param i The integer to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
@@ -97,10 +144,10 @@ public final class DBConnection
         prepStmt.setInt(cursor++, i);
     }
     
-        /** 
+    /** 
      * Adds a long integer to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
-     * Will fail if called more than there are ? fields avaialable in the prepared statement.
+     * Will fail if called more than there are ? fields available in the prepared statement.
      * @param i The long integer to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
@@ -108,6 +155,19 @@ public final class DBConnection
     public void add(Long i)throws SQLException, NullPointerException
     {
         prepStmt.setLong(cursor++, i);
+    }
+    
+    /** 
+     * Adds a boolean to the prepared statement.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * Will fail if called more than there are ? fields available in the prepared statement.
+     * @param b The boolean to add to the statement.
+     * @throws SQLException 
+     * @throws NullPointerException
+     */
+    public void add(boolean b)throws SQLException, NullPointerException
+    {
+        prepStmt.setBoolean(cursor++, b);
     }
     
     /**
@@ -126,9 +186,9 @@ public final class DBConnection
         }
         try
         {
-            PreparedStatement stmt = prepStmt;
+            prepStmt.execute();
             prepStmt = null;
-            stmt.execute();
+            return true;
         }
         catch(SQLException e)
         {
@@ -136,7 +196,6 @@ public final class DBConnection
             System.out.println(e.getMessage());
             return false;
         }
-        return true;
     }
     
     /**
@@ -148,8 +207,6 @@ public final class DBConnection
      */
     public ResultSet executePreparedQuery() throws NullPointerException
     {
-        ResultSet result;
-
         if(conn == null)
         {
             System.out.println("There is no database connected.");
@@ -159,7 +216,7 @@ public final class DBConnection
         {
             PreparedStatement stmt = prepStmt;
             prepStmt = null;
-            result = stmt.executeQuery();
+            return stmt.executeQuery();
         }
         catch(SQLException e)
         {
@@ -167,7 +224,6 @@ public final class DBConnection
             System.out.println(e.getMessage());
             return null;
         }
-        return result;
     }
     
     public boolean execute(String sql)
@@ -181,6 +237,7 @@ public final class DBConnection
         {
             Statement sqlStatement = conn.createStatement();
             sqlStatement.execute(sql);
+            return true;
         }
         catch(SQLException e)
         {
@@ -188,12 +245,10 @@ public final class DBConnection
             System.out.println(e.getMessage());
             return false;
         }
-        return true;
     }
     
     public ResultSet executeQuery(String sql)
     {
-        ResultSet result;
         if(conn == null)
         {
             System.out.println("There is no database connected.");
@@ -202,7 +257,7 @@ public final class DBConnection
         try
         {
             Statement sqlStatement = conn.createStatement();
-            result = sqlStatement.executeQuery(sql);
+            return sqlStatement.executeQuery(sql);
         }
         catch(SQLException e)
         {
@@ -210,6 +265,5 @@ public final class DBConnection
             System.out.println(e.getMessage());
             return null;
         }
-        return result;
     }
 }

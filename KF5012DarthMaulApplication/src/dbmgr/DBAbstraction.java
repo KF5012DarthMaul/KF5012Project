@@ -4,13 +4,20 @@
  * and open the template in the editor.
  */
 package dbmgr;
+import domain.TaskExecution;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.ResultSet;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.Month;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 /**
  *
@@ -19,9 +26,13 @@ import java.util.Random;
  * These methods utilize constructed SQL, preventing SQL injection.
  */
 import kf5012darthmaulapplication.PermissionManager.AccountType;
+import kf5012darthmaulapplication.User;
+import temporal.ConstrainedIntervaledPeriodSet;
+import temporal.Period;
 public final class DBAbstraction 
 {
     private final DBConnection db;
+    private static DBAbstraction instance;
     private String error;
     
     
@@ -30,7 +41,7 @@ public final class DBAbstraction
      * These methods utilize constructed SQL, preventing SQL injection.
      * If you retrieve an unexpected result, such as -1, call getError() or getError(true) to verify.
      */
-    public DBAbstraction()
+    private DBAbstraction()
     {
         db = DBConnection.getInstance();
         error = "";
@@ -38,15 +49,22 @@ public final class DBAbstraction
         fillDB("password");
     }
     
+    public static DBAbstraction getInstance()
+    {
+        if(instance == null)
+            instance = new DBAbstraction();
+        return instance;
+    }
     
-    public String randomString() 
+    private String randomString() 
     {
         int leftLimit = 97; // letter 'a'
         int rightLimit = 122; // letter 'z'
         Random random = new Random();
         int targetStringLength = random.nextInt(32);
         StringBuilder buffer = new StringBuilder(targetStringLength);
-        for (int i = 0; i < targetStringLength; i++) {
+        for (int i = 0; i < targetStringLength; i++) 
+        {
             int randomLimitedInt = leftLimit + (int) 
               (random.nextFloat() * (rightLimit - leftLimit + 1));
             buffer.append((char) randomLimitedInt);
@@ -54,7 +72,7 @@ public final class DBAbstraction
         return buffer.toString();
     }
     
-    public void fillDB(String hashedPassword)
+    private void fillDB(String hashedPassword)
     {
         for(int i = 0; i < 6; i++)
             createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
@@ -63,6 +81,19 @@ public final class DBAbstraction
         //createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
         for(int i = 0; i < 2; i++)
             createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
+        for(int i = 0; i < 10; i++)
+        {
+            submitTask(new Task(0, randomString(), randomString()));
+        }
+        ArrayList<Task> taskList = getTaskList();
+        ArrayList<TaskExecution> texecList = new ArrayList();
+        taskList.forEach(t -> {
+            System.out.println(t.toString());
+            LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 28, 10, 30);
+            LocalDateTime plusOneHour = startingPoint.plusHours(1);
+            texecList.add(new TaskExecution("", new Period(startingPoint, plusOneHour)));
+        });
+        submitTaskExecutions(texecList);
     }
     
     /**
@@ -102,6 +133,19 @@ public final class DBAbstraction
     /**
      * Attempts to create a new user in the Database.
      * If the user already exists, this function will return false.
+     * @param user The user object with data.
+     * @param hashedPassword A password (encrypted)
+     * @return True if succesful, false if not.
+     */
+    public boolean createUser(User user, String hashedPassword)
+    {
+       //return createUser(user.getUsername(), hashedPassword, user.getAccountType());
+        return false;
+    }
+    
+    /**
+     * Attempts to create a new user in the Database.
+     * If the user already exists, this function will return false.
      * @param username The username of the new user.
      * @param hashedPassword A password (encrypted).
      * @param perms Permission flags expressed in bits for the new user. See User class for information on these.
@@ -123,6 +167,7 @@ public final class DBAbstraction
             {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
                 error = ex.getLocalizedMessage();
+                return false;
             }
         }
         else
@@ -158,33 +203,46 @@ public final class DBAbstraction
     private void createTables()
     {
         db.execute("""
-                           CREATE TABLE IF NOT EXISTS tblUsers(
-                               username TEXT PRIMARY KEY,
-                               hashpass TEXT NOT NULL,
-                               permission_flags INTEGER
-                           );
-                                CREATE TABLE IF NOT EXISTS tblTasks(
+                   CREATE TABLE IF NOT EXISTS tblUsers(
+                                                  username TEXT PRIMARY KEY,
+                                                  hashpass TEXT NOT NULL,
+                                                  permission_flags INTEGER
+                                              );""");
+        db.execute(""" 
+                           CREATE TABLE IF NOT EXISTS tblTasks(
+                                type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                task_name TEXT NOT NULL,
+                                task_desc TEXT
+                           );""");
+        db.execute(""" 
+                           CREATE TABLE IF NOT EXISTS tblTaskExecutions(
                                task_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                task_type INTEGER NOT NULL,
                                caretaker TEXT,
-                               execution_day INTEGER,
-                               FOREIGN KEY(task_type) REFERENCES tblTaskType (type_id) ON DELETE CASCADE,
-                               FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
-                           );
-                                CREATE TABLE IF NOT EXISTS tblTaskType(
-                               type_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                               task_name TEXT NOT NULL,
-                               task_descr TEXT
-                           );
-                                -- Tasks could ref log_id instead of log referencing task_id
-                           -- That would require updating the task row instead of just adding to taskLog.
-                           CREATE TABLE IF NOT EXISTS tblTaskLog(
-                               log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                               task_id INTEGER NOT NULL,
-                               log_time INTEGER NOT NULL,
-                               completion_time INTEGER,
-                               FOREIGN KEY(task_id) REFERENCES tblTasks(task_id) ON DELETE CASCADE,
-                           );"""); 
+                               start_datetime INTEGER,
+                               end_datetime INTEGER,
+                               FOREIGN KEY(task_type) REFERENCES tblTasks (type_id) ON DELETE CASCADE,
+                               FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
+                           );""");
+        db.execute("""
+                            CREATE TABLE IF NOT EXISTS tblTaskTemporalRules(
+                                rules_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                task_type INTEGER NOT NULL,
+                                day_of_week INTEGER NOT NULL,
+                                start_datetime INTEGER,
+                                end_datetime INTEGER,
+                                FOREIGN KEY(task_type) REFERENCES tblTasks (type_id) ON DELETE CASCADE
+                            );""");
+                           // Tasks could ref log_id instead of log referencing task_id
+                           // That would require updating the task row instead of just adding to taskLog.
+        db.execute(""" 
+                        CREATE TABLE IF NOT EXISTS tblTaskLog(
+                            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            task_id INTEGER NOT NULL,
+                            log_time INTEGER NOT NULL,
+                            completion_time INTEGER,
+                            FOREIGN KEY(task_id) REFERENCES tblTaskExecutions(task_id) ON DELETE CASCADE
+                        );"""); 
         /*while(true)
             {
             JFileChooser fileChooser = new JFileChooser();
@@ -252,8 +310,7 @@ public final class DBAbstraction
             db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
             db.add(hashedPassword);
             db.add(username);
-            db.executePrepared();
-            return true;
+            return db.executePrepared();
         } 
         catch (SQLException ex) 
         {
@@ -304,8 +361,7 @@ public final class DBAbstraction
             db.prepareStatement("UPDATE tblUsers SET perms = ? WHERE username = ?");
             db.add(username);
             db.add(perms);
-            db.executePrepared();
-            return true;
+            return db.executePrepared();
         } 
         catch (SQLException ex) 
         {
@@ -313,23 +369,35 @@ public final class DBAbstraction
             error = ex.getLocalizedMessage();
             return false;
         }
+    }
+    
+    
+    // Update all records for a specific user
+    public boolean updateUser(User user)
+    {
+        return false;
+    }
+    
+    
+    // Delete a user
+    public boolean deleteUser(User user)
+    {
+        return false;
     }
     
     /**
-     * Adds a new task with name and description to the database. Allows for duplicates.
-     * @param taskName The string defining the name of the task
-     * @param taskDesc The string defining the description of the task.
+     * Adds a new task to the database. Allows for duplicates.
+     * @param task The task object containing all task-related information.
      * @return Always True, unless if an SQLException ocurred. If it did, returns False.
      */
-    public boolean createTask(String taskName, String taskDesc)
+    public boolean submitTask(Task task)
     {
         try 
         {
-            db.prepareStatement("INSERT INTO tblTaskType (task_name, task_desc) VALUES (?, ?)");
-            db.add(taskName);
-            db.add(taskDesc);
-            db.executePrepared();
-            return true;
+            db.prepareStatement("INSERT INTO tblTasks (task_name, task_desc) VALUES (?, ?)");
+            db.add(task.name);
+            db.add(task.desc);
+            return db.executePrepared();
         } 
         catch (SQLException ex) 
         {
@@ -339,95 +407,144 @@ public final class DBAbstraction
         }
     }
     
-    /*public class WeekSchedule
+    // Retrieve all non-priority tasks for today
+    public ArrayList<TaskExecution> getUnallocatedDailyTaskList()
     {
-        int length;
-        boolean Monday;
-        boolean Tuesday;
-        boolean Wednesday;
-        boolean Thursday;
-        boolean Friday;
-        boolean Saturday;
-        boolean Sunday;
-        public void setWeekdays()
-        {
-            Monday = true;
-            Tuesday = true;
-            Wednesday = true;
-            Thursday = true;
-            Friday = true;
-        }
-        public void unsetWeekdays()
-        {
-            Monday = false;
-            Tuesday = false;
-            Wednesday = false;
-            Thursday = false;
-            Friday = false;
-        }
-        public void setWeekend()
-        {
-            Saturday = true;
-            Sunday = true;
-        }
-        public void unsetWeekend()
-        {
-            Saturday = false;
-            Sunday = false;
-        }
-    }*/
+        return null;
+    }
     
-    // Date functions need to be checked for validity
-    /*public boolean scheduleTaskOnce(int taskID, Date day)
+    // Retrieve all tasks that were not completed before today
+    public ArrayList<TaskExecution> getUnallocatedOverflowTaskList()
+    {
+        return null;
+    }
+    
+    // Retrieve all tasks that have time restrictions for today
+    public ArrayList<TaskExecution> getUnallocatedDailyPriorityTaskList()
+    {
+        return null;
+    }
+    
+    public class Task
+    {
+        int id;
+        String name;
+        String desc;
+        public Task(int i, String n, String d){id=i;name=n;desc=d;}
+        public Task(String n, String d){name=n;desc=d;}
+        ConstrainedIntervaledPeriodSet temporalRules;
+        @Override
+        public String toString()
+        {
+            return "Task Object"
+                    + "{\n"+
+                   "  id: "+ Integer.toString(id)+
+                    "  name: " + name+ 
+                    "  desc:\n" + desc +
+                    "}";
+        }
+    }
+    
+    
+    // Retrieve all unique tasks and temporal rules
+    public ArrayList<Task> getTaskList()
     {
         try 
         {
-            db.prepareStatement("INSERT INTO tblTasks (task_type, execution_day) VALUES (?, ?)");
-            db.add(taskID);
-            db.add(day.getTime());
-            db.executePrepared();
-            return true;
-        } 
+            db.prepareStatement("SELECT type_id, task_name, task_desc FROM tblTasks");
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<Task> tasks = new ArrayList();
+                do
+                {
+                    tasks.add(new Task(res.getInt(1), res.getString(2), res.getString(3)));
+                }
+                while(res.next());
+                return tasks;
+            }
+            else
+            {
+                error = "No tasks were retrieved";
+                return null;
+            }
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return null;
+        }
+    }
+    
+    
+    // Insert all new taskexecutions in one go
+    public boolean submitTaskExecutions(List<TaskExecution> tasks)
+    {
+        try 
+        {
+            db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
+            for(TaskExecution t: tasks)
+            {
+                db.add(0); // REPLACE WITH ACTUAL TASK POINTER
+                Period p = t.getPeriod();
+                long start = p.start().toEpochSecond(ZoneOffset.UTC);
+                long end = p.end().toEpochSecond(ZoneOffset.UTC);
+                db.add(start);
+                db.add(end);
+                db.batch();
+            }
+            return db.executeBatch();
+        }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             error = ex.getLocalizedMessage();
             return false;
         }
-    }*/
+    }
     
-    public class CaretakerTask
+    // Insert a new taskexecution
+    public boolean submitTaskExecution(TaskExecution task)
     {
-        Integer taskid;
-        //String username;
-        String taskname;
-        String taskdesc;
-        public CaretakerTask(int tid, String tname, String tdesc)
+        try 
         {
-            taskid = tid;
-            taskname = tname;
-            taskdesc = tdesc;
+            db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
+            db.add(0); // REPLACE WITH ACTUAL TASK POINTER
+            Period p = task.getPeriod();
+            long start = p.start().toEpochSecond(ZoneOffset.UTC);
+            long end = p.end().toEpochSecond(ZoneOffset.UTC);
+            db.add(start);
+            db.add(end);
+            return db.executePrepared();
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex.getLocalizedMessage();
+            return false;
         }
     }
     
-    // Retrieve today's task list
+    // Retrieve today's task list for a given user
     // Untested
-    // Probably creates 4 new Strings per result, instead of reusing String objects
-    // Could be optimized for that case if necessary.
-    public ArrayList<CaretakerTask> retrieveTodayTaskList(String username)
+    public ArrayList<TaskExecution> getUserDailyTaskList(String username)
     {
         try 
         {
-            db.prepareStatement("SELECT (task_id, task_name, task_desc) FROM tblTasks WHERE username = ? AND execution_day = date('now')"
-                    + "JOIN tblTaskTypes ON tblTaskTypes.type_id = tblTasks.task_type");
+            db.prepareStatement("SELECT task_name, start_datetime, end_datetime FROM tblTaskExecutions "
+                    + "WHERE username = ? AND start_datetime = date('now', 'start of day'"
+                    + "+ \"JOIN tblTasks ON tblTasks.type_id = tblTaskExecutions.task_type\")");
             db.add(username);
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<CaretakerTask> tasks = new ArrayList();
+                ArrayList<TaskExecution> tasks = new ArrayList();
                 do
                 {
-                    tasks.add(new CaretakerTask(res.getInt(1), res.getString(2), res.getString(3)));
+                    LocalDateTime start = LocalDateTime.ofEpochSecond(res.getLong(2), 0, ZoneOffset.UTC);
+                    LocalDateTime end = LocalDateTime.ofEpochSecond(res.getLong(3), 0, ZoneOffset.UTC);
+                    tasks.add(new TaskExecution(res.getString(1), new Period(start, end)));
                 }
                 while(res.next());
                 return tasks;
