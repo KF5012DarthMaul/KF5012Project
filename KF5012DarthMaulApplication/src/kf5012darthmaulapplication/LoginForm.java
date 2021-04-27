@@ -24,9 +24,6 @@ public class LoginForm extends JFrame {
 	private JPanel contentPane;
 	DBAbstraction db = new DBAbstraction();
 	
-	private int loginAttempts = 0;
-	private final int MAX_LOGIN_ATTEMPTS = 3;
-	
 	private JPasswordField txt_password;
 	private JTextField txt_username;
 
@@ -118,17 +115,8 @@ public class LoginForm extends JFrame {
 				String tempPassword = "test";
 				String tempUsername = "test";
 				
-				if(loginAttempts >= MAX_LOGIN_ATTEMPTS) {
-					lbl_loginmessage.setText("Exeeded Maximum Attempts");
-					txt_username.setEnabled(false);
-					txt_password.setEnabled(false);
-					btn_login.setEnabled(false);
-					new ErrorDialog("Exeeded Maximum Login Attempts, Please try again later");
-					return;
-				}
 				//db.doesUserExist(username)
 				if(!username.equals(tempUsername)) {
-					loginAttempts++;
 					lbl_loginmessage.setText("Username or Password Invalid");
 					return;
 				}

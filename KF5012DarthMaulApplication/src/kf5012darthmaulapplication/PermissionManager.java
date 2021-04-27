@@ -13,10 +13,11 @@ public class PermissionManager {
 	public PermissionManager() {}
 	
 	public enum AccountType {
-		SYSADMIN(0b00111),
-		HR_PERSONNEL(0b00001),
-		MANAGER(0b11100),
-		CARETAKER(0b11000);
+		SYSADMIN(0b000111),
+		HR_PERSONNEL(0b000001),
+		MANAGER(0b011100),
+		CARETAKER(0b011000),
+		ESTATE(0b100000);
 		
 		public final int value;
 		private AccountType(int value) {
@@ -28,7 +29,8 @@ public class PermissionManager {
 		CHANGE_USER_PASSWORD,
 		ASSIGN_TASK,
 		SWAP_TASK,
-		GET_TASK;
+		GET_TASK,
+		GIVE_TASKS;
 		
 		private final int bitmask;
 		private Permission() {

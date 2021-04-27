@@ -23,10 +23,17 @@ public class User {
 		pm = new PermissionManager(this.accountType);
 	}
 	/**
-	 * Gets an ArrayList of permissions the User has
-	 * @return ArrayList<User.permissionsEnum>
+	 * Gets User Username
+	 * @return string
 	 */
 	public String getUsername() {
 		return this.username;
+	}
+	/**
+	 * Gets User AccountType
+	 * @return PermissionManager.AccountType
+	 */
+	public PermissionManager.AccountType getAccountType(){
+		return this.accountType;
 	}
 }
