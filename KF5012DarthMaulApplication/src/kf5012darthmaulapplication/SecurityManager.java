@@ -8,7 +8,7 @@ import org.bouncycastle.*;
 import org.bouncycastle.jce.provider.*;
 
 public class SecurityManager {
-	private static final int ITERATION_COUNT = 1000;
+	private static final int ITERATION_COUNT = 10000;
 	
 	public SecurityManager(){
 	}
