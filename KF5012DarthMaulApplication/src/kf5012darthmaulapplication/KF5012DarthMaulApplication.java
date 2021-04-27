@@ -5,12 +5,12 @@ import org.bouncycastle.jce.provider.*;
 
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
-		System.out.println("Loading...");
 		try {
 			
 			Security.addProvider(new BouncyCastleProvider());
 			Security.setProperty("crypto.policy", "unlimited");
 			
+			SecurityManager sm = new SecurityManager();
 			
 			LoginForm LoginForm = new LoginForm();
 			LoginForm.setVisible(true);
