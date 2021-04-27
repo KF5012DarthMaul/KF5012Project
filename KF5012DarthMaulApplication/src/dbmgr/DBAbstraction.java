@@ -11,12 +11,14 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Random;
 /**
  *
  * @author Emanuel Oliveira W19029581
  * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
  * These methods utilize constructed SQL, preventing SQL injection.
  */
+import kf5012darthmaulapplication.PermissionManager.AccountType;
 public final class DBAbstraction 
 {
     private final DBConnection db;
@@ -33,6 +35,34 @@ public final class DBAbstraction
         db = DBConnection.getInstance();
         error = "";
         createTables();
+        fillDB("password");
+    }
+    
+    
+    public String randomString() 
+    {
+        int leftLimit = 97; // letter 'a'
+        int rightLimit = 122; // letter 'z'
+        Random random = new Random();
+        int targetStringLength = random.nextInt(32);
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int) 
+              (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        return buffer.toString();
+    }
+    
+    public void fillDB(String hashedPassword)
+    {
+        for(int i = 0; i < 6; i++)
+            createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
+        createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
+        createUser("admin", hashedPassword, AccountType.SYSADMIN.value);
+        //createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
+        for(int i = 0; i < 2; i++)
+            createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
     }
     
     /**
@@ -395,7 +425,8 @@ public final class DBAbstraction
             if(!res.isClosed())
             {
                 ArrayList<CaretakerTask> tasks = new ArrayList();
-                do{
+                do
+                {
                     tasks.add(new CaretakerTask(res.getInt(1), res.getString(2), res.getString(3)));
                 }
                 while(res.next());
