@@ -1,11 +1,11 @@
 package dbmgr;
+import dbmgr.DBExceptions.FailedToConnectException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Date;
 /**
  *
  * @author Emanuel Oliveira W19029581
@@ -25,50 +25,43 @@ public final class DBConnection
      * Get the singleton instance of this class.
      * @return The singleton instance.
      */
-    static DBConnection getInstance()
+    static DBConnection getInstance() throws FailedToConnectException
     {
         if(instance == null)
             instance = new DBConnection();
         return instance;
     }
     
-    private DBConnection()
+    private DBConnection() throws FailedToConnectException
     {
-        connect("..\\db.sq3");
+        try {
+            connect("..\\db.sq3");
+        } catch (SQLException ex) {
+            throw new FailedToConnectException(ex);
+        }
     }
     
-    private boolean connect(String filename)
+    private boolean connect(String filename) throws SQLException
     {
-        try
-        {
-            String url = "jdbc:sqlite:"+filename;
-            conn = DriverManager.getConnection(url);
-            System.out.println("Connected");
-        }
-        catch(SQLException e)
-        {
-            System.out.println("Failed to connect");
-            System.out.println(e.getMessage());
-            return false;
-        }
-        return true;
+        String url = "jdbc:sqlite:"+filename;
+        conn = DriverManager.getConnection(url);
+        System.out.println("Connected");
+        return conn != null;
     }
     
     /**
      * Prepare a statement, avoiding SQL injection.<p>
-     * If an instance already exists, another won't be created.<p>
-     * Instance is cleared when executePrepated or executePreparedQuery are called.<p>
+     * Instance is nulled when executePrepated or executePreparedQuery are called.<p>
      * After calling this function, add() should be called to populate the ? fields
      * @param sql The SQL code to prepare with.
      * @throws SQLException 
      */
     public void prepareStatement(String sql) throws SQLException
     {
-        if(prepStmt == null)
-        {
-            prepStmt = conn.prepareStatement(sql);
-            cursor = 1;
-        }
+        if(prepStmt != null)
+            prepStmt.close();
+        prepStmt = conn.prepareStatement(sql);
+        cursor = 1;
     }
     
     /**
@@ -90,7 +83,7 @@ public final class DBConnection
     /**
      * Executes any batches remaining.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
-     * @return True if sucessful, False if an error occured
+     * @return True if successful, False if an error occured
      * @throws NullPointerException 
      */
     public boolean executeBatch() throws NullPointerException
@@ -148,13 +141,13 @@ public final class DBConnection
      * Adds a long integer to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
      * Will fail if called more than there are ? fields available in the prepared statement.
-     * @param i The long integer to add to the statement.
+     * @param l The long integer to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
      */
-    public void add(Long i)throws SQLException, NullPointerException
+    public void add(Long l)throws SQLException, NullPointerException
     {
-        prepStmt.setLong(cursor++, i);
+        prepStmt.setLong(cursor++, l);
     }
     
     /** 
@@ -174,7 +167,7 @@ public final class DBConnection
      * Executes the prepared statement.<p>
      * If prepareStatement() was not called before this method, a NullPointerException will be thrown.<p>
      * Will fail if the prepared statement's ? fields were not fully populated via add().
-     * @return True if sucessful, False if an error occured
+     * @return True if successful, False if an error occured
      * @throws NullPointerException 
      */
     public boolean executePrepared() throws NullPointerException
@@ -202,7 +195,7 @@ public final class DBConnection
      * Executes the prepared statement.<p>
      * If prepareStatement() was not called before this method, a NullPointerException will be thrown.<p>
      * If the prepared statement's ? fields were not fully populated via add(), this method will fail.
-     * @return If succesful, a ResultSet containing all queried columns. NULL if an error occured.
+     * @return If successful, a ResultSet containing all queried columns. NULL if an error occured.
      * @throws NullPointerException 
      */
     public ResultSet executePreparedQuery() throws NullPointerException

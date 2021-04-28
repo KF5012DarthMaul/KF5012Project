@@ -1,55 +1,47 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package dbmgr;
-import domain.TaskExecution;
+import dbmgr.DBExceptions.*;
+import domain.*;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.ResultSet;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-/**
- *
- * @author Emanuel Oliveira W19029581
- * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
- * These methods utilize constructed SQL, preventing SQL injection.
- */
+import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
 import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Period;
+
+/**
+ *
+ * @author Emanuel Oliveira W19029581
+ */
 public final class DBAbstraction 
 {
     private final DBConnection db;
     private static DBAbstraction instance;
-    private String error;
     
     
     /** 
-     * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.
-     * These methods utilize constructed SQL, preventing SQL injection.
-     * If you retrieve an unexpected result, such as -1, call getError() or getError(true) to verify.
+     * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
+     * These methods utilize constructed SQL and prepared statements, preventing SQL injection.
      */
-    private DBAbstraction()
+    private DBAbstraction() throws FailedToConnectException
     {
         db = DBConnection.getInstance();
-        error = "";
-        createTables();
-        fillDB("password");
     }
     
-    public static DBAbstraction getInstance()
+    /**
+     * Get the singleton instance of this class.
+     * @return The singleton instance.
+     * @throws FailedToConnectException
+     */
+    public static DBAbstraction getInstance() throws FailedToConnectException
     {
         if(instance == null)
             instance = new DBAbstraction();
@@ -58,74 +50,68 @@ public final class DBAbstraction
     
     private String randomString() 
     {
-        int leftLimit = 97; // letter 'a'
-        int rightLimit = 122; // letter 'z'
         Random random = new Random();
-        int targetStringLength = random.nextInt(32);
+        int targetStringLength = 10+random.nextInt(32);
         StringBuilder buffer = new StringBuilder(targetStringLength);
         for (int i = 0; i < targetStringLength; i++) 
         {
-            int randomLimitedInt = leftLimit + (int) 
-              (random.nextFloat() * (rightLimit - leftLimit + 1));
-            buffer.append((char) randomLimitedInt);
+            int c = 97 + random.nextInt(26);
+            buffer.append((char) c);
         }
         return buffer.toString();
     }
     
-    private void fillDB(String hashedPassword)
+    public void fillDB(String hashedPassword)
     {
-        for(int i = 0; i < 6; i++)
-            createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
-        createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
-        createUser("admin", hashedPassword, AccountType.SYSADMIN.value);
-        //createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
-        for(int i = 0; i < 2; i++)
-            createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
-        for(int i = 0; i < 10; i++)
-        {
-            submitTask(new Task(0, randomString(), randomString()));
-        }
-        ArrayList<Task> taskList = getTaskList();
-        ArrayList<TaskExecution> texecList = new ArrayList();
-        taskList.forEach(t -> {
-            System.out.println(t.toString());
-            LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 28, 10, 30);
+        try {
+            for(int i = 0; i < 6; i++)
+                createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
+            createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
+            try
+            {
+                createUser("admin", hashedPassword, AccountType.SYSADMIN.value);
+            }
+            catch(UserAlreadyExistsException ex){ 
+                Logger.getLogger(DBAbstraction.class.getName()).log(Level.INFO, "User admin already exists");
+            }
+            createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
+            for(int i = 0; i < 2; i++)
+                createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
+            for(int i = 0; i < 1000; i++)
+            {
+                submitTask(new Task(0, randomString(), randomString()));
+            }
+            ArrayList<Task> taskList = getTaskList();
+            ArrayList<TaskExecution> texecList = new ArrayList();
+            LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
             LocalDateTime plusOneHour = startingPoint.plusHours(1);
-            texecList.add(new TaskExecution("", new Period(startingPoint, plusOneHour)));
-        });
-        submitTaskExecutions(texecList);
+            Period p = new Period(startingPoint, plusOneHour);
+            taskList.forEach(t -> {
+                System.out.println(t.toString());
+                texecList.add(new TaskExecution(t.name, p));
+            });
+            submitTaskExecutions(texecList);
+            ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
+            tlist.forEach(t -> {
+                t.getName();
+            });
+            ArrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
+            t2.forEach(t -> {System.out.println(t.toString());
+            });
+        } catch (UserAlreadyExistsException | EmptyResultSetException | EmptyInputException ex) {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     /**
-     * Retrieve the latest error without clearing the error variable.
-     * @return A string containing the error.
-     */
-    public String getError()
-    {
-        return error;
-    }
-    
-    /**
-     * Retrieve the latest error and optionally clear the error variable.
-     * @param clear Pass true as a parameter to clear the variable.
-     * @return A string containing the error.
-     */
-    public String getError(boolean clear)
-    {
-        String cpy = error;
-        if(clear)
-            error = "";
-        return cpy;
-    }
-    
-    /**
-     * Attempts to create a new user in the Database.
+     * Attempts to create a new user in the Database with 0 permissions.
      * If the user already exists, this function will return false.
      * @param username The username of the new user.
      * @param hashedPassword A password (encrypted)
      * @return True if succesful, false if not.
+     * @throws UserAlreadyExistsException
      */
-    public boolean createUser(String username, String hashedPassword)
+    public boolean createUser(String username, String hashedPassword) throws UserAlreadyExistsException
     {
        return createUser(username, hashedPassword, 0);
     }
@@ -134,13 +120,13 @@ public final class DBAbstraction
      * Attempts to create a new user in the Database.
      * If the user already exists, this function will return false.
      * @param user The user object with data.
-     * @param hashedPassword A password (encrypted)
-     * @return True if succesful, false if not.
+     * @param hashedPassword A password (encrypted).
+     * @return A boolean representing success.
+     * @throws UserAlreadyExistsException
      */
-    public boolean createUser(User user, String hashedPassword)
+    public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
     {
-       //return createUser(user.getUsername(), hashedPassword, user.getAccountType());
-        return false;
+       return createUser(user.getUsername(), hashedPassword, user.getAccountType().value);
     }
     
     /**
@@ -148,10 +134,11 @@ public final class DBAbstraction
      * If the user already exists, this function will return false.
      * @param username The username of the new user.
      * @param hashedPassword A password (encrypted).
-     * @param perms Permission flags expressed in bits for the new user. See User class for information on these.
-     * @return True if succesful, false if not.
+     * @param perms Permission flags expressed for the new user. See User class for information on these.
+     * @return A boolean representing success.
+     * @throws UserAlreadyExistsException
      */
-    public boolean createUser(String username, String hashedPassword, int perms)
+    public boolean createUser(String username, String hashedPassword, int perms) throws UserAlreadyExistsException
     {
         if(!doesUserExist(username))
         {
@@ -161,21 +148,18 @@ public final class DBAbstraction
                 db.add(username);
                 db.add(hashedPassword);
                 db.add(perms);
-                db.executePrepared();
+                return db.executePrepared();
             } 
             catch (SQLException ex) 
             {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                error = ex.getLocalizedMessage();
                 return false;
             }
         }
         else
         {
-            error = "Username already exists";
-            return false;
+            throw new UserAlreadyExistsException();
         }
-        return true;
     }
     
     /**
@@ -195,12 +179,21 @@ public final class DBAbstraction
         catch (SQLException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return true;
         }
     }
     
-    private void createTables()
+    /**
+     * Tests whether a user exists inside the database.
+     * @param user The user to test.
+     * @return Returns true if the user exists in the database, false if it doesn't.
+     */
+    public boolean doesUserExist(User user)
+    {
+        return doesUserExist(user.getUsername());
+    }
+    
+    public void createTables()
     {
         db.execute("""
                    CREATE TABLE IF NOT EXISTS tblUsers(
@@ -272,9 +265,10 @@ public final class DBAbstraction
     /**
      * Gets the password (encrpyted) for a key username from the database.
      * @param username The username whose password to retrieve.
-     * @return A string containing the password (encrypted), or NULL if the username does not exist.
+     * @return A string containing the password (encrypted).
+     * @throws UserDoesNotExistException
      */
-    public String getHashedPassword(String username)
+    public String getHashedPassword(String username) throws UserDoesNotExistException
     {
         try 
         {
@@ -285,47 +279,74 @@ public final class DBAbstraction
                 return res.getString(1);
             else
             {
-                error = "User does not exist";
-                return null;
+                throw new UserDoesNotExistException();
             }
         }
         catch (SQLException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return null;
         }
     }
     
+     /**
+     * Gets the password (encrpyted) for a user from the database.
+     * @param user The user whose password to retrieve.
+     * @return A string containing the password (encrypted).
+     * @throws UserDoesNotExistException
+     */
+    public String getHashedPassword(User user) throws UserDoesNotExistException
+    {
+        return getHashedPassword(user.getUsername());
+    }
+    
     /**
-     * Sets a new password (encrypted) for a username, disregarding whether it actually exists in the database or not.
+     * Sets a new password (encrypted) for a username.
      * @param username The username whose password (encrypted) to set.
      * @param hashedPassword The password (encrypted) to set.
-     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
+     * @return A boolean representing success.
+     * @throws UserDoesNotExistException
      */
-    public boolean setHashedPassword(String username, String hashedPassword)
+    public boolean setHashedPassword(String username, String hashedPassword) throws UserDoesNotExistException
     {
         try 
         {
-            db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
-            db.add(hashedPassword);
-            db.add(username);
-            return db.executePrepared();
+            if(doesUserExist(username))
+            {
+                db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
+                db.add(hashedPassword);
+                db.add(username);
+                return db.executePrepared();
+            }
+            else
+                throw new UserDoesNotExistException();
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return false;
         }
     }
     
     /**
+     * Sets a new password (encrypted) for a user.
+     * @param user The user whose password (encrypted) to set.
+     * @param hashedPassword The password (encrypted) to set.
+     * @return A boolean representing success.
+     * @throws UserDoesNotExistException
+     */
+    public boolean setHashedPassword(User user, String hashedPassword) throws UserDoesNotExistException
+    {
+        return setHashedPassword(user.getUsername(), hashedPassword);
+    }
+    
+    /**
      * Gets the permission flags as an integer for a key username from the database.
      * @param username The username whose permissions to retrieve.
-     * @return A positive integer representing the permission flags, -1 if an error occured or the user does not exist.
+     * @return A positive integer representing the permission flags.
+     * @throws UserDoesNotExistException
      */
-    public int getPermissions(String username)
+    public int getPermissions(String username) throws UserDoesNotExistException
     {
         try 
         {
@@ -336,24 +357,82 @@ public final class DBAbstraction
                 return res.getInt(1);
             else 
             {
-                error = "User does not exist";
-                return -1;
+                throw new UserDoesNotExistException();
             }
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return -1;
         }
     }
     
     /**
+     * Gets the permission flags for a user from the database and copies them to the user's permission field.
+     * @param user The user whose permissions to retrieve and populate.
+     * @return The new User object with the new permission set.
+     * @throws UserDoesNotExistException
+     */
+    public User getPermissions(User user) throws UserDoesNotExistException
+    {
+        int perms = getPermissions(user.getUsername());
+        // Can't edit a user's PM yet, so just return a new object for now
+        user = new User(user.getUsername(), PermissionManager.intToAccountType(perms));
+        return user;
+    }
+    
+    /**
+     * Gets all fields of a user from the database.<p>
+     * Populates a new User object and returns it.
+     * @param user The user whose data to retrieve.
+     * @return Returns the new user object.
+     * @throws UserDoesNotExistException 
+     */
+    public User getUser(User user) throws UserDoesNotExistException
+    {
+        return getUser(user.getUsername());
+    }
+    
+    /**
+     * Gets all fields of a username from the database.<p>
+     * Populates a new User object and returns it.
+     * @param username The username of whose data to retrieve.
+     * @return Returns the new user object.
+     * @throws UserDoesNotExistException 
+     */
+    public User getUser(String username) throws UserDoesNotExistException
+    {
+        try 
+        {
+            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE username = ?");
+            db.add(username);
+            ResultSet res =  db.executePreparedQuery();
+            User u;
+            if(!res.isClosed())
+            {
+                int perms = res.getInt(1);
+                AccountType at = PermissionManager.intToAccountType(perms);
+                u = new User(username, at);
+                return u;
+            }
+            else 
+            {
+                throw new UserDoesNotExistException();
+            }
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+    /*/**
      * Sets new permission flags for a username, disregarding whether it actually exists in the database or not.
      * @param username The username whose permissions to set.
      * @param perms The permission flags to set.
      * @return Always True, unless if an SQLException ocurred. If it did, returns False.
      */
+    /*
     public boolean setPermissions(String username, int perms)
     {
         try 
@@ -369,26 +448,63 @@ public final class DBAbstraction
             error = ex.getLocalizedMessage();
             return false;
         }
-    }
+    }*/
     
     
-    // Update all records for a specific user
-    public boolean updateUser(User user)
+    /**
+     * Update all fields for a user.
+     * @param user The user object with data to update the database with.
+     * @return A boolean representing success.
+     * @throws UserDoesNotExistException 
+     */
+    public boolean updateUser(User user) throws UserDoesNotExistException
     {
-        return false;
-    }
-    
-    
-    // Delete a user
-    public boolean deleteUser(User user)
-    {
-        return false;
+        try 
+        {
+            if(doesUserExist(user))
+            {
+                db.prepareStatement("UPDATE tblUsers SET perms = ? WHERE username = ?");
+                db.add(user.getAccountType().value);
+                db.add(user.getUsername());
+                return db.executePrepared();
+            }
+            else
+            {
+                throw new UserDoesNotExistException();
+            }
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
     }
     
     /**
-     * Adds a new task to the database. Allows for duplicates.
+     * Deletes a user from the database.
+     * @param user The user to delete.
+     * @return A boolean representing success.
+     */
+    public boolean deleteUser(User user)
+    {
+        try
+        {
+            db.prepareStatement("DELETE FROM tblUsers WHERE username = ?");
+            db.add(user.getUsername());
+            return db.executePrepared();
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    /**
+     * Adds a new task to the database. Allows for duplicates.<p>
+     * This method automatically sets the ID of Task, so that TaskExecutions can reference it.
      * @param task The task object containing all task-related information.
-     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
+     * @return A boolean representing success.
      */
     public boolean submitTask(Task task)
     {
@@ -397,20 +513,93 @@ public final class DBAbstraction
             db.prepareStatement("INSERT INTO tblTasks (task_name, task_desc) VALUES (?, ?)");
             db.add(task.name);
             db.add(task.desc);
-            return db.executePrepared();
+            // Need to save all the temporal rules here
+            if(db.executePrepared())
+            {
+                //task.id = getLastTaskID();
+                return true;
+            }
+            else return false;
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return false;
         }
     }
     
-    // Retrieve all non-priority tasks for today
-    public ArrayList<TaskExecution> getUnallocatedDailyTaskList()
+    // Retrieve the last inserted task's ID
+    private int getLastTaskID()
     {
-        return null;
+        try 
+        {
+            db.prepareStatement("SELECT type_id FROM tblTasks ORDER BY type_id DESC LIMIT 1;");
+            ResultSet res =  db.executePreparedQuery();
+            if(!res.isClosed())
+                return res.getInt(1);
+            else return -1;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return -1;
+        }
+    }
+    
+    // Convert from 2 Epoch seconds of type Long to a Period object
+    private Period periodFromEpoch(Long start, Long end)
+    {
+        LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
+        LocalDateTime dtEnd = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
+        return new Period(dtStart, dtEnd);
+    }
+
+
+    
+    // Unwrapper class that converts Period to Epoch seconds of type Long
+    private final class PeriodUnwrapper
+    {
+        Long start;
+        Long end;
+        PeriodUnwrapper(Period p)
+        {
+            start = p.start().toEpochSecond(ZoneOffset.UTC);
+            end = p.end().toEpochSecond(ZoneOffset.UTC);
+        }
+    }
+    
+    // Retrieve all non-priority tasks for a time period
+    public ArrayList<TaskExecution> getUnallocatedTaskList(Period p) throws EmptyResultSetException
+    {
+        PeriodUnwrapper pw = new PeriodUnwrapper(p);
+        try 
+        {
+            db.prepareStatement("SELECT task_type, start_datetime, end_datetime FROM tblTaskExecutions"
+                    + " WHERE caretaker IS NULL AND start_datetime <= ? AND end_datetime >= ?");
+            db.add(pw.start);
+            db.add(pw.end);
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<TaskExecution> tasks = new ArrayList();
+                do
+                {
+                    Period taskP = periodFromEpoch(res.getLong(2), res.getLong(3));
+                    tasks.add(new TaskExecution("", taskP));
+                }
+                while(res.next());
+                return tasks;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
     
     // Retrieve all tasks that were not completed before today
@@ -425,6 +614,7 @@ public final class DBAbstraction
         return null;
     }
     
+    // Internal Task class for testing Task methods
     public class Task
     {
         int id;
@@ -437,17 +627,16 @@ public final class DBAbstraction
         public String toString()
         {
             return "Task Object"
-                    + "{\n"+
-                   "  id: "+ Integer.toString(id)+
-                    "  name: " + name+ 
-                    "  desc:\n" + desc +
-                    "}";
+                    + "\n{"+
+                   " \n id: "+ Integer.toString(id)+
+                    "\n name: " + name+ 
+                    "\n desc: " + desc +
+                    "\n}";
         }
     }
     
-    
     // Retrieve all unique tasks and temporal rules
-    public ArrayList<Task> getTaskList()
+    public ArrayList<Task> getTaskList() throws EmptyResultSetException
     {
         try 
         {
@@ -465,33 +654,30 @@ public final class DBAbstraction
             }
             else
             {
-                error = "No tasks were retrieved";
-                return null;
+                throw new EmptyResultSetException();
             }
         }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return null;
         }
     }
     
-    
     // Insert all new taskexecutions in one go
-    public boolean submitTaskExecutions(List<TaskExecution> tasks)
+    public boolean submitTaskExecutions(List<TaskExecution> tasks) throws EmptyInputException
     {
         try 
         {
+            if(tasks.isEmpty())
+                throw new EmptyInputException();
             db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
-            for(TaskExecution t: tasks)
+            for(TaskExecution task: tasks)
             {
                 db.add(0); // REPLACE WITH ACTUAL TASK POINTER
-                Period p = t.getPeriod();
-                long start = p.start().toEpochSecond(ZoneOffset.UTC);
-                long end = p.end().toEpochSecond(ZoneOffset.UTC);
-                db.add(start);
-                db.add(end);
+                PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
+                db.add(pw.start);
+                db.add(pw.end);
                 db.batch();
             }
             return db.executeBatch();
@@ -499,7 +685,6 @@ public final class DBAbstraction
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return false;
         }
     }
@@ -511,29 +696,38 @@ public final class DBAbstraction
         {
             db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
             db.add(0); // REPLACE WITH ACTUAL TASK POINTER
-            Period p = task.getPeriod();
-            long start = p.start().toEpochSecond(ZoneOffset.UTC);
-            long end = p.end().toEpochSecond(ZoneOffset.UTC);
-            db.add(start);
-            db.add(end);
+            PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
+            db.add(pw.start);
+            db.add(pw.end);
             return db.executePrepared();
         }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return false;
         }
     }
     
+    public boolean submitVerificationExecution(VerificationExecution ver)
+    {
+        return false;
+    }
+    
+    public boolean submitVerificationExecutions(List<VerificationExecution> vers) throws EmptyInputException
+    {
+        if(vers.isEmpty())
+            throw new EmptyInputException();
+        return false;
+    }
+    
     // Retrieve today's task list for a given user
     // Untested
-    public ArrayList<TaskExecution> getUserDailyTaskList(String username)
+    public ArrayList<TaskExecution> getUserDailyTaskList(String username) throws EmptyResultSetException
     {
         try 
         {
             db.prepareStatement("SELECT task_name, start_datetime, end_datetime FROM tblTaskExecutions "
-                    + "WHERE username = ? AND start_datetime = date('now', 'start of day'"
+                    + "WHERE username = ? AND start_datetime = date('now', 'start of day')"
                     + "+ \"JOIN tblTasks ON tblTasks.type_id = tblTaskExecutions.task_type\")");
             db.add(username);
             ResultSet res = db.executePreparedQuery();
@@ -542,23 +736,19 @@ public final class DBAbstraction
                 ArrayList<TaskExecution> tasks = new ArrayList();
                 do
                 {
-                    LocalDateTime start = LocalDateTime.ofEpochSecond(res.getLong(2), 0, ZoneOffset.UTC);
-                    LocalDateTime end = LocalDateTime.ofEpochSecond(res.getLong(3), 0, ZoneOffset.UTC);
-                    tasks.add(new TaskExecution(res.getString(1), new Period(start, end)));
+                    tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
                 }
                 while(res.next());
                 return tasks;
             }
             else 
             {
-                error = "No tasks are available";
-                return null;
+                throw new EmptyResultSetException();
             }
         }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
             return null;
         }
     }
