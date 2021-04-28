@@ -78,7 +78,7 @@ public class PermissionManager {
 	 * @param integer (permission value)
 	 * @return Enum PermissionManager.AccountType
 	 */
-	public AccountType intToAccountType(int x) {
+	public static AccountType intToAccountType(int x) {
 		ArrayList<AccountType> AccountTypesAsArrayList = (ArrayList<AccountType>) Arrays.asList(AccountType.values());
 		return AccountTypesAsArrayList.get(x);
 	}
