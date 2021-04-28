@@ -110,27 +110,23 @@ public class LoginForm extends JFrame {
 		btn_login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String username = txt_username.getText();
-				String password = new String( txt_password.getPassword() );
+				String password = new String(txt_password.getPassword());
 				
-				String tempPassword = "test";
-				String tempUsername = "test";
-				
-				//db.doesUserExist(username)
-				if(!username.equals(tempUsername)) {
-					lbl_loginmessage.setText("Username or Password Invalid");
-					return;
-				}
-				
-				if(password.equals(tempPassword)) {
-					System.out.println("Login Successful");
+				if(db.doesUserExist(username)) {
 					try {
-						User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
-						MainWindow MainWindow = new MainWindow(authorisedUser);
-						MainWindow.setVisible(true);
-						dispose();
-					}catch(Exception ex) {
-						new ExceptionDialog("An Error Occured", ex);
+						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
+							User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
+							MainWindow MainWindow = new MainWindow(authorisedUser);
+							MainWindow.setVisible(true);
+							dispose();
+						}else {
+							new ErrorDialog("Incorrect username or password");
+						}
+					} catch (Exception ex) {
+						new ErrorDialog("Error with username/password function");
 					}
+				}else {
+					new ErrorDialog("Incorrect username or password");
 				}
 			}
 		});

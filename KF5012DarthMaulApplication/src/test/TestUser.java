@@ -26,8 +26,6 @@ class TestUser {
 	}
 	/**
 	 * Testing Bitwise Permission Assignment
-	 * 
-	 * 
 	 * Order:
 	 * 	CREATE_USER,
 	 *	CHANGE_USER_PASSWORD,
@@ -98,7 +96,4 @@ class TestUser {
 			fail("User Generation failed: " + ex.getMessage());
 		}
 	}
-	
-	
-
 }

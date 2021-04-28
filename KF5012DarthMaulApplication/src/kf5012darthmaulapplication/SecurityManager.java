@@ -4,17 +4,16 @@ import org.bouncycastle.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.security.*;
+import java.util.Random;
+
 import org.bouncycastle.*;
 import org.bouncycastle.jce.provider.*;
 
 public class SecurityManager {
 	private static final int ITERATION_COUNT = 10000;
-	
-	public SecurityManager(){
-	}
-	public void GUISecurityErrorDialog(String message) {
-		 new ErrorDialog("An Error Occured", new Error("Security Failure: " + message));
-	}
+	/*
+	 * 	Makes sure that the Security of the application is set correctly
+	 */
 	public void testSecurity() {
 		int maxKeySize;
 		try {
@@ -29,12 +28,22 @@ public class SecurityManager {
 			System.exit(0);
 		}
 	}
+	/**
+	 * Generates a random 16 byte salt for use in password generation
+	 * @return byte[] salt
+	 * @throws Exception
+	 */
 	private static byte[] getSalt() throws Exception{
 		SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
 		byte[] salt = new byte[16];
 		sr.nextBytes(salt);
 		return salt;
 	}
+	/**
+	 * Helper function for converting bytes into a hex string
+	 * @param bytes
+	 * @return string
+	 */
 	private static String toHex(byte[] bytes){
 		StringBuilder sb = new StringBuilder (bytes.length * 2);
 		for(byte b : bytes) {
@@ -42,6 +51,11 @@ public class SecurityManager {
 		}
 		return sb.toString();
 	}
+	/**
+	 * 
+	 * @param string hex
+	 * @return byte[] bytes
+	 */
 	private static byte[] fromHex(String hex){
 		byte[] bytes = new byte[hex.length() / 2];
         for(int i = 0; i<bytes.length ;i++) {
@@ -59,6 +73,33 @@ public class SecurityManager {
 		byte[] hash = keyFac.generateSecret(spec).getEncoded();
 		
 		return iterations + ":" + toHex(salt) + ":" + toHex(hash);
+	}
+	public static String generateRandomPasswordString() {
+		SecureRandom sr = new SecureRandom();
+		int passLength = 16;		
+
+		int leftLimit = 33;
+		int rightLimit = 122;
+		
+		StringBuilder symbols = new StringBuilder(rightLimit - leftLimit);
+		for(int i = leftLimit; i <= rightLimit; i++) {
+			symbols.append((char)i);
+		}
+	    while(true) {
+	        char[] generatedString = new char[passLength];
+	        boolean hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
+	        for(int i=0; i<generatedString.length; i++) {
+	            char character = symbols.toString().charAt(sr.nextInt(symbols.length()));
+	            if(Character.isUpperCase(character)) hasUpper = true;
+	            else if(Character.isLowerCase(character)) hasLower = true;
+	            else if(Character.isDigit(character)) hasDigit = true;
+	            else hasSpecial = true;
+	            generatedString[i] = character;
+	        }
+	        if(hasUpper && hasLower && hasDigit && hasSpecial) {
+	            return new String(generatedString);
+	        }
+	    }
 	}
 	public static boolean validatePassword(String password, String storedPassword) throws Exception {
 		String[] passwordSegments = storedPassword.split(":");
