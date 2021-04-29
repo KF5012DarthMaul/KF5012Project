@@ -26,7 +26,10 @@ import java.awt.event.ActionEvent;
 public class LoginForm extends JFrame {
 	DBAbstraction db;
 	
+<<<<<<< HEAD
 <<<<<<< Updated upstream
+=======
+>>>>>>> GUI-implementation
 	private JPanel contentPane;
 
 	private JPanel contentPane;
