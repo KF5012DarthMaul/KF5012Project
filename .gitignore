@@ -4,6 +4,11 @@
 /.classpath
 /.project
 /.metadata
+/.idea
+/.idea/
+/out
+/out/
 KF5012DarthMaulApplication/.metadata/
 
 *.log
+*.iml
