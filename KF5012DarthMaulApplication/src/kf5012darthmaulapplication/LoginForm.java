@@ -8,7 +8,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import dbmgr.*;
+import dbmgr.DBAbstraction;
+import dbmgr.DBMgr;
+
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import java.awt.FlowLayout;
@@ -17,12 +19,22 @@ import javax.swing.Box;
 import javax.swing.JPasswordField;
 import java.awt.Component;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.event.ActionEvent;
 
 public class LoginForm extends JFrame {
+	DBAbstraction db;
+	
+<<<<<<< Updated upstream
+	private JPanel contentPane;
 
 	private JPanel contentPane;
 	DBAbstraction db;
+=======
+	private JPanel contentPane;
+
+>>>>>>> Stashed changes
 	
 	private JPasswordField txt_password;
 	private JTextField txt_username;
@@ -49,8 +61,8 @@ public class LoginForm extends JFrame {
 	public LoginForm() {
 		try {
 			db = DBAbstraction.getInstance();
-		} catch (DBExceptions.FailedToConnectException e) {
-			e.printStackTrace();
+		}catch(Exception ex) {
+            Logger.getLogger(DBMgr.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		setType(Type.UTILITY);
 		setTitle("Login");
@@ -118,6 +130,7 @@ public class LoginForm extends JFrame {
 				String password = new String(txt_password.getPassword());
 				
 				if(db.doesUserExist(username)) {
+					System.out.println("Username Exists");
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
 							User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
@@ -125,12 +138,15 @@ public class LoginForm extends JFrame {
 							MainWindow.setVisible(true);
 							dispose();
 						}else {
+							System.out.println("Password Fail");
+
 							new ErrorDialog("Incorrect username or password");
 						}
 					} catch (Exception ex) {
 						new ErrorDialog("Error with username/password function");
 					}
 				}else {
+					System.out.println("Username does not exist");
 					new ErrorDialog("Incorrect username or password");
 				}
 			}

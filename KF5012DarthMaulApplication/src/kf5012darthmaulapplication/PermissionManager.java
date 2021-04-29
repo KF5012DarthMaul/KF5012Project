@@ -13,7 +13,7 @@ public class PermissionManager {
 	public PermissionManager() {}
 	
 	public enum AccountType {
-		SYSADMIN(0b000111),
+		SYSADMIN(0b110111),
 		HR_PERSONNEL(0b000001),
 		MANAGER(0b011100),
 		CARETAKER(0b011000),
