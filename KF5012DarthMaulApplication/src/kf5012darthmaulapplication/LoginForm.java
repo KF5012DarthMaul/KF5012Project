@@ -24,20 +24,9 @@ import java.util.logging.Logger;
 import java.awt.event.ActionEvent;
 
 public class LoginForm extends JFrame {
-	DBAbstraction db;
-	
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
->>>>>>> GUI-implementation
-	private JPanel contentPane;
 
 	private JPanel contentPane;
 	DBAbstraction db;
-=======
-	private JPanel contentPane;
-
->>>>>>> Stashed changes
 	
 	private JPasswordField txt_password;
 	private JTextField txt_username;

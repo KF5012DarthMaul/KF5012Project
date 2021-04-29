@@ -47,9 +47,9 @@ public class PermissionManager {
 	/**
 	 * Returns True|False based on a PermissionManager.Permission and PermissionManager.AccountType
 	 * 
-	 * @param accountType
+	 * @param accountType 
 	 * @param permission
-	 * @return
+	 * @return boolean
 	 */
 	public boolean hasPermission(AccountType accountType, Permission permission) {
 		int bitmask = (int) Math.pow(2, permission.ordinal());
