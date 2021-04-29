@@ -130,15 +130,12 @@ public class LoginForm extends JFrame {
 							MainWindow.setVisible(true);
 							dispose();
 						}else {
-							System.out.println("Password Fail");
-
 							new ErrorDialog("Incorrect username or password");
 						}
 					} catch (Exception ex) {
 						new ErrorDialog("Error with username/password function");
 					}
 				}else {
-					System.out.println("Username does not exist");
 					new ErrorDialog("Incorrect username or password");
 				}
 			}
