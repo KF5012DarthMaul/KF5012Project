@@ -22,7 +22,7 @@ import java.awt.event.ActionEvent;
 public class LoginForm extends JFrame {
 
 	private JPanel contentPane;
-	DBAbstraction db = new DBAbstraction();
+	DBAbstraction db;
 	
 	private JPasswordField txt_password;
 	private JTextField txt_username;
@@ -47,6 +47,11 @@ public class LoginForm extends JFrame {
 	 * Create the frame.
 	 */
 	public LoginForm() {
+		try {
+			db = DBAbstraction.getInstance();
+		} catch (DBExceptions.FailedToConnectException e) {
+			e.printStackTrace();
+		}
 		setType(Type.UTILITY);
 		setTitle("Login");
 		setResizable(false);
