@@ -126,7 +126,6 @@ public class LoginForm extends JFrame {
 				String password = new String(txt_password.getPassword());
 				
 				if(db.doesUserExist(username)) {
-					System.out.println("Username Exists");
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
 							User authorisedUser = new User(username, PermissionManager.intToAccountType(db.getPermissions(username)));
