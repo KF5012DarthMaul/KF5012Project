@@ -86,6 +86,8 @@ class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.CREATE_USER);
 		expectedPermissions.add(PermissionManager.Permission.CHANGE_USER_PASSWORD);
 		expectedPermissions.add(PermissionManager.Permission.ASSIGN_TASK);
+		expectedPermissions.add(PermissionManager.Permission.SWAP_TASK);
+		expectedPermissions.add(PermissionManager.Permission.GIVE_TASKS);
 
 		try {
 			User user = new User("test", PermissionManager.AccountType.SYSADMIN);

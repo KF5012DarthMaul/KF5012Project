@@ -13,7 +13,7 @@ public class PermissionManager {
 	public PermissionManager() {}
 	
 	public enum AccountType {
-		SYSADMIN(0b000111),
+		SYSADMIN(0b101111),
 		HR_PERSONNEL(0b000001),
 		MANAGER(0b011100),
 		CARETAKER(0b011000),
@@ -49,7 +49,7 @@ public class PermissionManager {
 	 * 
 	 * @param accountType
 	 * @param permission
-	 * @return
+	 * @return boolean
 	 */
 	public boolean hasPermission(AccountType accountType, Permission permission) {
 		int bitmask = (int) Math.pow(2, permission.ordinal());
@@ -75,7 +75,7 @@ public class PermissionManager {
 	/**
 	 * Takes an Integer and returns an AccountType Enum Value
 	 * 
-	 * @param integer (permission value)
+	 * @param Integer permission value
 	 * @return Enum PermissionManager.AccountType
 	 */
 	public static AccountType intToAccountType(int x) {

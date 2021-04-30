@@ -8,7 +8,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import dbmgr.*;
+import dbmgr.DBAbstraction;
+import dbmgr.DBMgr;
+
 import javax.swing.JButton;
 import javax.swing.JTextField;
 import java.awt.FlowLayout;
@@ -17,12 +19,14 @@ import javax.swing.Box;
 import javax.swing.JPasswordField;
 import java.awt.Component;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.event.ActionEvent;
 
 public class LoginForm extends JFrame {
 
 	private JPanel contentPane;
-	DBAbstraction db = new DBAbstraction();
+	DBAbstraction db;
 	
 	private JPasswordField txt_password;
 	private JTextField txt_username;
@@ -47,6 +51,11 @@ public class LoginForm extends JFrame {
 	 * Create the frame.
 	 */
 	public LoginForm() {
+		try {
+			db = DBAbstraction.getInstance();
+		}catch(Exception ex) {
+            Logger.getLogger(DBMgr.class.getName()).log(Level.SEVERE, null, ex);
+		}
 		setType(Type.UTILITY);
 		setTitle("Login");
 		setResizable(false);
@@ -113,6 +122,7 @@ public class LoginForm extends JFrame {
 				String password = new String(txt_password.getPassword());
 				
 				if(db.doesUserExist(username)) {
+					System.out.println("Username Exists");
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
 							User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
