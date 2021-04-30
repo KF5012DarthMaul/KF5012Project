@@ -1,4 +1,4 @@
-package kf5012darthmaulapplication;
+package guicomponents;
 
 import java.awt.BorderLayout;
 
@@ -10,6 +10,10 @@ import javax.swing.border.EmptyBorder;
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBMgr;
+import kf5012darthmaulapplication.ErrorDialog;
+import kf5012darthmaulapplication.PermissionManager;
+import kf5012darthmaulapplication.SecurityManager;
+import kf5012darthmaulapplication.User;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -125,7 +129,7 @@ public class LoginForm extends JFrame {
 					System.out.println("Username Exists");
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
-							User authorisedUser = new User(username, PermissionManager.AccountType.SYSADMIN);
+							User authorisedUser = new User(username, PermissionManager.intToAccountType(db.getPermissions(username)));
 							MainWindow MainWindow = new MainWindow(authorisedUser);
 							MainWindow.setVisible(true);
 							dispose();
@@ -134,6 +138,7 @@ public class LoginForm extends JFrame {
 						}
 					} catch (Exception ex) {
 						new ErrorDialog("Error with username/password function");
+						ex.printStackTrace();
 					}
 				}else {
 					new ErrorDialog("Incorrect username or password");

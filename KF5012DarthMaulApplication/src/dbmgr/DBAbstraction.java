@@ -67,13 +67,6 @@ public final class DBAbstraction
             for(int i = 0; i < 6; i++)
                 createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
             createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
-            try
-            {
-                createUser("admin", hashedPassword, AccountType.SYSADMIN.value);
-            }
-            catch(UserAlreadyExistsException ex){ 
-                Logger.getLogger(DBAbstraction.class.getName()).log(Level.INFO, "User admin already exists");
-            }
             createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
             for(int i = 0; i < 2; i++)
                 createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
