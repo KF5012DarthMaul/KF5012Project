@@ -4,6 +4,7 @@ import java.security.Security;
 import org.bouncycastle.jce.provider.*;
 
 import dbmgr.DBAbstraction;
+import guicomponents.LoginForm;
 
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
@@ -13,13 +14,16 @@ public class KF5012DarthMaulApplication {
 			DBAbstraction db;
 			db = DBAbstraction.getInstance();
 			if(!db.doesUserExist("test")) {
-				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.SYSADMIN.value);
+				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.value);
+				System.out.println("TEST: User created fresh");
+			}else {
+				db.deleteUser(new User("test", PermissionManager.AccountType.HR_PERSONNEL));
+				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.value);
+				System.out.println("TEST: User deleted then created again");
 
-			}			
+			}
 			Security.addProvider(new BouncyCastleProvider());
 			Security.setProperty("crypto.policy", "unlimited");
-			
-			SecurityManager sm = new SecurityManager();
 			
 			LoginForm LoginForm = new LoginForm();
 			LoginForm.setVisible(true);

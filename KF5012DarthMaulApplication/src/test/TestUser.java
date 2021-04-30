@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import kf5012darthmaulapplication.*;
+import kf5012darthmaulapplication.PermissionManager.AccountType;
 
 import java.util.ArrayList;
+import java.util.Random;
 class TestUser {
 
 	@Test
@@ -14,6 +16,7 @@ class TestUser {
 		User user = new User(username,PermissionManager.AccountType.CARETAKER);
 		assertEquals(user.getUsername(),username);
 	}
+	
 	@Test
 	void testAccountTypeMatches() {
 		PermissionManager.AccountType[] accounts = PermissionManager.AccountType.values();
@@ -21,24 +24,14 @@ class TestUser {
 		User user = new User("test", accountType);
 		assertEquals(user.getAccountType(), accountType);
 	}
-	void testAccountTypeValues() {
-		
-	}
-	/**
-	 * Testing Bitwise Permission Assignment
-	 * Order:
-	 * 	CREATE_USER,
-	 *	CHANGE_USER_PASSWORD,
-	 *	ASSIGN_TASK,
-	 *	SWAP_TASK,
-	 *  GET_TASK;
-	 * 
-	 */
+
+	
 	@Test
 	void testCARETAKEPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
-		expectedPermissions.add(PermissionManager.Permission.SWAP_TASK);
-		expectedPermissions.add(PermissionManager.Permission.GET_TASK);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_ALLOCATION);
 		try {
 			User user = new User("test", PermissionManager.AccountType.CARETAKER);
 			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
@@ -52,9 +45,9 @@ class TestUser {
 	@Test
 	void testMANAGERPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
-		expectedPermissions.add(PermissionManager.Permission.ASSIGN_TASK);
-		expectedPermissions.add(PermissionManager.Permission.SWAP_TASK);
-		expectedPermissions.add(PermissionManager.Permission.GET_TASK);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
+		expectedPermissions.add(PermissionManager.Permission.VIEW_REPORTS);
 
 		try {
 			User user = new User("test", PermissionManager.AccountType.MANAGER);
@@ -69,7 +62,8 @@ class TestUser {
 	@Test
 	void testHRPERSONNELPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
-		expectedPermissions.add(PermissionManager.Permission.CREATE_USER);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_USERS);
+		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
 		try {
 			User user = new User("test", PermissionManager.AccountType.HR_PERSONNEL);
 			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
@@ -81,21 +75,19 @@ class TestUser {
 	}
 	
 	@Test
-	void testSYSADMINPermissionAssignment() {
-		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
-		expectedPermissions.add(PermissionManager.Permission.CREATE_USER);
-		expectedPermissions.add(PermissionManager.Permission.CHANGE_USER_PASSWORD);
-		expectedPermissions.add(PermissionManager.Permission.ASSIGN_TASK);
-		expectedPermissions.add(PermissionManager.Permission.SWAP_TASK);
-		expectedPermissions.add(PermissionManager.Permission.GIVE_TASKS);
-
-		try {
-			User user = new User("test", PermissionManager.AccountType.SYSADMIN);
-			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
-			
-			assertEquals(expectedPermissions,actualPermissions);
-		}catch(Exception ex) {
-			fail("User Generation failed: " + ex.getMessage());
-		}
+	void testUserPermissionCheck() {
+		User user = new User("test",AccountType.ESTATE);
+		assertTrue(user.pm.hasPermission(PermissionManager.Permission.MANAGE_TASKS));
+	}
+	
+	@Test
+	void testIntToAccountType() {
+		Random rand = new Random();
+		
+		int x = rand.nextInt(PermissionManager.AccountType.values().length);
+		AccountType expectedAccount = PermissionManager.AccountType.values()[x];
+		AccountType actualAccount = PermissionManager.intToAccountType(x);
+		
+		assertEquals(expectedAccount, actualAccount);
 	}
 }

@@ -13,11 +13,10 @@ public class PermissionManager {
 	public PermissionManager() {}
 	
 	public enum AccountType {
-		SYSADMIN(0b101111),
-		HR_PERSONNEL(0b000001),
-		MANAGER(0b011100),
-		CARETAKER(0b011000),
-		ESTATE(0b100000);
+		HR_PERSONNEL(0b00011),
+		MANAGER(0b10110),
+		CARETAKER(0b01110),
+		ESTATE(0b00110);
 		
 		public final int value;
 		private AccountType(int value) {
@@ -25,12 +24,11 @@ public class PermissionManager {
 		}
 	}
 	public enum Permission {
-		CREATE_USER,
-		CHANGE_USER_PASSWORD,
-		ASSIGN_TASK,
-		SWAP_TASK,
-		GET_TASK,
-		GIVE_TASKS;
+		MANAGE_USERS,
+		MANAGE_ACCOUNT,
+		MANAGE_TASKS,
+		MANAGE_ALLOCATION,
+		VIEW_REPORTS;
 		
 		private final int bitmask;
 		private Permission() {
@@ -57,6 +55,19 @@ public class PermissionManager {
 		return flag;
 	}
 	/**
+	 * 
+	 * @param accountType
+	 * @param permission
+	 * @return
+	 */
+	public boolean hasPermission(Permission permission) {
+			boolean flag = false;
+			for(Permission p : this.Permissions) {
+				if(p.equals(permission)) flag = true;
+			}
+			return flag;
+	}
+	/**
 	 * Generates an ArrayList of all the permissions a PermissionManager.AccountType can have. takes a PermissionManager.AccountType as an input
 	 *
 	 * @param Permission.AccountType
@@ -79,7 +90,6 @@ public class PermissionManager {
 	 * @return Enum PermissionManager.AccountType
 	 */
 	public static AccountType intToAccountType(int x) {
-		ArrayList<AccountType> AccountTypesAsArrayList = (ArrayList<AccountType>) Arrays.asList(AccountType.values());
-		return AccountTypesAsArrayList.get(x);
+		return AccountType.values()[x];
 	}
 }
