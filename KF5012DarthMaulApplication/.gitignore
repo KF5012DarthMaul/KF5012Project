@@ -3,5 +3,6 @@
 /.project
 /.classpath
 /build/
-/nbproject/
+/nbproject/private/
+/nbproject/*.properties
 /manifest.mf
