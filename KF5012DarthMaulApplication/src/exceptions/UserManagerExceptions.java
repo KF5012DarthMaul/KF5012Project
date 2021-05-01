@@ -34,10 +34,10 @@ public class UserManagerExceptions {
     		super(message);
     	}
     }
-    public static class UserAlreadyExists extends Exception {
-    	public UserAlreadyExists() {
+    public static class UserDoesNotExist extends Exception {
+    	public UserDoesNotExist() {
     	}
-    	public UserAlreadyExists(String message) {
+    	public UserDoesNotExist(String message) {
     		super(message);
     	}
     }

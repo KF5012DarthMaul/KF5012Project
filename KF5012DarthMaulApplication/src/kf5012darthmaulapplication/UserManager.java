@@ -2,11 +2,12 @@ package kf5012darthmaulapplication;
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
+import dbmgr.DBExceptions.UserAlreadyExistsException;
 import dbmgr.DBExceptions.UserDoesNotExistException;
 
 import exceptions.UserManagerExceptions;
-import exceptions.UserManagerExceptions.UserAlreadyExists;
 import exceptions.UserManagerExceptions.UserAuthenticationFailed;
+import exceptions.UserManagerExceptions.UserDoesNotExist;
 
 public class UserManager {
 	static DBAbstraction db;
@@ -39,13 +40,12 @@ public class UserManager {
 	 * @param newUser
 	 * @throws UserAuthenticationFailed
 	 * @throws UserAlreadyExists 
+	 * @throws UserAlreadyExistsException 
 	 */
 	
-	public static void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists {
+	public static void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
 		if(verifyAuthorisedUser(authorisedUser)) {
-			if(db.doesUserExist(newUser)) throw new UserManagerExceptions.UserAlreadyExists();
-			else {
-			}
+			if(!db.createUser(newUser, hashedPassword)) throw new UserAlreadyExistsException();
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();
 		}
@@ -58,8 +58,9 @@ public class UserManager {
 	 * @param newAccountValue
 	 * @throws UserAuthenticationFailed
 	 * @throws UserAlreadyExists 
+	 * @throws UserAlreadyExistsException 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists {
+	public static void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
 		addUser(authorisedUser, new User(newUserName, PermissionManager.intToAccountType(newAccountValue)), hashedPassword);
 	}
 	/**
@@ -70,8 +71,9 @@ public class UserManager {
 	 * @param newUserAccountType
 	 * @throws UserAuthenticationFailed
 	 * @throws UserAlreadyExists 
+	 * @throws UserAlreadyExistsException 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists{
+	public static void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException{
 		addUser(authorisedUser, new User(newUserName, newUserAccountType), hashedPassword);
 	}
 	/**
@@ -79,23 +81,23 @@ public class UserManager {
 	 * @param authorisedUser
 	 * @param user
 	 * @throws UserAuthenticationFailed
+	 * @throws UserDoesNotExist 
 	 */
-	public static void removeUser(User authorisedUser,User user) throws UserAuthenticationFailed {
+	public static void removeUser(User authorisedUser,User user) throws UserAuthenticationFailed, UserDoesNotExist {
 		if(verifyAuthorisedUser(authorisedUser)) {
-			
+			if(!db.deleteUser(user)) throw new UserManagerExceptions.UserDoesNotExist();
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();
-		}
-
-		
+		}	
 	}
 	/**
 	 * Removes a user from the user table
 	 * @param authorisedUser
 	 * @param name
 	 * @throws UserAuthenticationFailed
+	 * @throws UserDoesNotExist 
 	 */
-	public static void removeUser(User authorisedUser,String name) throws UserAuthenticationFailed {
+	public static void removeUser(User authorisedUser,String name) throws UserAuthenticationFailed, UserDoesNotExist {
 		try {
 			removeUser(authorisedUser, db.getUser(name));
 		} catch (UserDoesNotExistException e) {
@@ -120,7 +122,5 @@ public class UserManager {
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();
 		}
-
-		
 	}
 }

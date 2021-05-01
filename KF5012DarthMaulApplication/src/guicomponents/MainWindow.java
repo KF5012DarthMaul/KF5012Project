@@ -35,7 +35,7 @@ public class MainWindow extends JFrame {
 	 * Create the frame.
 	 */
 	public MainWindow(User user) {
-		boolean inTesting = true;
+		boolean inTesting = false;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -47,7 +47,7 @@ public class MainWindow extends JFrame {
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
 		
 		if(inTesting || user.pm.hasPermission(PermissionManager.Permission.MANAGE_ACCOUNT)) {
-			tabbedPane.addTab("My Account", null, new ManageAccount() , null);
+			tabbedPane.addTab("My Account", null, new ManageAccount(user) , null);
 		}
 		
 		if(inTesting || user.pm.hasPermission(PermissionManager.Permission.MANAGE_ALLOCATION )) {

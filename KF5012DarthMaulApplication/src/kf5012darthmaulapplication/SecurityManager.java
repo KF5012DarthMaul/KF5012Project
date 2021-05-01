@@ -4,6 +4,7 @@ import org.bouncycastle.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Random;
 
 import org.bouncycastle.*;
@@ -102,16 +103,26 @@ public class SecurityManager {
 	        }
 	    }
 	}
-	public static boolean validatePassword(String password, String storedPassword) throws Exception {
+	public static boolean validatePassword(String password, String storedPassword) {
 		String[] passwordSegments = storedPassword.split(":");
 		int iterations = Integer.parseInt(passwordSegments[0]);
 		byte[] salt = fromHex(passwordSegments[1]);
 		byte[] hash = fromHex(passwordSegments[2]);
 		
 		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, hash.length * 8);
-		SecretKeyFactory keyFac =  SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+		SecretKeyFactory keyFac = null;
+		try {
+			keyFac = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+		} catch (NoSuchAlgorithmException e1) {
+			e1.printStackTrace();
+		}
 		
-		byte[] testHash = keyFac.generateSecret(spec).getEncoded();
+		byte[] testHash = null;
+		try {
+			testHash = keyFac.generateSecret(spec).getEncoded();
+		} catch (InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
 		int diff = hash.length ^ testHash.length;
 		for(int i = 0; i < hash.length && i < testHash.length; i++) {
 			diff |= hash[i] ^ testHash[i];
