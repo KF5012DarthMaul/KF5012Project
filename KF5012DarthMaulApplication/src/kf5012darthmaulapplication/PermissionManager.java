@@ -49,7 +49,7 @@ public class PermissionManager {
 	 * @param permission
 	 * @return boolean
 	 */
-	public boolean hasPermission(AccountType accountType, Permission permission) {
+	public static boolean hasPermission(AccountType accountType, Permission permission) {
 		int bitmask = (int) Math.pow(2, permission.ordinal());
 		boolean flag = (bitmask & accountType.value) == bitmask;
 		return flag;
@@ -91,5 +91,13 @@ public class PermissionManager {
 	 */
 	public static AccountType intToAccountType(int x) {
 		return AccountType.values()[x];
+	}
+	/**
+	 * Convers an AccountType to integer value
+	 * @param type
+	 * @return int
+	 */
+	public static int accountTypetoInt(AccountType type) {
+		return type.value;
 	}
 }

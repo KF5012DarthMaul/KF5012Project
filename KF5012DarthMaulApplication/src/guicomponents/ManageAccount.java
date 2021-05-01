@@ -9,9 +9,12 @@ import javax.swing.JTabbedPane;
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
 import dbmgr.DBExceptions.UserDoesNotExistException;
+import exceptions.UserManagerExceptions.UserAuthenticationFailed;
 import kf5012darthmaulapplication.ErrorDialog;
+import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.SecurityManager;
 import kf5012darthmaulapplication.User;
+import kf5012darthmaulapplication.UserManager;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -23,12 +26,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import javax.swing.JCheckBox;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
 public class ManageAccount extends JPanel {
 	private JPasswordField passfield_old;
 	private JPasswordField passfield_new;
 	private JPasswordField passfield_newConfirm;
 	DBAbstraction db;
+	UserManager UserManager = new UserManager();
 
 	/**
 	 * Create the panel.
@@ -78,22 +85,99 @@ public class ManageAccount extends JPanel {
 					try {
 						if(SecurityManager.validatePassword(new String(passfield_old.getPassword()), db.getHashedPassword(user))) {
 							//Old password verified
+							if(new String(passfield_new.getPassword()).equals(new String(passfield_newConfirm.getPassword()))) {
+								//Password field and Confirmation field match
+								SecurityManager.generatePassword(new String(passfield_new.getPassword()));
+								try {
+									if(passwordStrengthValidator(passfield_new.getPassword())) {
+										if(UserManager.editUserPassword(user, user, SecurityManager.generatePassword(new String(passfield_new.getPassword())))) {
+											//If the password was edited
+											JOptionPane.showConfirmDialog(null, "Password successfully updated","Password updated", JOptionPane.DEFAULT_OPTION);
+										}else {
+											new ExceptionDialog("Failed to update password, try again later.");
+											clearFields();
+										}
+									}
+								} catch (UserAuthenticationFailed ex ) {
+									new ErrorDialog("You are not authorised to edit this password");
+									clearFields();
+								}
+							}else {
+								JOptionPane.showConfirmDialog(null, "Password did not match","Password update failed", JOptionPane.DEFAULT_OPTION);
+								clearFields();
+							}
 						}else {
 							//Old password failed
 							JOptionPane.showConfirmDialog(null, "Old password incorrect, try again","Failed to update password",JOptionPane.DEFAULT_OPTION);
-							passfield_old.setText(null);
-							passfield_new.setText(null);
-							passfield_newConfirm.setText(null);
+							clearFields();
 						}
 					} catch (UserDoesNotExistException e1) {
 						e1.printStackTrace();
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
+			}
+			private void clearFields() {
+				passfield_old.setText(null);
+				passfield_new.setText(null);
+				passfield_newConfirm.setText(null);
+			}
+			/**
+			 * Validate password strength before sending to database and updating password
+			 * @param password
+			 * @return
+			 */
+			private boolean passwordStrengthValidator(char[] password) {
+				boolean hasUpper = false;
+				boolean hasLower = false;
+				boolean hasDigit = false;
+				boolean hasSpecial = false;
+				boolean minimumLength = (password.length >= 8)? true : false;
+				for(char c : password) {
+					if(Character.isUpperCase(c)) hasUpper = true;
+					else if(Character.isLowerCase(c)) hasLower = true;
+					else if(Character.isDigit(c)) hasDigit = true;
+					else hasSpecial = true;
+				}
+				if (hasUpper && hasLower && hasDigit && hasSpecial) return true;
+				else {
+					String upperMissing = "\n> Missing an Uppercase character";
+					String lowerMissing = "\n> Missing a Lowercase character";
+					String digitMissing = "\n> Missing a number";
+					String specialMissing = "\n> Missing a special character";
+					String tooShortPass = "\n> Password too short, must be at least 6 characters";
+					
+					StringBuilder bobTheBuilder = new StringBuilder();
+					
+					if(!hasUpper) bobTheBuilder.append(upperMissing);
+					if(!hasLower) bobTheBuilder.append(lowerMissing);
+					if(!hasDigit) bobTheBuilder.append(digitMissing);
+					if(!hasSpecial) bobTheBuilder.append(specialMissing);
+					if(!minimumLength) bobTheBuilder.append(tooShortPass);
+					JOptionPane.showConfirmDialog(null, bobTheBuilder.toString(), "Password does not meet the minimum requirements", JOptionPane.DEFAULT_OPTION);
+					clearFields();
+					return false;
+				}
 				
-				// Verify new password is strong enough
-				
-				// Verify password == passwordConfirm
 			}
 		});
+		
+		JCheckBox chkbx_showPassword = new JCheckBox("Show Password");
+		chkbx_showPassword.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				boolean isChecked = chkbx_showPassword.isSelected();
+				if(isChecked) {
+					passfield_new.setEchoChar((char)0);
+					passfield_newConfirm.setEchoChar((char)0);
+				}else {
+					passfield_new.setEchoChar('*');
+					passfield_newConfirm.setEchoChar('*');
+				}
+
+			}
+		});
+		panel_password.add(chkbx_showPassword, "cell 3 5");
 		panel_password.add(btn_changePassword, "cell 3 6,alignx right");
 
 	}

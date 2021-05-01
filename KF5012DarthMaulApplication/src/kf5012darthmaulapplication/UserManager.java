@@ -10,8 +10,8 @@ import exceptions.UserManagerExceptions.UserAuthenticationFailed;
 import exceptions.UserManagerExceptions.UserDoesNotExist;
 
 public class UserManager {
-	static DBAbstraction db;
-	UserManager(){
+	DBAbstraction db;
+	public UserManager(){
 		try {
 			db = DBAbstraction.getInstance();
 			} catch (FailedToConnectException e) {
@@ -19,14 +19,14 @@ public class UserManager {
 			e.printStackTrace();
 		}
 	}
-	
-	private static boolean verifyAuthorisedUser(User authorisedUser) {
+	private boolean verifyAuthorisedUser(User authorisedUser) {
 		boolean localFlag = false;
 		boolean databaseFlag = false;
 		boolean userFlag = true; 
 		if(!authorisedUser.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)) localFlag = true;
 		try {
-			if(db.getPermissions(authorisedUser).pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)) databaseFlag = true;
+			PermissionManager.AccountType dbAccount = PermissionManager.intToAccountType(db.getPermissions(authorisedUser.getUsername()));
+			if(PermissionManager.hasPermission(dbAccount, PermissionManager.Permission.MANAGE_USERS)) databaseFlag = true;
 			return false;
 		} catch (UserDoesNotExistException e) {
 			userFlag = false;
@@ -43,7 +43,7 @@ public class UserManager {
 	 * @throws UserAlreadyExistsException 
 	 */
 	
-	public static void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
+	public void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
 		if(verifyAuthorisedUser(authorisedUser)) {
 			if(!db.createUser(newUser, hashedPassword)) throw new UserAlreadyExistsException();
 		}else {
@@ -60,7 +60,7 @@ public class UserManager {
 	 * @throws UserAlreadyExists 
 	 * @throws UserAlreadyExistsException 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
+	public void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
 		addUser(authorisedUser, new User(newUserName, PermissionManager.intToAccountType(newAccountValue)), hashedPassword);
 	}
 	/**
@@ -73,7 +73,7 @@ public class UserManager {
 	 * @throws UserAlreadyExists 
 	 * @throws UserAlreadyExistsException 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException{
+	public void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException{
 		addUser(authorisedUser, new User(newUserName, newUserAccountType), hashedPassword);
 	}
 	/**
@@ -83,7 +83,7 @@ public class UserManager {
 	 * @throws UserAuthenticationFailed
 	 * @throws UserDoesNotExist 
 	 */
-	public static void removeUser(User authorisedUser,User user) throws UserAuthenticationFailed, UserDoesNotExist {
+	public void removeUser(User authorisedUser,User user) throws UserAuthenticationFailed, UserDoesNotExist {
 		if(verifyAuthorisedUser(authorisedUser)) {
 			if(!db.deleteUser(user)) throw new UserManagerExceptions.UserDoesNotExist();
 		}else {
@@ -97,7 +97,7 @@ public class UserManager {
 	 * @throws UserAuthenticationFailed
 	 * @throws UserDoesNotExist 
 	 */
-	public static void removeUser(User authorisedUser,String name) throws UserAuthenticationFailed, UserDoesNotExist {
+	public void removeUser(User authorisedUser,String name) throws UserAuthenticationFailed, UserDoesNotExist {
 		try {
 			removeUser(authorisedUser, db.getUser(name));
 		} catch (UserDoesNotExistException e) {
@@ -112,12 +112,14 @@ public class UserManager {
 	 * @param user
 	 * @throws UserAuthenticationFailed
 	 */
-	public static void editUserPassword(User authorisedUser, User user, String newHashedPassword) throws UserAuthenticationFailed {
+	public boolean editUserPassword(User authorisedUser, User user, String newHashedPassword) throws UserAuthenticationFailed {
 		if(verifyAuthorisedUser(authorisedUser) || authorisedUser.equals(user)) {
 			try {
 				db.setHashedPassword(user, newHashedPassword);
+				return true;
 			} catch (UserDoesNotExistException e) {
 				e.printStackTrace();
+				return false;
 			}
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();
