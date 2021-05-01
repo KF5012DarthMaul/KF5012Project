@@ -5,6 +5,7 @@ import dbmgr.DBExceptions.FailedToConnectException;
 import dbmgr.DBExceptions.UserDoesNotExistException;
 
 import exceptions.UserManagerExceptions;
+import exceptions.UserManagerExceptions.UserAlreadyExists;
 import exceptions.UserManagerExceptions.UserAuthenticationFailed;
 
 public class UserManager {
@@ -37,11 +38,14 @@ public class UserManager {
 	 * @param authorisedUser
 	 * @param newUser
 	 * @throws UserAuthenticationFailed
+	 * @throws UserAlreadyExists 
 	 */
 	
-	public static void addUser(User authorisedUser, User newUser) throws UserAuthenticationFailed {
+	public static void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists {
 		if(verifyAuthorisedUser(authorisedUser)) {
-			
+			if(db.doesUserExist(newUser)) throw new UserManagerExceptions.UserAlreadyExists();
+			else {
+			}
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();
 		}
@@ -53,9 +57,10 @@ public class UserManager {
 	 * @param newUserName
 	 * @param newAccountValue
 	 * @throws UserAuthenticationFailed
+	 * @throws UserAlreadyExists 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, int newAccountValue) throws UserAuthenticationFailed {
-		addUser(authorisedUser, new User(newUserName, PermissionManager.intToAccountType(newAccountValue)));
+	public static void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists {
+		addUser(authorisedUser, new User(newUserName, PermissionManager.intToAccountType(newAccountValue)), hashedPassword);
 	}
 	/**
 	 * Takes in the User Currently logged in as the AuthorisedUser and then takes a User Object for the new user.
@@ -64,9 +69,10 @@ public class UserManager {
 	 * @param newUserName
 	 * @param newUserAccountType
 	 * @throws UserAuthenticationFailed
+	 * @throws UserAlreadyExists 
 	 */
-	public static void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType) throws UserAuthenticationFailed{
-		addUser(authorisedUser, new User(newUserName, newUserAccountType));
+	public static void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExists{
+		addUser(authorisedUser, new User(newUserName, newUserAccountType), hashedPassword);
 	}
 	/**
 	 * Removes a user from the user table

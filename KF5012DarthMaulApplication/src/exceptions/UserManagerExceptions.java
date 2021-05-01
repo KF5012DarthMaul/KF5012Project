@@ -1,7 +1,5 @@
 package exceptions;
 
-import java.sql.SQLException;
-
 public class UserManagerExceptions {
 	
     public static class UserAuthenticationFailed extends Exception {
@@ -9,24 +7,38 @@ public class UserManagerExceptions {
         }
     }
     public static class UpdateActionFailed extends Exception {
+    	public UpdateActionFailed() {
+    	}
     	public UpdateActionFailed(String message) {
     		super(message);
     	}
     }
     public static class RemoveActionFailed extends Exception {
+    	public RemoveActionFailed() {
+    	}
     	public RemoveActionFailed(String message) {
     		super(message);
     	}
     }
     public static class CreateActionFailed extends Exception {
+    	public CreateActionFailed() {
+    	}
     	public CreateActionFailed(String message) {
     		super(message);
     	}
     }
     public static class ActionFailed extends Exception {
+    	public ActionFailed() {
+    	}
     	public ActionFailed(String message) {
     		super(message);
     	}
     }
-    
+    public static class UserAlreadyExists extends Exception {
+    	public UserAlreadyExists() {
+    	}
+    	public UserAlreadyExists(String message) {
+    		super(message);
+    	}
+    }
 }
