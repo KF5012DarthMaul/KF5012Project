@@ -12,6 +12,7 @@ import dbmgr.DBExceptions.UserDoesNotExistException;
 import exceptions.UserManagerExceptions.UserAuthenticationFailed;
 import kf5012darthmaulapplication.ErrorDialog;
 import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.SecurityManager;
 import kf5012darthmaulapplication.User;
 import kf5012darthmaulapplication.UserManager;
@@ -29,6 +30,7 @@ import java.awt.event.FocusEvent;
 import javax.swing.JCheckBox;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.JTextField;
 
 public class ManageAccount extends JPanel {
 	private JPasswordField passfield_old;
@@ -36,6 +38,8 @@ public class ManageAccount extends JPanel {
 	private JPasswordField passfield_newConfirm;
 	DBAbstraction db;
 	UserManager UserManager = new UserManager();
+	private JTextField txt_username;
+	private JTextField txt_role;
 
 	/**
 	 * Create the panel.
@@ -46,8 +50,6 @@ public class ManageAccount extends JPanel {
 		} catch (FailedToConnectException exception) {
 			new ErrorDialog("Failed to make database connection");
 		}
-		
-		
 		setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -55,6 +57,27 @@ public class ManageAccount extends JPanel {
 		
 		JPanel panel_information = new JPanel();
 		tabbedPane.addTab("My Information", null, panel_information, null);
+		panel_information.setLayout(new MigLayout("", "[][][][grow][][grow]", "[][][][]"));
+		
+		JLabel lbl_username = new JLabel("Username");
+		panel_information.add(lbl_username, "cell 1 1,alignx right");
+		
+		txt_username = new JTextField();
+		txt_username.setEnabled(false);
+		txt_username.setEditable(false);
+		txt_username.setText(user.getUsername());
+		panel_information.add(txt_username, "cell 3 1,growx");
+		txt_username.setColumns(10);
+		
+		JLabel lbl_role = new JLabel("Role");
+		panel_information.add(lbl_role, "cell 1 3,alignx right");
+		
+		txt_role = new JTextField();
+		txt_role.setEditable(false);
+		txt_role.setEnabled(false);
+		txt_role.setText(PermissionManager.AccountTypeToString(user.getAccountType()));
+		panel_information.add(txt_role, "cell 3 3,growx");
+		txt_role.setColumns(10);
 		
 		JPanel panel_password = new JPanel();
 		tabbedPane.addTab("Change Password", null, panel_password, null);

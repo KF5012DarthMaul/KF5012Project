@@ -100,4 +100,30 @@ public class PermissionManager {
 	public static int accountTypetoInt(AccountType type) {
 		return type.value;
 	}
+	/**
+	 * Given an account type enum, will return the String verion
+	 * @param type
+	 * @return
+	 */
+	public static String AccountTypeToString(AccountType type) {
+		String result = "";
+		switch(type) {
+		case CARETAKER:
+			result = "Caretaker";
+			break;
+		case ESTATE:
+			result = "Estate";
+			break;
+		case HR_PERSONNEL:
+			result = "Human Resources";
+			break;
+		case MANAGER:
+			result = "Manager";
+			break;
+		default:
+			result = "No role found!";
+			break;
+		}
+		return result;
+	}
 }
