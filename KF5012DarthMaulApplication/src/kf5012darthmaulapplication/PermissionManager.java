@@ -98,7 +98,7 @@ public class PermissionManager {
 	 * @return int
 	 */
 	public static int accountTypetoInt(AccountType type) {
-		return type.value;
+		return type.ordinal();
 	}
 	/**
 	 * Given an account type enum, will return the String verion

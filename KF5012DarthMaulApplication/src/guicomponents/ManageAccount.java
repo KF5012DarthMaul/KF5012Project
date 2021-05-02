@@ -63,7 +63,6 @@ public class ManageAccount extends JPanel {
 		panel_information.add(lbl_username, "cell 1 1,alignx right");
 		
 		txt_username = new JTextField();
-		txt_username.setEnabled(false);
 		txt_username.setEditable(false);
 		txt_username.setText(user.getUsername());
 		panel_information.add(txt_username, "cell 3 1,growx");
@@ -74,7 +73,6 @@ public class ManageAccount extends JPanel {
 		
 		txt_role = new JTextField();
 		txt_role.setEditable(false);
-		txt_role.setEnabled(false);
 		txt_role.setText(PermissionManager.AccountTypeToString(user.getAccountType()));
 		panel_information.add(txt_role, "cell 3 3,growx");
 		txt_role.setColumns(10);
@@ -169,7 +167,7 @@ public class ManageAccount extends JPanel {
 					String lowerMissing = "\n> Missing a Lowercase character";
 					String digitMissing = "\n> Missing a number";
 					String specialMissing = "\n> Missing a special character";
-					String tooShortPass = "\n> Password too short, must be at least 6 characters";
+					String tooShortPass = "\n> Password too short, must be at least 8 characters";
 					
 					StringBuilder bobTheBuilder = new StringBuilder();
 					

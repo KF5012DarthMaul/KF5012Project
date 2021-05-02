@@ -104,7 +104,6 @@ public class UserManager {
 			e.printStackTrace();
 		}
 	}
-	
 	/**
 	 * Edits a Users password (AuthorisedUser)
 	 * Edits a Users own password (Generic User)
