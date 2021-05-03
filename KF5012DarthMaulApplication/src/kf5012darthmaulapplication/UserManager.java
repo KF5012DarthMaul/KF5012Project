@@ -19,6 +19,11 @@ public class UserManager {
 			e.printStackTrace();
 		}
 	}
+	/**
+	 * Performs multiple checks to ensure that the user attempting to do an action is authorised to manage users
+	 * @param authorisedUser
+	 * @return
+	 */
 	private boolean verifyAuthorisedUser(User authorisedUser) {
 		boolean localFlag = false;
 		boolean databaseFlag = false;

@@ -28,9 +28,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.JTextField;
+import java.awt.Component;
+import javax.swing.Box;
+import java.awt.Dimension;
 
 public class ManageAccount extends JPanel {
 	private JPasswordField passfield_old;
@@ -44,7 +48,8 @@ public class ManageAccount extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public ManageAccount(User user) {
+	public ManageAccount(User user, JFrame mainWindow) {
+		setMinimumSize(new Dimension(640, 400));
 		try {
 			db = DBAbstraction.getInstance();
 		} catch (FailedToConnectException exception) {
@@ -57,7 +62,7 @@ public class ManageAccount extends JPanel {
 		
 		JPanel panel_information = new JPanel();
 		tabbedPane.addTab("My Information", null, panel_information, null);
-		panel_information.setLayout(new MigLayout("", "[][][][grow][][grow]", "[][][][]"));
+		panel_information.setLayout(new MigLayout("", "[][][][grow][][grow]", "[][][][][][][][][][][][]"));
 		
 		JLabel lbl_username = new JLabel("Username");
 		panel_information.add(lbl_username, "cell 1 1,alignx right");
@@ -76,6 +81,16 @@ public class ManageAccount extends JPanel {
 		txt_role.setText(PermissionManager.AccountTypeToString(user.getAccountType()));
 		panel_information.add(txt_role, "cell 3 3,growx");
 		txt_role.setColumns(10);
+		
+		JButton btn_logout = new JButton("Logout");
+		btn_logout.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				mainWindow.dispose();
+				LoginForm loginForm = new LoginForm();
+				loginForm.setVisible(true);
+			}
+		});
+		panel_information.add(btn_logout, "cell 1 11");
 		
 		JPanel panel_password = new JPanel();
 		tabbedPane.addTab("Change Password", null, panel_password, null);
@@ -99,6 +114,31 @@ public class ManageAccount extends JPanel {
 		passfield_newConfirm = new JPasswordField();
 		panel_password.add(passfield_newConfirm, "cell 3 4,growx");
 		
+		JCheckBox chkbx_showPassword = new JCheckBox("Show Password");
+		chkbx_showPassword.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				boolean isChecked = chkbx_showPassword.isSelected();
+				if(isChecked) {
+					passfield_new.setEchoChar((char)0);
+					passfield_newConfirm.setEchoChar((char)0);
+				}else {
+					passfield_new.setEchoChar('*');
+					passfield_newConfirm.setEchoChar('*');
+				}
+
+			}
+		});
+		panel_password.add(chkbx_showPassword, "flowx,cell 3 5");
+		
+		JButton btn_generateRandomPassword = new JButton("Generate a Password");
+		btn_generateRandomPassword.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				chkbx_showPassword.setSelected(true);
+				passfield_new.setText(SecurityManager.generateRandomPasswordString());
+			}
+		});
+		panel_password.add(btn_generateRandomPassword, "cell 3 5,alignx left");
+		
 		JButton btn_changePassword = new JButton("Save");
 		btn_changePassword.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -110,7 +150,7 @@ public class ManageAccount extends JPanel {
 								//Password field and Confirmation field match
 								SecurityManager.generatePassword(new String(passfield_new.getPassword()));
 								try {
-									if(passwordStrengthValidator(passfield_new.getPassword())) {
+									if(SecurityManager.passwordStrengthValidator(passfield_new.getPassword())) {
 										if(UserManager.editUserPassword(user, user, SecurityManager.generatePassword(new String(passfield_new.getPassword())))) {
 											//If the password was edited
 											JOptionPane.showConfirmDialog(null, "Password successfully updated","Password updated", JOptionPane.DEFAULT_OPTION);
@@ -118,6 +158,8 @@ public class ManageAccount extends JPanel {
 											new ExceptionDialog("Failed to update password, try again later.");
 											clearFields();
 										}
+									}else {
+										clearFields();
 									}
 								} catch (UserAuthenticationFailed ex ) {
 									new ErrorDialog("You are not authorised to edit this password");
@@ -144,62 +186,8 @@ public class ManageAccount extends JPanel {
 				passfield_new.setText(null);
 				passfield_newConfirm.setText(null);
 			}
-			/**
-			 * Validate password strength before sending to database and updating password
-			 * @param password
-			 * @return
-			 */
-			private boolean passwordStrengthValidator(char[] password) {
-				boolean hasUpper = false;
-				boolean hasLower = false;
-				boolean hasDigit = false;
-				boolean hasSpecial = false;
-				boolean minimumLength = (password.length >= 8)? true : false;
-				for(char c : password) {
-					if(Character.isUpperCase(c)) hasUpper = true;
-					else if(Character.isLowerCase(c)) hasLower = true;
-					else if(Character.isDigit(c)) hasDigit = true;
-					else hasSpecial = true;
-				}
-				if (hasUpper && hasLower && hasDigit && hasSpecial) return true;
-				else {
-					String upperMissing = "\n> Missing an Uppercase character";
-					String lowerMissing = "\n> Missing a Lowercase character";
-					String digitMissing = "\n> Missing a number";
-					String specialMissing = "\n> Missing a special character";
-					String tooShortPass = "\n> Password too short, must be at least 8 characters";
-					
-					StringBuilder bobTheBuilder = new StringBuilder();
-					
-					if(!hasUpper) bobTheBuilder.append(upperMissing);
-					if(!hasLower) bobTheBuilder.append(lowerMissing);
-					if(!hasDigit) bobTheBuilder.append(digitMissing);
-					if(!hasSpecial) bobTheBuilder.append(specialMissing);
-					if(!minimumLength) bobTheBuilder.append(tooShortPass);
-					JOptionPane.showConfirmDialog(null, bobTheBuilder.toString(), "Password does not meet the minimum requirements", JOptionPane.DEFAULT_OPTION);
-					clearFields();
-					return false;
-				}
-				
-			}
 		});
-		
-		JCheckBox chkbx_showPassword = new JCheckBox("Show Password");
-		chkbx_showPassword.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				boolean isChecked = chkbx_showPassword.isSelected();
-				if(isChecked) {
-					passfield_new.setEchoChar((char)0);
-					passfield_newConfirm.setEchoChar((char)0);
-				}else {
-					passfield_new.setEchoChar('*');
-					passfield_newConfirm.setEchoChar('*');
-				}
-
-			}
-		});
-		panel_password.add(chkbx_showPassword, "cell 3 5");
-		panel_password.add(btn_changePassword, "cell 3 6,alignx right");
+		panel_password.add(btn_changePassword, "cell 3 5,alignx right");
 
 	}
 

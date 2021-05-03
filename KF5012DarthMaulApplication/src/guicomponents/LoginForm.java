@@ -133,6 +133,7 @@ public class LoginForm extends JFrame {
 							MainWindow.setVisible(true);
 							dispose();
 						}else {
+							System.out.println("Password failed");
 							new ErrorDialog("Incorrect username or password");
 						}
 					} catch (Exception ex) {
@@ -140,6 +141,7 @@ public class LoginForm extends JFrame {
 						ex.printStackTrace();
 					}
 				}else {
+					System.out.println("Username failed");
 					new ErrorDialog("Incorrect username or password");
 				}
 			}

@@ -3,6 +3,8 @@ package kf5012darthmaulapplication;
 import org.bouncycastle.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
+import javax.swing.JOptionPane;
+
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Random;
@@ -128,5 +130,41 @@ public class SecurityManager {
 			diff |= hash[i] ^ testHash[i];
 		}
 		return diff == 0;
+	}
+	/**
+	 * Validate password strength before sending to database and updating password
+	 * @param password
+	 * @return
+	 */
+	public static boolean passwordStrengthValidator(char[] password) {
+		boolean hasUpper = false;
+		boolean hasLower = false;
+		boolean hasDigit = false;
+		boolean hasSpecial = false;
+		boolean minimumLength = (password.length >= 8)? true : false;
+		for(char c : password) {
+			if(Character.isUpperCase(c)) hasUpper = true;
+			else if(Character.isLowerCase(c)) hasLower = true;
+			else if(Character.isDigit(c)) hasDigit = true;
+			else hasSpecial = true;
+		}
+		if (hasUpper && hasLower && hasDigit && hasSpecial) return true;
+		else {
+			String upperMissing = "\n> Missing an Uppercase character";
+			String lowerMissing = "\n> Missing a Lowercase character";
+			String digitMissing = "\n> Missing a number";
+			String specialMissing = "\n> Missing a special character";
+			String tooShortPass = "\n> Password too short, must be at least 8 characters";
+			
+			StringBuilder bobTheBuilder = new StringBuilder();
+			
+			if(!hasUpper) bobTheBuilder.append(upperMissing);
+			if(!hasLower) bobTheBuilder.append(lowerMissing);
+			if(!hasDigit) bobTheBuilder.append(digitMissing);
+			if(!hasSpecial) bobTheBuilder.append(specialMissing);
+			if(!minimumLength) bobTheBuilder.append(tooShortPass);
+			JOptionPane.showConfirmDialog(null, bobTheBuilder.toString(), "Password does not meet the minimum requirements", JOptionPane.DEFAULT_OPTION);
+			return false;
+		}
 	}
 }

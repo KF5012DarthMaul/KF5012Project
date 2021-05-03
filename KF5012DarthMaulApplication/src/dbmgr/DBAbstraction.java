@@ -374,6 +374,21 @@ public final class DBAbstraction
         return user;
     }
     
+    public ArrayList<User> getAllUsers() {
+		ArrayList<User> allUsers = new ArrayList<User>();
+    	try {
+			db.prepareStatement("SELECT username, permission_flags FROM tblUsers");
+			ResultSet res = db.executePreparedQuery();
+	    	while(res.next()) {
+	    		allUsers.add(new User(res.getString("username"), PermissionManager.intToAccountType(res.getInt("permission_flags"))));
+	    	}
+		} catch (SQLException ex) {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+		}
+    	return allUsers;
+
+    }
+    
     /**
      * Gets all fields of a user from the database.<p>
      * Populates a new User object and returns it.
