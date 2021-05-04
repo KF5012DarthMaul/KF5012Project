@@ -5,29 +5,25 @@ import java.time.Duration;
 import kf5012darthmaulapplication.User;
 
 public class Verification {
-	private Task task;
 	private String notes;
 	private TaskPriority standardPriority;
 	private Duration standardDeadline; // Nullable
 	private User allocationConstraint; // Nullable
 	
 	public Verification(
-			Task task,
 			String notes,
 			TaskPriority standardPriority,
 			Duration standardDeadline,
 			User allocationConstraint
 	) {
-		this.task = task;
 		this.notes = notes;
 		this.standardPriority = standardPriority;
 		this.standardDeadline = standardDeadline;
 		this.allocationConstraint = allocationConstraint;
 	}
 	
-	public Verification(Task task) {
+	public Verification() {
 		this(
-			task,
 			"",
 			TaskPriority.NORMAL,
 			null, // No deadline
@@ -35,9 +31,6 @@ public class Verification {
 		);
 	}
 
-	public Task getTask() {
-		return this.task;
-	}
 	public String getNotes() {
 		return this.notes;
 	}
