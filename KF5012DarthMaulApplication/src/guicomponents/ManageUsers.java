@@ -19,7 +19,6 @@ import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.awt.BorderLayout;
 import javax.swing.JLabel;
@@ -33,8 +32,6 @@ import javax.swing.event.CaretEvent;
 import java.awt.FlowLayout;
 import javax.swing.JButton;
 import net.miginfocom.swing.MigLayout;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 
 @SuppressWarnings("serial")
 public class ManageUsers extends JPanel {
@@ -105,7 +102,7 @@ public class ManageUsers extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				int selectedIndex = tbl_addUsersTable.getSelectedRow();
 				if(selectedIndex != -1) {
-					undoQueue.add(new undoRemove(usersToAddTemp.get(selectedIndex), usersToAddTemp));
+					undoQueue.add(new UndoRemove(usersToAddTemp.get(selectedIndex), usersToAddTemp));
 					usersToAddTemp.remove(selectedIndex);
 					updateTable(usersToAddTemp, tbl_addUsersTable);
 				}
@@ -195,7 +192,7 @@ public class ManageUsers extends JPanel {
 					usersToAddTemp.add(tempUser);
 					updateTable(usersToAddTemp,tbl_addUsersTable);
 			
-					undoQueue.add(new undoAddUser(tempUser, usersToAddTemp));
+					undoQueue.add(new UndoAdd(tempUser, usersToAddTemp));
 				}else {
 					new ErrorDialog("User with this username already exists");
 				}
@@ -302,10 +299,10 @@ interface Action {
 	void run();
 }
 
-class undoRemove implements Action {
+class UndoRemove implements Action {
 	User user;
 	ArrayList<User> list;
-	public undoRemove(User user,ArrayList<User> list) {
+	public UndoRemove(User user,ArrayList<User> list) {
 		this.user = user;
 		this.list = list;
 	}
@@ -314,10 +311,10 @@ class undoRemove implements Action {
 		this.list.add(user);
 	}	
 }
-class undoAddUser implements Action {
+class UndoAdd implements Action {
 	User user;
 	ArrayList<User> list;
-	public undoAddUser(User user, ArrayList<User> list) {
+	public UndoAdd(User user, ArrayList<User> list) {
 		this.user = user;
 		this.list = list;
 	}
