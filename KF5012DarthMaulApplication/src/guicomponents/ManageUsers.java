@@ -296,13 +296,6 @@ public class ManageUsers extends JPanel {
 			}
 		});
 	}
-	private void updateTableOld() {
-		DefaultTableModel tableModel = (DefaultTableModel) tbl_viewUsersTable.getModel();
-		tableModel.setRowCount(0);
-		for(User u : allUsersList) {
-			tableModel.addRow(new Object[] {u.getUsername(), PermissionManager.AccountTypeToString(u.getAccountType())});
-		}
-	}
 }
 
 interface Action {
