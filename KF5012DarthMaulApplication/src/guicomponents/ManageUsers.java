@@ -13,6 +13,7 @@ import javax.swing.table.DefaultTableModel;
 import dbmgr.DBAbstraction;
 
 import dbmgr.DBExceptions.FailedToConnectException;
+import kf5012darthmaulapplication.ErrorDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
@@ -184,15 +185,20 @@ public class ManageUsers extends JPanel {
 		btn_newUserAddToList.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String username = txt_newUserUsername.getText();
-				AccountType ac = comboBoxParser(comboBox_newUserAssignRole);
-	
-				txt_newUserUsername.setText("");
-				
-				User tempUser = new User(username, ac);
-				usersToAddTemp.add(tempUser);
-				updateTable(usersToAddTemp,tbl_addUsersTable);
-				
-				undoQueue.add(new undoAddUser(tempUser, usersToAddTemp));
+				if(!db.doesUserExist(username)) {
+
+					AccountType ac = comboBoxParser(comboBox_newUserAssignRole);
+
+					txt_newUserUsername.setText("");
+			
+					User tempUser = new User(username, ac);
+					usersToAddTemp.add(tempUser);
+					updateTable(usersToAddTemp,tbl_addUsersTable);
+			
+					undoQueue.add(new undoAddUser(tempUser, usersToAddTemp));
+				}else {
+					new ErrorDialog("User with this username already exists");
+				}
 			}
 		});
 		panel_addUser.add(btn_newUserAddToList, "cell 3 1");
