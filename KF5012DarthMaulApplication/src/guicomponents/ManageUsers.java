@@ -58,6 +58,9 @@ public class ManageUsers extends JPanel {
     DefaultTableModel userTableModel = new DefaultTableModel(
 			new Object[][] {}, tblUsers_columnNames
 			);
+    DefaultTableModel newUserTableModel = new DefaultTableModel(
+    			new Object[][] {}, tblUsers_columnNames
+    		);
 	ArrayList<User> allUsersList;
 	private JTextField txt_searchField;
 	private JTextField txt_newUserUsername;
@@ -243,15 +246,17 @@ public class ManageUsers extends JPanel {
 		panel_topViewUsers.add(txt_searchField);
 		txt_searchField.setColumns(10);
 
-		tbl_addUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tbl_addUsersTable.setModel(userTableModel);
-		updateTable(usersToAddTemp, tbl_addUsersTable);
-		scrollPane_newUsers.setViewportView(tbl_addUsersTable);
-		
+
+	
 		tbl_viewUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tbl_viewUsersTable.setModel(userTableModel);
 		scrollPane_tableParent.setViewportView(tbl_viewUsersTable);
 		updateTable(filterListAccountType(allUsersList, comboBoxParser(comboBox_roleTypes)), tbl_viewUsersTable);
+		
+		tbl_addUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tbl_addUsersTable.setModel(newUserTableModel);
+		scrollPane_newUsers.setViewportView(tbl_addUsersTable);
+		updateTable(usersToAddTemp, tbl_addUsersTable);
 	}
 	
 	private PermissionManager.AccountType comboBoxParser(JComboBox<?> combo) {
