@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import kf5012darthmaulapplication.User;
 
 public class Completion {
+	private Integer id; // Nullable
+	
 	private User caretaker;
 	private LocalDateTime startTime;
 	private LocalDateTime completionTime;
@@ -12,12 +14,16 @@ public class Completion {
 	private String notes;
 	
 	public Completion(
+			Integer id,
+			
 			User caretaker,
 			LocalDateTime startTime,
 			LocalDateTime completionTime,
 			TaskCompletionQuality workQuality,
 			String notes
 	) {
+		this.id = id;
+		
 		this.caretaker = caretaker;
 		this.startTime = startTime;
 		this.completionTime = completionTime;
@@ -27,6 +33,7 @@ public class Completion {
 	
 	public Completion() {
 		this(
+			null, // No ID assigned yet (ie. not in DB)
 			null, // Not ideal: not a nullable field (will need to be validated)
 			LocalDateTime.now(),
 			LocalDateTime.now(),
@@ -35,6 +42,13 @@ public class Completion {
 		);
 	}
 
+	public Integer getID() {
+		return this.id;
+	}
+	public void setID(Integer id) {
+		this.id = id;
+	}
+	
 	public User getCaretaker() {
 		return this.caretaker;
 	}

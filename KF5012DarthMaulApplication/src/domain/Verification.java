@@ -5,17 +5,21 @@ import java.time.Duration;
 import kf5012darthmaulapplication.User;
 
 public class Verification {
+	private Integer id; // Nullable
+	
 	private String notes;
 	private TaskPriority standardPriority;
 	private Duration standardDeadline; // Nullable
 	private User allocationConstraint; // Nullable
 	
 	public Verification(
+			Integer id,
 			String notes,
 			TaskPriority standardPriority,
 			Duration standardDeadline,
 			User allocationConstraint
 	) {
+		this.id = id;
 		this.notes = notes;
 		this.standardPriority = standardPriority;
 		this.standardDeadline = standardDeadline;
@@ -24,6 +28,7 @@ public class Verification {
 	
 	public Verification() {
 		this(
+			null, // No ID assigned yet (ie. not in DB)
 			"",
 			TaskPriority.NORMAL,
 			null, // No deadline
@@ -31,6 +36,13 @@ public class Verification {
 		);
 	}
 
+	public Integer getID() {
+		return this.id;
+	}
+	public void setID(Integer id) {
+		this.id = id;
+	}
+	
 	public String getNotes() {
 		return this.notes;
 	}

@@ -11,6 +11,8 @@ import temporal.IntervaledPeriodSet;
 import temporal.Period;
 
 public class Task {
+	private Integer id; // Nullable
+	
 	private String name;
 	private String notes;
 	
@@ -24,6 +26,8 @@ public class Task {
 	private Verification verification; // Nullable
 	
 	public Task(
+			Integer id,
+			
 			String name,
 			String notes,
 			
@@ -36,6 +40,7 @@ public class Task {
 			User allocationConstraint,
 			Verification verification
 	) {
+		this.id = id;
 		this.name = name;
 		this.notes = notes;
 		this.preferences = preferences;
@@ -51,6 +56,7 @@ public class Task {
 	// user.
 	public Task() {
 		this(
+			null, // No ID assigned yet (ie. not in DB)
 			"Task Name", // Default name
 			"", // Empty description
 			
@@ -77,6 +83,13 @@ public class Task {
 		);
 	}
 
+	public Integer getID() {
+		return this.id;
+	}
+	public void setID(Integer id) {
+		this.id = id;
+	}
+	
 	public String getName() {
 		return this.name;
 	}

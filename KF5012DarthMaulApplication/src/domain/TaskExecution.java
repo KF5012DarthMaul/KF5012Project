@@ -9,6 +9,7 @@ import temporal.Period;
 public class TaskExecution implements ChartableEvent {
 	private static final Color color = Color.BLUE;
 	
+	private Integer id; // Nullable
 	private Task task;
 	
 	private String notes;
@@ -19,7 +20,9 @@ public class TaskExecution implements ChartableEvent {
 	private VerificationExecution verification; // Nullable
 	
 	public TaskExecution(
+			Integer id,
 			Task task,
+			
 			String notes,
 			TaskPriority priority,
 			Period period,
@@ -27,7 +30,9 @@ public class TaskExecution implements ChartableEvent {
 			Completion completion,
 			VerificationExecution verification
 	) {
+		this.id = id;
 		this.task = task;
+		
 		this.notes = notes;
 		this.period = period;
 		this.allocation = allocation;
@@ -36,6 +41,13 @@ public class TaskExecution implements ChartableEvent {
 		this.priority = priority;
 	}
 
+	public Integer getID() {
+		return this.id;
+	}
+	public void setID(Integer id) {
+		this.id = id;
+	}
+	
 	public Task getTask() {
 		return this.task;
 	}
