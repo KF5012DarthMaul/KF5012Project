@@ -6,6 +6,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
 import dbmgr.DBAbstraction;
@@ -16,6 +18,7 @@ import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.awt.BorderLayout;
 import javax.swing.JLabel;
@@ -236,17 +239,16 @@ public class ManageUsers extends JPanel {
 		});
 		panel_topViewUsers.add(txt_searchField);
 		txt_searchField.setColumns(10);
+
+		tbl_addUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tbl_addUsersTable.setModel(userTableModel);
+		updateTable(usersToAddTemp, tbl_addUsersTable);
+		scrollPane_newUsers.setViewportView(tbl_addUsersTable);
 		
 		tbl_viewUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tbl_viewUsersTable.setModel(userTableModel);
 		scrollPane_tableParent.setViewportView(tbl_viewUsersTable);
 		updateTable(filterListAccountType(allUsersList, comboBoxParser(comboBox_roleTypes)), tbl_viewUsersTable);
-
-		
-		tbl_addUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tbl_addUsersTable.setModel(userTableModel);
-		updateTable(usersToAddTemp, tbl_addUsersTable);
-		scrollPane_newUsers.setViewportView(tbl_addUsersTable);
 	}
 	
 	private PermissionManager.AccountType comboBoxParser(JComboBox<?> combo) {
@@ -276,14 +278,23 @@ public class ManageUsers extends JPanel {
 	};
 	
 	private void updateTable(ArrayList<User> userList, JTable table) {
-		for(User u : userList) {
-			System.out.println(u.getUsername());
-		}
 		DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-		
+		AbstractTableModel aTableModel = (AbstractTableModel) table.getModel();
 		tableModel.setRowCount(0);
 		for(User u : userList) {
-			System.out.println("User: " + u.getUsername() + " added");
+			tableModel.addRow(new Object[] {u.getUsername(), PermissionManager.AccountTypeToString(u.getAccountType())});
+		}
+		SwingUtilities.invokeLater( new Runnable() {
+			public void run() {
+				aTableModel.fireTableDataChanged();
+				System.out.println("Thing");
+			}
+		});
+	}
+	private void updateTableOld() {
+		DefaultTableModel tableModel = (DefaultTableModel) tbl_viewUsersTable.getModel();
+		tableModel.setRowCount(0);
+		for(User u : allUsersList) {
 			tableModel.addRow(new Object[] {u.getUsername(), PermissionManager.AccountTypeToString(u.getAccountType())});
 		}
 	}
