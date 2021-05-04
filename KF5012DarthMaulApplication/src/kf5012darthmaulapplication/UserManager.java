@@ -47,7 +47,6 @@ public class UserManager {
 	 * @throws UserAlreadyExists 
 	 * @throws UserAlreadyExistsException 
 	 */
-	
 	public void addUser(User authorisedUser, User newUser, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
 		if(verifyAuthorisedUser(authorisedUser)) {
 			if(!db.createUser(newUser, hashedPassword)) throw new UserAlreadyExistsException();
