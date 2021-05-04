@@ -293,7 +293,6 @@ public class ManageUsers extends JPanel {
 		SwingUtilities.invokeLater( new Runnable() {
 			public void run() {
 				aTableModel.fireTableDataChanged();
-				System.out.println("Thing");
 			}
 		});
 	}
