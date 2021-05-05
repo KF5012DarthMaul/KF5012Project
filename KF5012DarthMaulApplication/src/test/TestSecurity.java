@@ -2,13 +2,13 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import kf5012darthmaulapplication.SecurityManager;
 
-class TestSecurity {
+public class TestSecurity {
 	
 	@Test
-	void testPasswordValidation() {
+	public void testPasswordValidation() {
 		String testPassword = "password";		
 		try {
 			String testEncryptedPassword = SecurityManager.generatePassword(testPassword);
@@ -21,7 +21,7 @@ class TestSecurity {
 	}
 	
 	@Test
-	void testPasswordGeneration() {
+	public void testPasswordGeneration() {
 		String testPassword = "password";
 		try {
 			String encryptedPassword1 = SecurityManager.generatePassword(testPassword);
@@ -33,14 +33,14 @@ class TestSecurity {
 	}
 	
 	@Test
-	void testNewPasswordStringGeneration() {
+	public void testNewPasswordStringGeneration() {
 		String passString1 = SecurityManager.generateRandomPasswordString();
 		String passString2 = SecurityManager.generateRandomPasswordString();
 		assertNotEquals(passString1, passString2);
 	}
 	
 	@Test
-	void forceFail() {
+	public void forceFail() {
 		fail("forcefail");
 	}
 

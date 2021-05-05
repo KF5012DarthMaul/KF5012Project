@@ -2,23 +2,23 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import kf5012darthmaulapplication.*;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 
 import java.util.ArrayList;
 import java.util.Random;
-class TestUser {
-
+public class TestUser {
+	
 	@Test
-	void testUsernameMatches() {
+	public void testUsernameMatches() {
 		String username = "username";
 		User user = new User(username,PermissionManager.AccountType.CARETAKER);
 		assertEquals(user.getUsername(),username);
 	}
 	
 	@Test
-	void testAccountTypeMatches() {
+	public void testAccountTypeMatches() {
 		PermissionManager.AccountType[] accounts = PermissionManager.AccountType.values();
 		PermissionManager.AccountType accountType = accounts[(int) Math.floor(Math.random() * accounts.length)];
 		User user = new User("test", accountType);
@@ -27,7 +27,7 @@ class TestUser {
 
 	
 	@Test
-	void testCARETAKEPermissionAssignment() {
+	public void testCARETAKEPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
@@ -43,7 +43,7 @@ class TestUser {
 	}
 	
 	@Test
-	void testMANAGERPermissionAssignment() {
+	public void testMANAGERPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
@@ -60,7 +60,7 @@ class TestUser {
 	}
 	
 	@Test
-	void testHRPERSONNELPermissionAssignment() {
+	public void testHRPERSONNELPermissionAssignment() {
 		ArrayList<PermissionManager.Permission> expectedPermissions = new ArrayList<>();
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_USERS);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
@@ -75,13 +75,13 @@ class TestUser {
 	}
 	
 	@Test
-	void testUserPermissionCheck() {
+	public void testUserPermissionCheck() {
 		User user = new User("test",AccountType.ESTATE);
 		assertTrue(user.pm.hasPermission(PermissionManager.Permission.MANAGE_TASKS));
 	}
 	
 	@Test
-	void testIntToAccountType() {
+	public void testIntToAccountType() {
 		Random rand = new Random();
 		
 		int x = rand.nextInt(PermissionManager.AccountType.values().length);
