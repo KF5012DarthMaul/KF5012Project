@@ -25,4 +25,7 @@ jobs:
       with:
         name: Package
         path: ./KF5012DarthMaulApplication/build/jar
+    - name: Testing Report
+      uses: mikepenz/action-junit-report@v2.4.1
+
       
