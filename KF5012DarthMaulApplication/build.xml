@@ -145,7 +145,7 @@
     <target name="junitreport">
         <junitreport todir="${junit.output.dir}">
             <fileset dir="${junit.output.dir}">
-                <echo message="RUNNING JUNITREPORT/>
+                <echo message="RUNNING JUNITREPORT"/>
                 <include name="TEST-*.xml"/>
             </fileset>
             <report format="frames" todir="${junit.output.dir}"/>
