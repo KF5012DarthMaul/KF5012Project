@@ -36,6 +36,7 @@ import java.awt.Component;
 import javax.swing.Box;
 import java.awt.Dimension;
 
+@SuppressWarnings("serial")
 public class ManageAccount extends JPanel {
 	private JPasswordField passfield_old;
 	private JPasswordField passfield_new;

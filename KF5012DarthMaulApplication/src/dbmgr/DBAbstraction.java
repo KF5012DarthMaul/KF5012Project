@@ -119,7 +119,7 @@ public final class DBAbstraction
      */
     public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
     {
-       return createUser(user.getUsername(), hashedPassword, user.getAccountType().value);
+       return createUser(user.getUsername(), hashedPassword, user.getAccountType().ordinal());
     }
     
     /**
