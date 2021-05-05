@@ -119,7 +119,7 @@ public final class DBAbstraction
      */
     public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
     {
-       return createUser(user.getUsername(), hashedPassword, user.getAccountType().value);
+       return createUser(user.getUsername(), hashedPassword, user.getAccountType().ordinal());
     }
     
     /**
@@ -372,6 +372,21 @@ public final class DBAbstraction
         // Can't edit a user's PM yet, so just return a new object for now
         user = new User(user.getUsername(), PermissionManager.intToAccountType(perms));
         return user;
+    }
+    
+    public ArrayList<User> getAllUsers() {
+		ArrayList<User> allUsers = new ArrayList<User>();
+    	try {
+			db.prepareStatement("SELECT username, permission_flags FROM tblUsers");
+			ResultSet res = db.executePreparedQuery();
+	    	while(res.next()) {
+	    		allUsers.add(new User(res.getString("username"), PermissionManager.intToAccountType(res.getInt("permission_flags"))));
+	    	}
+		} catch (SQLException ex) {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+		}
+    	return allUsers;
+
     }
     
     /**

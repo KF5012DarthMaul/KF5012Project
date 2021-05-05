@@ -49,7 +49,7 @@ public class PermissionManager {
 	 * @param permission
 	 * @return boolean
 	 */
-	public boolean hasPermission(AccountType accountType, Permission permission) {
+	public static boolean hasPermission(AccountType accountType, Permission permission) {
 		int bitmask = (int) Math.pow(2, permission.ordinal());
 		boolean flag = (bitmask & accountType.value) == bitmask;
 		return flag;
@@ -91,5 +91,39 @@ public class PermissionManager {
 	 */
 	public static AccountType intToAccountType(int x) {
 		return AccountType.values()[x];
+	}
+	/**
+	 * Convers an AccountType to integer value
+	 * @param type
+	 * @return int
+	 */
+	public static int accountTypetoInt(AccountType type) {
+		return type.ordinal();
+	}
+	/**
+	 * Given an account type enum, will return the String verion
+	 * @param type
+	 * @return
+	 */
+	public static String AccountTypeToString(AccountType type) {
+		String result = "";
+		switch(type) {
+		case CARETAKER:
+			result = "Caretaker";
+			break;
+		case ESTATE:
+			result = "Estate";
+			break;
+		case HR_PERSONNEL:
+			result = "Human Resources";
+			break;
+		case MANAGER:
+			result = "Manager";
+			break;
+		default:
+			result = "No role found!";
+			break;
+		}
+		return result;
 	}
 }

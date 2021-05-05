@@ -126,7 +126,6 @@ public class LoginForm extends JFrame {
 				String password = new String(txt_password.getPassword());
 				
 				if(db.doesUserExist(username)) {
-					System.out.println("Username Exists");
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
 							User authorisedUser = new User(username, PermissionManager.intToAccountType(db.getPermissions(username)));
@@ -134,6 +133,7 @@ public class LoginForm extends JFrame {
 							MainWindow.setVisible(true);
 							dispose();
 						}else {
+							System.out.println("Password failed");
 							new ErrorDialog("Incorrect username or password");
 						}
 					} catch (Exception ex) {
@@ -141,6 +141,7 @@ public class LoginForm extends JFrame {
 						ex.printStackTrace();
 					}
 				}else {
+					System.out.println("Username failed");
 					new ErrorDialog("Incorrect username or password");
 				}
 			}

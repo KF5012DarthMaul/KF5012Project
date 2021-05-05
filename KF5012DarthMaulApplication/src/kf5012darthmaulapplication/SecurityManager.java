@@ -3,11 +3,15 @@ package kf5012darthmaulapplication;
 import org.bouncycastle.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
+import javax.swing.JOptionPane;
+
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Random;
 
 import org.bouncycastle.*;
 import org.bouncycastle.jce.provider.*;
+
 
 public class SecurityManager {
 	private static final int ITERATION_COUNT = 10000;
@@ -101,20 +105,66 @@ public class SecurityManager {
 	        }
 	    }
 	}
-	public static boolean validatePassword(String password, String storedPassword) throws Exception {
+	public static boolean validatePassword(String password, String storedPassword) {
 		String[] passwordSegments = storedPassword.split(":");
 		int iterations = Integer.parseInt(passwordSegments[0]);
 		byte[] salt = fromHex(passwordSegments[1]);
 		byte[] hash = fromHex(passwordSegments[2]);
 		
 		PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, hash.length * 8);
-		SecretKeyFactory keyFac =  SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+		SecretKeyFactory keyFac = null;
+		try {
+			keyFac = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+		} catch (NoSuchAlgorithmException e1) {
+			e1.printStackTrace();
+		}
 		
-		byte[] testHash = keyFac.generateSecret(spec).getEncoded();
+		byte[] testHash = null;
+		try {
+			testHash = keyFac.generateSecret(spec).getEncoded();
+		} catch (InvalidKeySpecException e) {
+			e.printStackTrace();
+		}
 		int diff = hash.length ^ testHash.length;
 		for(int i = 0; i < hash.length && i < testHash.length; i++) {
 			diff |= hash[i] ^ testHash[i];
 		}
 		return diff == 0;
+	}
+	/**
+	 * Validate password strength before sending to database and updating password
+	 * @param password
+	 * @return
+	 */
+	public static boolean passwordStrengthValidator(char[] password) {
+		boolean hasUpper = false;
+		boolean hasLower = false;
+		boolean hasDigit = false;
+		boolean hasSpecial = false;
+		boolean minimumLength = (password.length >= 8)? true : false;
+		for(char c : password) {
+			if(Character.isUpperCase(c)) hasUpper = true;
+			else if(Character.isLowerCase(c)) hasLower = true;
+			else if(Character.isDigit(c)) hasDigit = true;
+			else hasSpecial = true;
+		}
+		if (hasUpper && hasLower && hasDigit && hasSpecial) return true;
+		else {
+			String upperMissing = "\n> Missing an Uppercase character";
+			String lowerMissing = "\n> Missing a Lowercase character";
+			String digitMissing = "\n> Missing a number";
+			String specialMissing = "\n> Missing a special character";
+			String tooShortPass = "\n> Password too short, must be at least 8 characters";
+			
+			StringBuilder bobTheBuilder = new StringBuilder();
+			
+			if(!hasUpper) bobTheBuilder.append(upperMissing);
+			if(!hasLower) bobTheBuilder.append(lowerMissing);
+			if(!hasDigit) bobTheBuilder.append(digitMissing);
+			if(!hasSpecial) bobTheBuilder.append(specialMissing);
+			if(!minimumLength) bobTheBuilder.append(tooShortPass);
+			JOptionPane.showConfirmDialog(null, bobTheBuilder.toString(), "Password does not meet the minimum requirements", JOptionPane.DEFAULT_OPTION);
+			return false;
+		}
 	}
 }

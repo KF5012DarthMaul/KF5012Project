@@ -13,14 +13,15 @@ public class KF5012DarthMaulApplication {
 			//Generate Temp User
 			DBAbstraction db;
 			db = DBAbstraction.getInstance();
+			
+			System.out.println(db.getUser("test").getAccountType());
 			if(!db.doesUserExist("test")) {
-				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.value);
+				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.ordinal());
 				System.out.println("TEST: User created fresh");
 			}else {
 				db.deleteUser(new User("test", PermissionManager.AccountType.HR_PERSONNEL));
-				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.value);
+				db.createUser("test", SecurityManager.generatePassword("password"), PermissionManager.AccountType.HR_PERSONNEL.ordinal());
 				System.out.println("TEST: User deleted then created again");
-
 			}
 			Security.addProvider(new BouncyCastleProvider());
 			Security.setProperty("crypto.policy", "unlimited");
