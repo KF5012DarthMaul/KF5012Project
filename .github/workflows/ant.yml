@@ -1,0 +1,28 @@
+name: Testing CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+    - name: Build with Ant
+      run: ant -noinput -buildfile build.xml
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Package
+        path: build/jar
+      
