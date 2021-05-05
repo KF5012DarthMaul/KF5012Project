@@ -6,7 +6,7 @@
               as the first entry and export the buildfile again. --><project basedir="." default="build" name="KF5012DarthMaulApplication">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="C:/Users/Scrub/eclipse/java-2020-12/eclipse/"/>
-    <property name="junit.output.dir" value="junit"/>
+    <property name="junit.output.dir" value="build/jar"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="15"/>
     <property name="source" value="15"/>
@@ -145,6 +145,7 @@
     <target name="junitreport">
         <junitreport todir="${junit.output.dir}">
             <fileset dir="${junit.output.dir}">
+                <echo message="RUNNING JUNITREPORT/>
                 <include name="TEST-*.xml"/>
             </fileset>
             <report format="frames" todir="${junit.output.dir}"/>
