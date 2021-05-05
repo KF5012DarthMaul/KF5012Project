@@ -127,6 +127,7 @@ public class EditUser extends JFrame {
 				if(SecurityManager.passwordStrengthValidator(passfield_resetPassword.getPassword())) {
 					try {
 						db.setHashedPassword(user, SecurityManager.generatePassword(passfield_resetPassword.getPassword().toString()));
+						dispose();
 					} catch (UserDoesNotExistException e1) {
 						e1.printStackTrace();
 					} catch (Exception e1) {
@@ -138,6 +139,11 @@ public class EditUser extends JFrame {
 		panel_3.add(btn_editUserApply);
 		
 		JButton btn_editUserCancel = new JButton("Cancel");
+		btn_editUserCancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+			}
+		});
 		panel_3.add(btn_editUserCancel);
 	}
 
