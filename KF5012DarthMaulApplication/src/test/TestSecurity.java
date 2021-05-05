@@ -38,6 +38,10 @@ class TestSecurity {
 		String passString2 = SecurityManager.generateRandomPasswordString();
 		assertNotEquals(passString1, passString2);
 	}
+	
+	@Test
+	void forceFail() {
+		fail("forcefail");
+	}
 
 }
-
