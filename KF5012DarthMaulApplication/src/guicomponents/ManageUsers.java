@@ -313,13 +313,16 @@ public class ManageUsers extends JPanel {
 				for(User u : usersToRemove) {
 					db.deleteUser(u);
 				}
-				JOptionPane.showConfirmDialog(null, "Removed " + usersToRemove.size() + " users.","Removed Users", JOptionPane.OK_OPTION);
-				usersToRemove.clear();
-				tabbedPane.setSelectedIndex(0);
-				updateTable(db.getAllUsers(), tbl_removeUsersAll);
-				updateTable(usersToRemove, tbl_removeUsersSelected);
-				updateTable(db.getAllUsers(), tbl_viewUsersTable);
-
+				int res = JOptionPane.showConfirmDialog(null, "This Action will remove " + usersToRemove.size() + " users, Are you sure?","Removed Users", JOptionPane.OK_OPTION);
+				if(res == JOptionPane.YES_OPTION) {
+					usersToRemove.clear();
+					tabbedPane.setSelectedIndex(0);
+					updateTable(db.getAllUsers(), tbl_removeUsersAll);
+					updateTable(usersToRemove, tbl_removeUsersSelected);
+					updateTable(db.getAllUsers(), tbl_viewUsersTable);
+				}else {
+					return;
+				}
 			}
 		});
 		panel_removeUsersBottom.add(btn_removeSelected);
