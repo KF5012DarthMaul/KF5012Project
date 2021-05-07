@@ -36,8 +36,9 @@ public class PermissionManager {
 		}
 	}
 	
-	public AccountType getAccountType(int x) {
-		return AccountType.values()[x];
+	public static AccountType getAccountType(int x) {
+		if(x >= AccountType.values().length || x < 0) return null;
+		else return AccountType.values()[x];
 	}
 	public ArrayList<Permission> getPermissions(){
 		return Permissions;

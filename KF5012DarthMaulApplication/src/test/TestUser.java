@@ -1,6 +1,7 @@
 package test;
-
+//import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.*;
+//import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.Test;
 import kf5012darthmaulapplication.*;
@@ -90,4 +91,39 @@ public class TestUser {
 		
 		assertEquals(expectedAccount, actualAccount);
 	}
+	
+	@Test
+	public void testAccountTypeDoesNotHavePermission() {
+		AccountType ac = PermissionManager.AccountType.HR_PERSONNEL;
+		assertFalse(PermissionManager.hasPermission(ac, PermissionManager.Permission.VIEW_REPORTS));
+	}
+	
+	@Test
+	public void testAccountTypeDoesHavePermission() {
+		AccountType ac = PermissionManager.AccountType.HR_PERSONNEL;
+		assertTrue(PermissionManager.hasPermission(ac, PermissionManager.Permission.MANAGE_USERS));
+	}
+	
+	@Test
+	public void testAUsereDoesNotHavePermission() {
+		User user = new User("test", AccountType.HR_PERSONNEL);
+		assertFalse(user.pm.hasPermission(PermissionManager.Permission.VIEW_REPORTS));
+	}
+	
+	@Test
+	public void testUserDoesHavePermission() {
+		User user = new User("test", AccountType.HR_PERSONNEL);
+		assertTrue(user.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS));
+	}
+	
+	@Test
+	public void testGetAccountType() {
+		assertNull(PermissionManager.getAccountType(-1));
+		assertNull(PermissionManager.getAccountType(AccountType.values().length));
+		assertNull(PermissionManager.getAccountType(Integer.MAX_VALUE));
+		assertNull(PermissionManager.getAccountType(Integer.MIN_VALUE));
+		assertEquals(AccountType.HR_PERSONNEL, PermissionManager.getAccountType(0));
+		assertEquals(AccountType.ESTATE, PermissionManager.getAccountType(AccountType.values().length - 1));
+	}
+	
 }

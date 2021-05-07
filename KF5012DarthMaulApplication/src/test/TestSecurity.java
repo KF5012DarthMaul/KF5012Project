@@ -38,4 +38,14 @@ public class TestSecurity {
 		String passString2 = SecurityManager.generateRandomPasswordString();
 		assertNotEquals(passString1, passString2);
 	}
+	
+	@Test
+	public void testPasswordStrengthValidator() {
+		assertTrue(SecurityManager.passwordStrengthValidatorNoOutput("abcABC123!@#".toCharArray()));
+		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput(null));
+		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput("AAAaa#1".toCharArray())); //Length
+		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput("aaaaaaa#1".toCharArray())); //Upper
+		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput("AAAAAAA#1".toCharArray())); //Lower
+		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput("AAAAaaaa1".toCharArray())); //Special
+	}
 }
