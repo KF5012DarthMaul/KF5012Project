@@ -31,7 +31,7 @@ public class KF5012DarthMaulApplication {
 		}catch(Error e) {
 			new ErrorDialog("An Error occured opening the Login Form", e);
 		}catch(Exception e) {
-			new ExceptionDialog(e.getMessage());
+			new ExceptionDialog("Failed to open applicaiton, maybe you have it already running?");
 		}
 	}
 }
