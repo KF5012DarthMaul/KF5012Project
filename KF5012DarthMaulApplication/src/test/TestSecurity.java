@@ -49,3 +49,4 @@ public class TestSecurity {
 		assertFalse(SecurityManager.passwordStrengthValidatorNoOutput("AAAAaaaa1".toCharArray())); //Special
 	}
 }
+
