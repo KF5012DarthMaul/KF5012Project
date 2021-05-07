@@ -1,6 +1,7 @@
 package kf5012darthmaulapplication;
 
 import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions;
 import dbmgr.DBExceptions.FailedToConnectException;
 import dbmgr.DBExceptions.UserAlreadyExistsException;
 import dbmgr.DBExceptions.UserDoesNotExistException;
@@ -28,11 +29,11 @@ public class UserManager {
 		boolean localFlag = false;
 		boolean databaseFlag = false;
 		boolean userFlag = true; 
-		if(!authorisedUser.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)) localFlag = true;
+		if(authorisedUser.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)) localFlag = true;
 		try {
 			PermissionManager.AccountType dbAccount = PermissionManager.intToAccountType(db.getPermissions(authorisedUser.getUsername()));
 			if(PermissionManager.hasPermission(dbAccount, PermissionManager.Permission.MANAGE_USERS)) databaseFlag = true;
-			return false;
+			//return false;
 		} catch (UserDoesNotExistException e) {
 			userFlag = false;
 		}
@@ -115,14 +116,13 @@ public class UserManager {
 	 * @param user
 	 * @throws UserAuthenticationFailed
 	 */
-	public boolean editUserPassword(User authorisedUser, User user, String newHashedPassword) throws UserAuthenticationFailed {
+	public boolean editUserPassword(User authorisedUser, User user, String newHashedPassword) throws UserAuthenticationFailed, UserDoesNotExistException {
 		if(verifyAuthorisedUser(authorisedUser) || authorisedUser.equals(user)) {
 			try {
 				db.setHashedPassword(user, newHashedPassword);
 				return true;
 			} catch (UserDoesNotExistException e) {
-				e.printStackTrace();
-				return false;
+				throw new DBExceptions.UserDoesNotExistException();
 			}
 		}else {
 			throw new UserManagerExceptions.UserAuthenticationFailed();

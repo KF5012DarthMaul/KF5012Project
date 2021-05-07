@@ -137,6 +137,7 @@ public class SecurityManager {
 	 * @return
 	 */
 	public static boolean passwordStrengthValidator(char[] password) {
+		if(password == null) return false;
 		boolean hasUpper = false;
 		boolean hasLower = false;
 		boolean hasDigit = false;
@@ -148,7 +149,7 @@ public class SecurityManager {
 			else if(Character.isDigit(c)) hasDigit = true;
 			else hasSpecial = true;
 		}
-		if (hasUpper && hasLower && hasDigit && hasSpecial) return true;
+		if (hasUpper && hasLower && hasDigit && hasSpecial && minimumLength) return true;
 		else {
 			String upperMissing = "\n> Missing an Uppercase character";
 			String lowerMissing = "\n> Missing a Lowercase character";
@@ -164,6 +165,24 @@ public class SecurityManager {
 			if(!hasSpecial) bobTheBuilder.append(specialMissing);
 			if(!minimumLength) bobTheBuilder.append(tooShortPass);
 			JOptionPane.showConfirmDialog(null, bobTheBuilder.toString(), "Password does not meet the minimum requirements", JOptionPane.DEFAULT_OPTION);
+			return false;
+		}
+	}
+	public static boolean passwordStrengthValidatorNoOutput(char[] password) {
+		if(password == null) return false;
+		boolean hasUpper = false;
+		boolean hasLower = false;
+		boolean hasDigit = false;
+		boolean hasSpecial = false;
+		boolean minimumLength = (password.length >= 8)? true : false;
+		for(char c : password) {
+			if(Character.isUpperCase(c)) hasUpper = true;
+			else if(Character.isLowerCase(c)) hasLower = true;
+			else if(Character.isDigit(c)) hasDigit = true;
+			else hasSpecial = true;
+		}
+		if (hasUpper && hasLower && hasDigit && hasSpecial && minimumLength) return true;
+		else {
 			return false;
 		}
 	}
