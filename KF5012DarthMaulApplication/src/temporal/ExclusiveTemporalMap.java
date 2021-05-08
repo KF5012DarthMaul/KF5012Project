@@ -27,12 +27,21 @@ public class ExclusiveTemporalMap<I extends Comparable<I>, T extends Event>
 
 	// Validity checking
 	
-	public boolean isValid(I index) {
-		Period p = this.get(index).getPeriod();
+	public boolean isValid(T event) {
+		Period p = event.getPeriod();
 		List<T> items = this.getBetween(
 			p.start(), p.end(), this.exclusivityMetric, false, false
 		);
 		return items.isEmpty();
+	}
+
+	public boolean isRangeValid(List<T> events) {
+		boolean valid = true;
+		for (T event : events) {
+			valid = this.isValid(event);
+			if (!valid) break;
+		}
+		return valid;
 	}
 
 	// Delegate to map for everything
