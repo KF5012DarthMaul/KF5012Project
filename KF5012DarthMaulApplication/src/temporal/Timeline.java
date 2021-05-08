@@ -18,9 +18,9 @@ import java.util.List;
 public class Timeline<I extends Comparable<? super I>, T extends Event>
 		implements TemporalMap<Timeline.Index, T>
 {
-	private List<TemporalMap<I, T>> maps;
+	private List<? extends TemporalMap<I, T>> maps;
 
-	public Timeline(List<TemporalMap<I, T>> maps) {
+	public Timeline(List<? extends TemporalMap<I, T>> maps) {
 		this.maps = maps;
 	}
 
@@ -230,7 +230,7 @@ public class Timeline<I extends Comparable<? super I>, T extends Event>
 	public TemporalMap<I, T> getMap(int mapIndex) {
 		return this.maps.get(mapIndex);
 	}
-	public List<TemporalMap<I, T>> getAllMaps() {
+	public List<? extends TemporalMap<I, T>> getAllMaps() {
 		return this.maps;
 	}
 	
