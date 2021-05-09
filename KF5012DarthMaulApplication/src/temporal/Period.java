@@ -20,11 +20,17 @@ public class Period {
 	
 	public Period(LocalDateTime start, LocalDateTime end) {
 		this.start = start;
-		this.end = end;
+		if (this.start.isAfter(end)) {
+			this.end = start;
+		} else {
+			this.end = end;
+		}
 	}
 	public Period(LocalDateTime start, Duration length) {
 		this.start = start;
-		if (length.isNegative()) {
+		if (length == null) {
+			this.end = null;
+		} else if (length.isNegative()) {
 			this.end = start;
 		} else {
 			this.end = start.plus(length);
@@ -42,6 +48,9 @@ public class Period {
 		return this.end;
 	}
 	public Duration duration() {
+		if (this.end == null) {
+			return null;
+		}
 		return Duration.between(this.start, this.end);
 	}
 }

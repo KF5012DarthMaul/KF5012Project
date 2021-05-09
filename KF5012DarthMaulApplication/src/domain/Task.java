@@ -52,6 +52,27 @@ public class Task {
 		this.verification = verification;
 	}
 	
+	/**
+	 * Copy constructor.
+	 * 
+	 * Use carefully, as it copies the ID. Make sure to delete the old object
+	 * after confirming changes to the new one.
+	 * 
+	 * @param obj The Task object to copy.
+	 */
+	public Task(Task obj) {
+		this.id = obj.id;
+		this.name = obj.name;
+		this.notes = obj.notes;
+		this.preferences = obj.preferences;
+		this.efficiency = obj.efficiency;
+		this.effectiveness = obj.effectiveness;
+		this.standardPriority = obj.standardPriority;
+		this.scheduleConstraint = obj.scheduleConstraint;
+		this.allocationConstraint = obj.allocationConstraint;
+		this.verification = obj.verification;
+	}
+	
 	// Used when creating a task, just before its details are filled in by the
 	// user.
 	public Task() {
@@ -83,6 +104,7 @@ public class Task {
 		);
 	}
 
+	// ID management
 	public Integer getID() {
 		return this.id;
 	}
@@ -90,6 +112,7 @@ public class Task {
 		this.id = id;
 	}
 	
+	// Getters
 	public String getName() {
 		return this.name;
 	}
@@ -118,5 +141,29 @@ public class Task {
 	}
 	public Verification getVerification() {
 		return this.verification;
+	}
+
+	// Setters
+	public void setName(String name) {
+		this.name = name;
+	}
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
+	
+	// TODO: make methods for preferences, efficiency, and effectiveness
+	
+	public void setStandardPriority(TaskPriority standardPriority) {
+		this.standardPriority = standardPriority;
+	}
+	public void setScheduleConstraint(
+			ConstrainedIntervaledPeriodSet scheduleConstraint) {
+		this.scheduleConstraint = scheduleConstraint;
+	}
+	public void setAllocationConstraint(User allocationConstraint) {
+		this.allocationConstraint = allocationConstraint;
+	}
+	public void setVerification(Verification verification) {
+		this.verification = verification;
 	}
 }
