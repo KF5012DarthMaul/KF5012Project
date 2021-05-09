@@ -1,9 +1,7 @@
+
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. --><project basedir="." default="test" name="KF5012DarthMaulApplication">
+<?eclipse.ant.import?>
+<project basedir="." default="test" name="KF5012DarthMaulApplication">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="C:/Users/Scrub/eclipse/java-2020-12/eclipse/"/>
     <property name="junit.output.dir" value="build/jar"/>
@@ -90,7 +88,7 @@
     <target name="build-subprojects"/>
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+        <javac debug="true" debuglevel="${debuglevel}" destdir="${junit.output.dir}" includeantruntime="false" source="${source}" target="${target}">
             <src path="src"/>
             <classpath refid="KF5012DarthMaulApplication.classpath"/>
         </javac>
