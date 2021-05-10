@@ -147,7 +147,7 @@ public class TimelinePanel extends JPanel {
 			}
 			endSnapped = end.truncatedTo(ChronoUnit.DAYS);
 			tickLabelFormatter = DateTimeFormatter.ofPattern(
-				"d/M/yyyy\nh:mm a"
+				"d/M/yyyy, h:mm a"
 			);
 			
 		} else if (hours > 0L) {
