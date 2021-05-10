@@ -27,7 +27,7 @@ public class TimelinePanel extends JPanel {
 	/* Retrievable
 	 * ---------- */
 	
-	private final Timeline<Integer, ChartableEvent> timeline;
+	private Timeline<Integer, ChartableEvent> timeline;
 	private LocalDateTime start;
 	private LocalDateTime end;
 
@@ -70,20 +70,30 @@ public class TimelinePanel extends JPanel {
 	
 	/**
 	 * Create the panel.
-	 * 
-	 * @param timeline The timeline to plot.
 	 */
-	public TimelinePanel(Timeline<Integer, ChartableEvent> timeline) {
-		this.timeline = timeline;
-		
+	public TimelinePanel() {
 		this.margin = 50;
 		this.tickLength = 20;
 		this.hangingTickLength = 40;
 	}
 
+	/**
+	 * Create the panel.
+	 * 
+	 * @param timeline The timeline to plot.
+	 */
+	public TimelinePanel(Timeline<Integer, ChartableEvent> timeline) {
+		this();
+		this.setTimeline(timeline);
+	}
+
 	/* Public
 	 * -------------------------------------------------- */
 
+	public void setTimeline(Timeline<Integer, ChartableEvent> timeline) {
+		this.timeline = timeline;
+	}
+	
 	/**
 	 * Show all events in the given range from this panel's map.
 	 * 
