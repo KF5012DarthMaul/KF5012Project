@@ -4,19 +4,42 @@ import java.time.LocalDateTime;
 
 import kf5012darthmaulapplication.User;
 
+/**
+ * The information about completing an execution of a task or verification.
+ * 
+ * @author William Taylor
+ */
 public class Completion {
 	private Integer id; // Nullable
 	
-	private User caretaker;
+	private User staff;
 	private LocalDateTime startTime;
 	private LocalDateTime completionTime;
 	private TaskCompletionQuality workQuality;
 	private String notes;
 	
+	/**
+	 * Create a new Completion, or populate a Completion object from data
+	 * storage.
+	 * 
+	 * @param id The ID of the completion in the database. Null if not in the
+	 * DB.
+	 * @param staff The caretaker or manager that completed the task or
+	 * verification execution.
+	 * @param startTime The time the task or verification execution was started.
+	 * @param completionTime The time the task or verification execution was
+	 * completed.
+	 * @param workQuality The quality the task was completed to. Self-reported
+	 * at the completion of a task, and externally verified at the completion of
+	 * a verification.
+	 * @param notes Any notes to make after a task or verification was
+	 * completed, such as comments on what happened, any needed follow-up tasks
+	 * that must be made, etc.
+	 */
 	public Completion(
 			Integer id,
 			
-			User caretaker,
+			User staff,
 			LocalDateTime startTime,
 			LocalDateTime completionTime,
 			TaskCompletionQuality workQuality,
@@ -24,13 +47,22 @@ public class Completion {
 	) {
 		this.id = id;
 		
-		this.caretaker = caretaker;
+		this.staff = staff;
 		this.startTime = startTime;
 		this.completionTime = completionTime;
 		this.workQuality = workQuality;
 		this.notes = notes;
 	}
 	
+	/**
+	 * Create a new completion with sensible default values. These should be
+	 * filled out by the user who completed the associated task.
+	 * 
+	 * Note that the staff member who completed the task or verification is not
+	 * set by default, which is a temporarily invalid state. It must be set
+	 * before the completion is used (linked to the task or verification
+	 * execution) or stored.
+	 */
 	public Completion() {
 		this(
 			null, // No ID assigned yet (ie. not in DB)
@@ -49,8 +81,8 @@ public class Completion {
 		this.id = id;
 	}
 	
-	public User getCaretaker() {
-		return this.caretaker;
+	public User getStaff() {
+		return this.staff;
 	}
 	public LocalDateTime getStartTime() {
 		return this.startTime;

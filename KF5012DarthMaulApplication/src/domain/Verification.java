@@ -4,6 +4,13 @@ import java.time.Duration;
 
 import kf5012darthmaulapplication.User;
 
+/**
+ * The information about verifying a task that may be done more than once. A
+ * Verification implies that the task should be verified every time it is
+ * executed.
+ * 
+ * @author William Taylor
+ */
 public class Verification {
 	private Integer id; // Nullable
 	
@@ -12,6 +19,20 @@ public class Verification {
 	private Duration standardDeadline; // Nullable
 	private User allocationConstraint; // Nullable
 	
+	/**
+	 * Create a new Verification, or populate a Verification object from data
+	 * storage.
+	 * 
+	 * @param id The ID of the verification in the database. Null if not in the
+	 * DB.
+	 * @param notes The notes common to all verifications of this task.
+	 * @param standardPriority The usual priority of executions of verifying the
+	 * task.
+	 * @param standardDeadline The usual deadline for executions of verifying
+	 * the task.
+	 * @param allocationConstraint The only caretaker that may be assigned this
+	 * verification. Null if not constrained to any caretaker.
+	 */
 	public Verification(
 			Integer id,
 			String notes,
@@ -26,6 +47,9 @@ public class Verification {
 		this.allocationConstraint = allocationConstraint;
 	}
 	
+	/**
+	 * Create a new verification with sensible default values.
+	 */
 	public Verification() {
 		this(
 			null, // No ID assigned yet (ie. not in DB)
