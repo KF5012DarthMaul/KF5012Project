@@ -52,27 +52,6 @@ public class Task {
 		this.verification = verification;
 	}
 	
-	/**
-	 * Copy constructor.
-	 * 
-	 * Use carefully, as it copies the ID. Make sure to delete the old object
-	 * after confirming changes to the new one.
-	 * 
-	 * @param obj The Task object to copy.
-	 */
-	public Task(Task obj) {
-		this.id = obj.id;
-		this.name = obj.name;
-		this.notes = obj.notes;
-		this.preferences = obj.preferences;
-		this.efficiency = obj.efficiency;
-		this.effectiveness = obj.effectiveness;
-		this.standardPriority = obj.standardPriority;
-		this.scheduleConstraint = obj.scheduleConstraint;
-		this.allocationConstraint = obj.allocationConstraint;
-		this.verification = obj.verification;
-	}
-	
 	// Used when creating a task, just before its details are filled in by the
 	// user.
 	public Task() {
