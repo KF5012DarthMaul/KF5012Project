@@ -1,14 +1,16 @@
 package kf5012darthmaulapplication;
 
-import java.awt.BorderLayout;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+
+import guicomponents.utils.TimelinePanel;
 
 import domain.TaskExecution;
 import domain.VerificationExecution;

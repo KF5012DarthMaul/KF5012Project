@@ -1,4 +1,4 @@
-package kf5012darthmaulapplication;
+package guicomponents.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
