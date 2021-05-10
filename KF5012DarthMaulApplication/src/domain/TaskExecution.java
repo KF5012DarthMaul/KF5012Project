@@ -41,6 +41,7 @@ public class TaskExecution implements ChartableEvent {
 		this.priority = priority;
 	}
 
+	// ID and reference management
 	public Integer getID() {
 		return this.id;
 	}
@@ -51,18 +52,15 @@ public class TaskExecution implements ChartableEvent {
 	public Task getTask() {
 		return this.task;
 	}
+	// You can't set the task
 
+	// Getters
 	@Override
 	public String getName() {
 		return this.task.getName();
 	}
-	
 	public String getNotes() {
 		return this.notes;
-	}
-
-	public TaskPriority getPriority() {
-		return this.priority;
 	}
 
 	@Override
@@ -70,14 +68,15 @@ public class TaskExecution implements ChartableEvent {
 		return this.period;
 	}
 
+	public TaskPriority getPriority() {
+		return this.priority;
+	}
 	public User getAllocation() {
 		return this.allocation;
 	}
-
 	public Completion getCompletion() {
 		return this.completion;
 	}
-
 	public VerificationExecution getVerification() {
 		return this.verification;
 	}
@@ -85,5 +84,27 @@ public class TaskExecution implements ChartableEvent {
 	@Override
 	public Color getColor() {
 		return TaskExecution.color;
+	}
+
+	// Setters
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
+
+	public void setPeriod(Period period) {
+		this.period = period;
+	}
+
+	public void setPriority(TaskPriority priority) {
+		this.priority = priority;
+	}
+	public void setAllocation(User allocation) {
+		this.allocation = allocation;
+	}
+	public void setCompletion(Completion completion) {
+		this.completion = completion;
+	}
+	public void setVerification(VerificationExecution verification) {
+		this.verification = verification;
 	}
 }
