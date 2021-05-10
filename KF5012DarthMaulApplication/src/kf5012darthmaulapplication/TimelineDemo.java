@@ -1,22 +1,23 @@
 package kf5012darthmaulapplication;
 
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.awt.BorderLayout;
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
-import guicomponents.utils.TimelinePanel;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
 import domain.Verification;
 import domain.VerificationExecution;
-
+import guicomponents.utils.TimelinePanel;
 import temporal.ChartableEvent;
 import temporal.ChartableTemporalMap;
 import temporal.ConstrainedIntervaledPeriodSet;
@@ -26,24 +27,57 @@ import temporal.TemporalList;
 import temporal.TemporalMap;
 import temporal.Timeline;
 
-public class TimelineDemo implements Runnable {
+@SuppressWarnings("serial")
+public class TimelineDemo extends JFrame {
 	private static final DateTimeFormatter formatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 	
-	private final Timeline<Integer, ChartableEvent> timeline;
+	private JPanel contentPane;
 
+	/**
+	 * Launch the application.
+	 */
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new TimelineDemo());
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					TimelineDemo frame = new TimelineDemo();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
+	/**
+	 * Create the frame.
+	 */
 	public TimelineDemo() {
-		timeline = generateTimeline();
+		setTitle("Time Line Plot");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 1000, 300);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		contentPane.setLayout(new BorderLayout(0, 0));
+		setContentPane(contentPane);
+
+		Timeline<Integer, ChartableEvent> timeline = generateTimeline();
+		TimelinePanel timelinePanel = new TimelinePanel(timeline);
+		contentPane.add(timelinePanel, BorderLayout.CENTER);
+
+		timelinePanel.showBetween(
+			dt("9:00am 9/5/2021"), dt("5:00pm 10/5/2021"), true
+		);
 	}
-	
-	private List<ChartableEvent> generateTaskExecs() {
-		List<ChartableEvent> taskExecs = new ArrayList<>();
+
+	private List<List<ChartableEvent>> generateTaskExecs() {
+		List<List<ChartableEvent>> eventLists = new ArrayList<>();
 		
 		// A recurring task
+		List<ChartableEvent> task1Events = new ArrayList<>();
+		eventLists.add(task1Events);
+		
 		Task t1 = new Task(
 			null,
 			"Check toilets", "",
@@ -63,59 +97,67 @@ public class TimelineDemo implements Runnable {
 		);
 		
 		// Some on the 9th
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
 			null, null, null
 		));
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
 			null, null, null
 		));
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
 			null, null, null
 		));
 
 		// Some on the 10th
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
 			null, null, null
 		));
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
 			null, null, null
 		));
-		taskExecs.add(new TaskExecution(
+		task1Events.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
 			null, null, null
 		));
 
 		// A low-priority one-off task without a deadline
+		List<ChartableEvent> task2Events = new ArrayList<>();
+		eventLists.add(task2Events);
+		
 		Task t2 = new Task(
-				null,
-				"Fix Window on bike shed", "",
-				null, null, null,
-				TaskPriority.LOW,
-				new ConstrainedIntervaledPeriodSet(
-					new IntervaledPeriodSet(
-						new Period(dt("9:45am 9/5/2021"), (Duration) null), null
-					),
-					null
+			null,
+			"Fix Window on bike shed", "",
+			null, null, null,
+			TaskPriority.LOW,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("9:45am 9/5/2021"), (Duration) null), null
 				),
-				null, null);
-		taskExecs.add(new TaskExecution(
+				null
+			),
+			null, null
+		);
+		
+		task2Events.add(new TaskExecution(
 			null, t2, "", TaskPriority.LOW,
 			new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
 			null, null, null
 		));
 
 		// A high-priority one-off task with deadline and verification.
+		List<ChartableEvent> task3Events = new ArrayList<>();
+		eventLists.add(task3Events);
+		
 		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
 		
 		Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
@@ -149,21 +191,23 @@ public class TimelineDemo implements Runnable {
 		);
 
 		// Add both
-		taskExecs.add(t3Exec);
-		taskExecs.add(t3VerExec);
+		task3Events.add(t3Exec);
+		task3Events.add(t3VerExec);
 		
-		return taskExecs;
+		return eventLists;
 	}
 	
 	private Timeline<Integer, ChartableEvent> generateTimeline() {
-		List<ChartableEvent> events = this.generateTaskExecs();
-		
-		TemporalMap<Integer, ChartableEvent> map =
-			new ChartableTemporalMap<Integer, ChartableEvent>(
-				new TemporalList<ChartableEvent>(events));
-		
+		List<List<ChartableEvent>> eventLists = this.generateTaskExecs();
+
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
-		maps.add(map);
+		for (List<ChartableEvent> eventList : eventLists) {
+			maps.add(
+				new ChartableTemporalMap<Integer, ChartableEvent>(
+					new TemporalList<ChartableEvent>(eventList)
+				)
+			);
+		}
 		
 		Timeline<Integer, ChartableEvent> timeline = new Timeline<>(maps);
 		return timeline;
@@ -171,20 +215,5 @@ public class TimelineDemo implements Runnable {
 
 	private LocalDateTime dt(String dateTimeString) {
 		return LocalDateTime.parse(dateTimeString, formatter);
-	}
-	
-	@Override
-	public void run() {
-		JFrame frame = new JFrame("Time Line Plot");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		TimelinePanel timelinePanel = new TimelinePanel(timeline, 1000, 300);
-		timelinePanel.showBetween(dt("9:00am 9/5/2021"), dt("5:00pm 10/5/2021"));
-		
-		frame.add(timelinePanel, BorderLayout.CENTER);
-
-		frame.pack();
-		frame.setLocationByPlatform(true);
-		frame.setVisible(true);
 	}
 }
