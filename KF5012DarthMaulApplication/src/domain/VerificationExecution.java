@@ -7,11 +7,19 @@ import kf5012darthmaulapplication.User;
 import temporal.ChartableEvent;
 import temporal.Period;
 
+/**
+ * An instance of verifying a task.
+ * 
+ * Some tasks may not be verified regularly, so these can be made for arbitrary
+ * tasks without a consistent {@link Verification} associated with them.
+ * 
+ * @author William Taylor
+ */
 public class VerificationExecution implements ChartableEvent {
 	private static final Color color = Color.RED;
 
 	private Integer id; // Nullable
-	private Verification verification;
+	private Verification verification; // Nullable
 	private TaskExecution taskExec;
 	
 	private String notes;
@@ -19,6 +27,24 @@ public class VerificationExecution implements ChartableEvent {
 	private User allocation; // Nullable
 	private Completion completion; // Nullable
 	
+	/**
+	 * Create a new VerificationExecution, or populate a VerificationExecution
+	 * object from data storage.
+	 * 
+	 * @param id The ID of the verification execution in the database. Null if
+	 * not in the DB.
+	 * @param verification The verification this is an execution of. Null if the
+	 * task of this verification execution (this -> task execution -> task) is
+	 * not normally verified.
+	 * @param taskExec The task execution this is a verification of.
+	 * @param notes Notes associated with the verification execution.
+	 * @param deadline The latest point after the task is
+	 * {@link Completion completed} that it must be verified by.
+	 * @param allocation The caretaker or manager this verification is allocated
+	 * to. Null if not allocated.
+	 * @param completion The completion information associated with this
+	 * verification execution. Null if not completed.
+	 */
 	public VerificationExecution(
 			Integer id,
 			

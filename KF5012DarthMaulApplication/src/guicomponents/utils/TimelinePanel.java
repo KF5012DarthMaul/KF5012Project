@@ -1,4 +1,4 @@
-package kf5012darthmaulapplication;
+package guicomponents.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -27,13 +27,10 @@ public class TimelinePanel extends JPanel {
 	/* Retrievable
 	 * ---------- */
 	
-	private final Timeline<Integer, ChartableEvent> timeline;
+	private Timeline<Integer, ChartableEvent> timeline;
 	private LocalDateTime start;
 	private LocalDateTime end;
 
-	private final int width;
-	private final int height;
-	
 	/* Internal
 	 * ---------- */
 	
@@ -43,14 +40,16 @@ public class TimelinePanel extends JPanel {
 	
 	// Overall measures
 	private final int margin;
-	private final int plotWidth;
-	private final int plotHeight;
+	private int width;
+	private int height;
+	private int plotWidth;
+	private int plotHeight;
 	private int xAxisHeight;
 	private int timelineHeight;
-	
+
 	// Font measures
 	private FontMetrics metrics;
-	
+
 	// Axis tick measures
 	private final int tickLength;
 	private final int hangingTickLength;
@@ -66,39 +65,65 @@ public class TimelinePanel extends JPanel {
 	// Axis labels
 	private String[] xAxis;
 
-	public TimelinePanel(
-			Timeline<Integer, ChartableEvent> timeline,
-			int width, int height
-	) {
-		this.timeline = timeline;
-		
-		this.width = width;
-		this.height = height;
-		this.setPreferredSize(new Dimension(width, height));
-
+	// Element labels
+	private boolean showLabelOnce;
+	
+	/**
+	 * Create the panel.
+	 */
+	public TimelinePanel() {
 		this.margin = 50;
-		this.plotWidth = width - margin * 2;
-		this.plotHeight = height - margin * 2;
-
 		this.tickLength = 20;
 		this.hangingTickLength = 40;
+	}
+
+	/**
+	 * Create the panel.
+	 * 
+	 * @param timeline The timeline to plot.
+	 */
+	public TimelinePanel(Timeline<Integer, ChartableEvent> timeline) {
+		this();
+		this.setTimeline(timeline);
 	}
 
 	/* Public
 	 * -------------------------------------------------- */
 
-	public void showBetween(LocalDateTime start, LocalDateTime end) {
+	public void setTimeline(Timeline<Integer, ChartableEvent> timeline) {
+		this.timeline = timeline;
+	}
+	
+	/**
+	 * Show all events in the given range from this panel's map.
+	 * 
+	 * @param start The start of the date/time range in which to show events
+	 * from this panel's map.
+	 * @param end The end of the date/time range in which to show events from
+	 * this panel's map.
+	 * @param showLabelOnce Whether to only show the label for the first event
+	 * in the give range for each map.
+	 */
+	public void showBetween(
+			LocalDateTime start, LocalDateTime end, boolean showLabelOnce
+	) {
 		this.start = start;
 		this.end = end;
 		this.xAxis = createXAxisLabels();
+		this.showLabelOnce = showLabelOnce;
 		this.repaint();
 	}
-	
-	public int getWidth() { return this.width; }
-	public int getHeight() { return this.height; }
 
-	public LocalDateTime getStart() { return this.start; }
-	public LocalDateTime getEnd() { return this.end; }
+	public void showBetween(LocalDateTime start, LocalDateTime end) {
+		this.showBetween(start, end, false);
+	}
+
+	public LocalDateTime getStart() {
+		return this.start;
+	}
+	public LocalDateTime getEnd() {
+		return this.end;
+	}
 	
 	/* Private / Protected
 	 * -------------------------------------------------- */
@@ -122,7 +147,7 @@ public class TimelinePanel extends JPanel {
 			}
 			endSnapped = end.truncatedTo(ChronoUnit.DAYS);
 			tickLabelFormatter = DateTimeFormatter.ofPattern(
-				"d/M/yyyy\nh:mm a"
+				"d/M/yyyy, h:mm a"
 			);
 			
 		} else if (hours > 0L) {
@@ -190,10 +215,15 @@ public class TimelinePanel extends JPanel {
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		
+		this.width = this.getWidth();
+		this.height = this.getHeight();
+		this.plotWidth = width - margin * 2;
+		this.plotHeight = height - margin * 2;
 
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setColor(Color.WHITE);
-		g2d.fillRect(0, 0, getWidth(), getHeight());
+		g2d.fillRect(0, 0, this.width, this.width);
 
 		if (xAxis != null) {
 			g2d.setFont(
@@ -300,15 +330,18 @@ public class TimelinePanel extends JPanel {
 			List<ChartableEvent> events = map.getBetween(
 				start, end, Event.byPeriodDefaultZero, true, true
 			);
-			for (ChartableEvent event : events) {
-				drawChartableEvent(g2d, x, y, event);
+			for (int i = 0; i < events.size(); i++) {
+				ChartableEvent event = events.get(i);
+				boolean drawLabel = (i == 0 || !this.showLabelOnce);
+				drawChartableEvent(g2d, x, y, event, drawLabel);
 			}
 			y += pixelsPerTimeline;
 		}
 	}
 
 	private void drawChartableEvent(
-			Graphics2D g2d, int x, int y, ChartableEvent event
+			Graphics2D g2d, int x, int y, ChartableEvent event,
+			boolean drawLabel
 	) {
 		LocalDateTime startTime = event.getPeriod().start();
 		LocalDateTime endTime = event.getPeriod().end();
@@ -358,7 +391,9 @@ public class TimelinePanel extends JPanel {
 			g2d.drawLine(endx, y - 5, endx, y + 5);
 		}
 		
-		g2d.setColor(event.getColor());
-		g2d.drawString(label, labelx, labely);
+		if (drawLabel) {
+			g2d.setColor(event.getColor());
+			g2d.drawString(label, labelx, labely);
+		}
 	}
 }
