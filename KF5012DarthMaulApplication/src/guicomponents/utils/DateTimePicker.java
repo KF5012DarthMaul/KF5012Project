@@ -40,7 +40,7 @@ public class DateTimePicker extends JPanel {
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
 		JLabel lblLabel = new JLabel(label);
-		this.add(lblLabel);
+		add(lblLabel);
 
 		// See:
 		// - https://stackoverflow.com/questions/26794698/how-do-i-implement-jdatepicker
@@ -48,14 +48,14 @@ public class DateTimePicker extends JPanel {
 		dateModel = new UtilDateModel();
 		datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
 		datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
-		this.add(datePicker);
+		add(datePicker);
 		
 		timeSpinner = new JSpinner(new SpinnerDateModel());
 		timeEditor = new JSpinner.DateEditor(timeSpinner, "h:mma");
 		timeSpinner.setEditor(timeEditor);
-		this.add(timeSpinner);
+		add(timeSpinner);
 		
-		this.setDateTime(initialTime);
+		setDateTime(initialTime);
 	}
 
 	public DateTimePicker(String label) {

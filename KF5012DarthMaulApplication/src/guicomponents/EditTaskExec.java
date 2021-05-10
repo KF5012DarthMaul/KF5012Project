@@ -79,7 +79,7 @@ public class EditTaskExec extends JScrollPane {
 	}
 
 	public void showTaskExec(TaskExecution task) {
-		this.txtNotes.setText(task.getName());
-		this.cmbPriority.setSelectedItem(task.getPriority());
+		txtNotes.setText(task.getName());
+		cmbPriority.setSelectedItem(task.getPriority());
 	}
 }

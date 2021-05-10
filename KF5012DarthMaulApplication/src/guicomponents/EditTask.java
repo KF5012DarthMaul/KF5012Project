@@ -120,10 +120,10 @@ public class EditTask extends JScrollPane {
 				
 				// If it is the string "", then ...
 				if (value == "") {
-					this.setText("No Allocation Constraint");
+					setText("No Allocation Constraint");
 				} else {
 					User user = (User) value;
-					this.setText(user.getUsername());
+					setText(user.getUsername());
 				}
 				
 				return this;
@@ -221,12 +221,12 @@ public class EditTask extends JScrollPane {
 				.collect(Collectors.toList());
 	
 			// (Re)fill the list
-			this.cmbAllocationConstraint.removeAllItems();
+			cmbAllocationConstraint.removeAllItems();
 			for (User user : caretakers) {
-				this.cmbAllocationConstraint.addItem(user);
+				cmbAllocationConstraint.addItem(user);
 			}
-			this.cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
-			this.usersLoaded  = true;
+			cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
+			usersLoaded  = true;
 		}
 	}
 	
@@ -235,7 +235,7 @@ public class EditTask extends JScrollPane {
 	 * do not reload.
 	 */
 	public void loadUsers() {
-		this.loadUsers(false);
+		loadUsers(false);
 	}
 	
 	/**
@@ -244,15 +244,15 @@ public class EditTask extends JScrollPane {
 	 * @param task The task to edit.
 	 */
 	public void showTask(Task task) {
-		this.txtName.setText(task.getName());
-		this.txtNotes.setText(task.getNotes());
-		this.cmbPriority.setSelectedItem(task.getStandardPriority());
+		txtName.setText(task.getName());
+		txtNotes.setText(task.getNotes());
+		cmbPriority.setSelectedItem(task.getStandardPriority());
 		
 		User allocConst = task.getAllocationConstraint();
 		if (allocConst == null) {
-			this.cmbAllocationConstraint.setSelectedItem(""); // null -> ""
+			cmbAllocationConstraint.setSelectedItem(""); // null -> ""
 		} else {
-			this.cmbAllocationConstraint.setSelectedItem(allocConst);
+			cmbAllocationConstraint.setSelectedItem(allocConst);
 		}
 	}
 
@@ -265,7 +265,7 @@ public class EditTask extends JScrollPane {
 		boolean valid = true;
 		
 		// Name
-		String name = this.txtName.getText();
+		String name = txtName.getText();
 		if (name.isEmpty()) valid = false;
 		
 		// Notes - no validation
@@ -281,12 +281,12 @@ public class EditTask extends JScrollPane {
 	 * @param task The task to update.
 	 */
 	public void updateTask(Task task) {
-		task.setName(this.txtName.getText());
-		task.setNotes(this.txtNotes.getText());
+		task.setName(txtName.getText());
+		task.setNotes(txtNotes.getText());
 		task.setStandardPriority(
-			(TaskPriority) this.cmbPriority.getSelectedObjects()[0]);
+			(TaskPriority) cmbPriority.getSelectedObjects()[0]);
 		
-		Object obj = this.cmbAllocationConstraint.getSelectedObjects()[0];
+		Object obj = cmbAllocationConstraint.getSelectedObjects()[0];
 		if (obj instanceof String && obj.equals("")) {
 			task.setAllocationConstraint(null);
 		} else {

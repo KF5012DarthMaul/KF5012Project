@@ -124,40 +124,40 @@ public class ManageTasks extends JPanel {
 		/* Button Panel
 		 * -------------------------------------------------- */
 		
-		this.buttonPanel = new JPanel();
-		add(this.buttonPanel);
-		this.buttonPanel.setLayout(new CardLayout(0, 0));
+		buttonPanel = new JPanel();
+		add(buttonPanel);
+		buttonPanel.setLayout(new CardLayout(0, 0));
 
 		// View Task buttons panel
 		JPanel viewTasksButtonsPanel = new JPanel();
-		this.buttonPanel.add(viewTasksButtonsPanel, "viewTasksButtons");
+		buttonPanel.add(viewTasksButtonsPanel, "viewTasksButtons");
 		
 		JButton btnRefresh = new JButton("Refresh");
-		btnRefresh.addActionListener((e) -> this.refresh());
+		btnRefresh.addActionListener((e) -> refresh());
 		viewTasksButtonsPanel.add(btnRefresh);
 		
 		JButton btnAddTask = new JButton("Add Task");
-		btnAddTask.addActionListener((e) -> this.addTask());
+		btnAddTask.addActionListener((e) -> addTask());
 		viewTasksButtonsPanel.add(btnAddTask);
 		
 		JButton btnEditTask = new JButton("Edit Task");
-		btnEditTask.addActionListener((e) -> this.editTask());
+		btnEditTask.addActionListener((e) -> editTask());
 		viewTasksButtonsPanel.add(btnEditTask);
 		
 		JButton btnRemoveTask = new JButton("Remove Task");
-		btnRemoveTask.addActionListener((e) -> this.removeTask());
+		btnRemoveTask.addActionListener((e) -> removeTask());
 		viewTasksButtonsPanel.add(btnRemoveTask);
 		
 		// Edit Task / Edit Task Execution buttons panel
 		JPanel editTaskOrExecButtonsPanel = new JPanel();
-		this.buttonPanel.add(editTaskOrExecButtonsPanel, "editTaskOrExecButtons");
+		buttonPanel.add(editTaskOrExecButtonsPanel, "editTaskOrExecButtons");
 
 		JButton btnCancelEdit = new JButton("Cancel");
-		btnCancelEdit.addActionListener((e) -> this.cancelEdit());
+		btnCancelEdit.addActionListener((e) -> cancelEdit());
 		editTaskOrExecButtonsPanel.add(btnCancelEdit);
 		
 		JButton btnConfirmEdit = new JButton("Done");
-		btnConfirmEdit.addActionListener((e) -> this.confirmEdit());
+		btnConfirmEdit.addActionListener((e) -> confirmEdit());
 		editTaskOrExecButtonsPanel.add(btnConfirmEdit);
 		
 		// Separator
@@ -167,15 +167,15 @@ public class ManageTasks extends JPanel {
 		/* Main Panel
 		 * -------------------------------------------------- */
 
-		this.mainPanel = new JPanel();
-		add(this.mainPanel);
-		this.mainPanel.setLayout(new CardLayout(0, 0));
+		mainPanel = new JPanel();
+		add(mainPanel);
+		mainPanel.setLayout(new CardLayout(0, 0));
 
 		/* View Tasks
 		 * -------------------- */
 		
 		JPanel viewTasksPanel = new JPanel();
-		this.mainPanel.add(viewTasksPanel, "viewTasks");
+		mainPanel.add(viewTasksPanel, "viewTasks");
 		GridBagLayout gbl_viewTasksPanel = new GridBagLayout();
 		gbl_viewTasksPanel.columnWidths = new int[]{0, 0};
 		gbl_viewTasksPanel.rowHeights = new int[]{0, 0, 0, 0};
@@ -196,13 +196,13 @@ public class ManageTasks extends JPanel {
 		viewTasksPanel.add(rangePanel, gbc_rangePanel);
 		rangePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-		this.startDateTimePicker = new DateTimePicker(
+		startDateTimePicker = new DateTimePicker(
 			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS), // Start of today
 			"Start Date/Time"
 		);
 		rangePanel.add(startDateTimePicker);
 		
-		this.endDateTimePicker = new DateTimePicker(
+		endDateTimePicker = new DateTimePicker(
 			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1), // End of today
 			"End Date/Time"
 		);
@@ -228,9 +228,9 @@ public class ManageTasks extends JPanel {
 		gbc_taskTreeScrollPane.gridy = 2;
 		viewTasksPanel.add(taskTreeScrollPane, gbc_taskTreeScrollPane);
 
-		this.taskJTreeRoot = new DefaultMutableTreeNode();
-		this.taskJTreeModel = new DefaultTreeModel(this.taskJTreeRoot);
-		this.taskJTree = new JTree(this.taskJTreeModel) {
+		taskJTreeRoot = new DefaultMutableTreeNode();
+		taskJTreeModel = new DefaultTreeModel(taskJTreeRoot);
+		taskJTree = new JTree(taskJTreeModel) {
 			// Based on https://www.logicbig.com/tutorials/java-swing/jtree-renderer.html
 			private static final String SPAN_FORMAT = "<span style='color:%s;'>%s</span>";
 			
@@ -341,19 +341,19 @@ public class ManageTasks extends JPanel {
 				}
 			}
 		};
-		this.taskJTree.setRootVisible(false);
-		taskTreeScrollPane.setViewportView(this.taskJTree);
+		taskJTree.setRootVisible(false);
+		taskTreeScrollPane.setViewportView(taskJTree);
 		
 		/* Edit Task
 		 * -------------------- */
 		
-		this.editTaskComponent = new EditTask();
-		this.mainPanel.add(this.editTaskComponent, "editTask");
+		editTaskComponent = new EditTask();
+		mainPanel.add(editTaskComponent, "editTask");
 
 		/* Initialise the data model
 		 * -------------------------------------------------- */
 		
-		this.refresh();
+		refresh();
 	}
 
 	private void refresh() {
@@ -383,50 +383,50 @@ public class ManageTasks extends JPanel {
 //		db.submitVerificationExecutions(List<VerificationExecution> vers)
 
 		// Get tasks and task executions
-		//this.allTasks = db.getTaskList();
-		//this.allTaskExecs = db.getTaskExecutionList();
+		//allTasks = db.getTaskList();
+		//allTaskExecs = db.getTaskExecutionList();
 		
 		Task t1 = new Task();
 		Task t2 = new Task();
 		Task t3 = new Task();
-		this.allTaskExecs = new ArrayList<>();
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs = new ArrayList<>();
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("8:30am 9/5/2021"), dt("11:00am 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("11:30am 9/5/2021"), dt("12:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
 			new Period(dt("12:30pm 9/5/2021"), dt("1:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t2, "", TaskPriority.LOW,
 			new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t3, "Important for some reason", TaskPriority.HIGH,
 			new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
 			null, null, null
 		));
 		
 		// Filter list to relevant task executions
-		LocalDateTime start = this.startDateTimePicker.getDateTime();
-		LocalDateTime end = this.endDateTimePicker.getDateTime();
+		LocalDateTime start = startDateTimePicker.getDateTime();
+		LocalDateTime end = endDateTimePicker.getDateTime();
 		
-		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(this.allTaskExecs);
+		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(allTaskExecs);
 		List<TaskExecution> execsInRange = taskExecTemporal.getBetween(
 			start, end, Event.byPeriodDefaultInf, true, true
 		);
 		
 		// Map back to tasks
-		this.taskTree = new HashMap<>();
+		taskTree = new HashMap<>();
 		for (TaskExecution task : execsInRange) {
 			Task owningTask = task.getTask();
 			
@@ -438,19 +438,19 @@ public class ManageTasks extends JPanel {
 		}
 		
 		// Construct/Reconstruct the tree
-		this.taskJTreeRoot.removeAllChildren();
-		for (Map.Entry<Task, List<TaskExecution>> entry : this.taskTree.entrySet()) {
+		taskJTreeRoot.removeAllChildren();
+		for (Map.Entry<Task, List<TaskExecution>> entry : taskTree.entrySet()) {
 			DefaultMutableTreeNode taskNode = new DefaultMutableTreeNode(entry.getKey());
 			for (TaskExecution taskExec : entry.getValue()) {
 				taskNode.add(new DefaultMutableTreeNode(taskExec));
 			}
-			this.taskJTreeRoot.add(taskNode);
+			taskJTreeRoot.add(taskNode);
 		}
-		this.taskJTreeModel.nodeStructureChanged(this.taskJTreeRoot);
+		taskJTreeModel.nodeStructureChanged(taskJTreeRoot);
 	}
 
 	private void removeTask() {
-		TreePath path = this.taskJTree.getSelectionPath();
+		TreePath path = taskJTree.getSelectionPath();
 		if (path == null) {
 			new ExceptionDialog("You must select a task or instance to remove.");
 			return;
@@ -463,13 +463,13 @@ public class ManageTasks extends JPanel {
 
 	private void addTask() {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
-		this.active = newTask; // Keep a reference to it (the task being edited)
-		this.views.get("editTask").run(); // Show the edit view
-		this.editTaskComponent.showTask(newTask); // Set up the edit view to edit that task
+		active = newTask; // Keep a reference to it (the task being edited)
+		views.get("editTask").run(); // Show the edit view
+		editTaskComponent.showTask(newTask); // Set up the edit view to edit that task
 	}
 
 	private void editTask() {
-		TreePath path = this.taskJTree.getSelectionPath();
+		TreePath path = taskJTree.getSelectionPath();
 		if (path == null) {
 			new ExceptionDialog("You must select a task or instance to edit.");
 			return;
@@ -478,14 +478,14 @@ public class ManageTasks extends JPanel {
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
 		Object obj = node.getUserObject();
 		if (obj instanceof Task) {
-			this.active = obj; // Keep a reference to it (the task being edited)
-			this.views.get("editTask").run(); // Show the edit view
-			this.editTaskComponent.showTask((Task) obj); // Set up the edit view to edit that task
+			active = obj; // Keep a reference to it (the task being edited)
+			views.get("editTask").run(); // Show the edit view
+			editTaskComponent.showTask((Task) obj); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
-			this.active = obj; // Keep a reference to it (the task execution being edited)
-			this.views.get("editTaskInstance").run(); // Show the edit view
-			this.editTaskExecComponent.showTaskExec((TaskExecution) obj);
+			active = obj; // Keep a reference to it (the task execution being edited)
+			views.get("editTaskInstance").run(); // Show the edit view
+			editTaskExecComponent.showTaskExec((TaskExecution) obj);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -493,7 +493,7 @@ public class ManageTasks extends JPanel {
 	}
 	
 	private void cancelEdit() {
-		this.views.get("viewTasks").run();
+		views.get("viewTasks").run();
 	}
 	
 	private void confirmEdit() {
@@ -507,18 +507,18 @@ public class ManageTasks extends JPanel {
 			return;
 		}
 		
-		if (this.active instanceof Task) {
-			boolean valid = this.editTaskComponent.validateFields();
+		if (active instanceof Task) {
+			boolean valid = editTaskComponent.validateFields();
 			if (!valid) {
 				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
 				return;
 			}
 			
-			this.editTaskComponent.updateTask((Task) this.active);
-			//db.submitTask(this.active); // TODO
+			editTaskComponent.updateTask((Task) active);
+			//db.submitTask(active); // TODO
 		}
 
-		this.views.get("viewTasks").run();
+		views.get("viewTasks").run();
 	}
 	
 	/* Utils
