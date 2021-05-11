@@ -14,7 +14,7 @@ public class DBMgr {
         try {
             db = DBAbstraction.getInstance();
             db.createTables();
-            db.fillDB("password");
+            db.fillDB();
         } catch (DBExceptions.FailedToConnectException ex) {
             Logger.getLogger(DBMgr.class.getName()).log(Level.SEVERE, null, ex);
         }

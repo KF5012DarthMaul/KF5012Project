@@ -35,7 +35,7 @@ public final class DBConnection
     private DBConnection() throws FailedToConnectException
     {
         try {
-            connect("..\\db.sq3");
+            connect(".\\db.sq3");
         } catch (SQLException ex) {
             throw new FailedToConnectException(ex);
         }

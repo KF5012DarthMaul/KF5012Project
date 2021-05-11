@@ -9,13 +9,11 @@ import guicomponents.LoginForm;
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
 		try {
-			
 			//Generate Temp User
 			DBAbstraction db;
 			db = DBAbstraction.getInstance();
-			
-			System.out.println(db.getUser("test").getAccountType());
-			
+			db.createTables();
+			db.fillDB();			
 			if(!db.doesUserExist("test")) {
 				db.createUser(
 					"test",
@@ -30,24 +28,6 @@ public class KF5012DarthMaulApplication {
 					"test",
 					SecurityManager.generatePassword("password"),
 					PermissionManager.AccountType.HR_PERSONNEL.ordinal()
-				);
-				System.out.println("TEST: User deleted then created again");
-			}
-
-			if(!db.doesUserExist("test_caretaker")) {
-				db.createUser(
-					"test_caretaker",
-					SecurityManager.generatePassword("password"),
-					PermissionManager.AccountType.CARETAKER.ordinal()
-				);
-				System.out.println("TEST: User created fresh");
-				
-			} else {
-				db.deleteUser(new User("test_caretaker", PermissionManager.AccountType.CARETAKER));
-				db.createUser(
-					"test_caretaker",
-					SecurityManager.generatePassword("password"),
-					PermissionManager.AccountType.CARETAKER.ordinal()
 				);
 				System.out.println("TEST: User deleted then created again");
 			}

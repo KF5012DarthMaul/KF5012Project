@@ -14,6 +14,7 @@ import java.util.Random;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
+import kf5012darthmaulapplication.SecurityManager;
 import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Period;
 
@@ -61,15 +62,40 @@ public final class DBAbstraction
         return buffer.toString();
     }
     
-    public void fillDB(String hashedPassword)
+    public void fillDB()
     {
         try {
-            for(int i = 0; i < 6; i++)
-                createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
-            createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
-            createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
-            for(int i = 0; i < 2; i++)
-                createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
+//            for(int i = 0; i < 6; i++)
+//                createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
+//            createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
+//            createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
+//            for(int i = 0; i < 2; i++)
+//                createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
+        	ArrayList<User> userListToAdd = new ArrayList<>();
+        	String password = "Password123#";
+        	int hrCount = 5;
+        	int managerCount = 7;
+        	int estateCount = 3;
+        	int caretakerCount = 15;
+
+        	for(int i = 0 ; i < hrCount; i++) {
+        		String username = "hr_" + i;
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL.ordinal());
+        	};
+        	for(int i = 0 ; i < managerCount; i++) {
+        		String username = "manager_" + i;
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER.ordinal());
+        	};
+        	for(int i = 0 ; i < estateCount; i++) {
+        		String username = "estate_" + i;
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE.ordinal());
+        	};
+        	for(int i = 0 ; i < caretakerCount; i++) {
+        		String username = "caretaker_" + i;
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER.ordinal());
+        	};
+        	
+        	
             for(int i = 0; i < 1000; i++)
             {
                 submitTask(new Task(0, randomString(), randomString()));
@@ -79,10 +105,10 @@ public final class DBAbstraction
             LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
             LocalDateTime plusOneHour = startingPoint.plusHours(1);
             Period p = new Period(startingPoint, plusOneHour);
-            taskList.forEach(t -> {
-                System.out.println(t.toString());
-                texecList.add(new TaskExecution(t.name, p));
-            });
+//            taskList.forEach(t -> {
+//                System.out.println(t.toString());
+//                texecList.add(new TaskExecution(t.name, p));
+//            });
             submitTaskExecutions(texecList);
             ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
             tlist.forEach(t -> {
@@ -91,7 +117,7 @@ public final class DBAbstraction
             ArrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
             t2.forEach(t -> {System.out.println(t.toString());
             });
-        } catch (UserAlreadyExistsException | EmptyResultSetException | EmptyInputException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -593,7 +619,7 @@ public final class DBAbstraction
                 do
                 {
                     Period taskP = periodFromEpoch(res.getLong(2), res.getLong(3));
-                    tasks.add(new TaskExecution("", taskP));
+                    //tasks.add(new TaskExecution("", taskP));
                 }
                 while(res.next());
                 return tasks;
@@ -744,7 +770,7 @@ public final class DBAbstraction
                 ArrayList<TaskExecution> tasks = new ArrayList();
                 do
                 {
-                    tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
+                    //tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
                 }
                 while(res.next());
                 return tasks;
