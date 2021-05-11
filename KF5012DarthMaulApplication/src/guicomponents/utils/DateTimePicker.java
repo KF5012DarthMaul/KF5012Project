@@ -38,8 +38,10 @@ public class DateTimePicker extends JPanel {
 	private JSpinner timeSpinner;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
-		JLabel lblLabel = new JLabel(label);
-		add(lblLabel);
+		if (label != null) {
+			JLabel lblLabel = new JLabel(label);
+			add(lblLabel);
+		}
 
 		// See:
 		// - https://stackoverflow.com/questions/26794698/how-do-i-implement-jdatepicker
@@ -57,21 +59,21 @@ public class DateTimePicker extends JPanel {
 		setDateTime(initialTime);
 	}
 	
+	public DateTimePicker(String label) {
+		this(LocalDateTime.now(), label);
+	}
+	public DateTimePicker(LocalDateTime initialTime) {
+		this(initialTime, null);
+	}
+	public DateTimePicker() {
+		this(LocalDateTime.now(), null);
+	}
+
 	public void addChangeListener(ChangeListener listener) {
 		this.dateModel.addChangeListener(listener);
 		this.timeSpinner.addChangeListener(listener);
 	}
 
-	public DateTimePicker(String label) {
-		this(LocalDateTime.now(), label);
-	}
-	public DateTimePicker(LocalDateTime initialTime) {
-		this(initialTime, "");
-	}
-	public DateTimePicker() {
-		this(LocalDateTime.now(), "");
-	}
-	
 	public LocalDateTime getDateTime() {
 		Date date = (Date) dateModel.getValue();
 		LocalDate localDate = LocalDate.ofInstant(
