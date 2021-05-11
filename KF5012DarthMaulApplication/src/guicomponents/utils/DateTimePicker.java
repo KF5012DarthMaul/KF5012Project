@@ -35,10 +35,7 @@ public class DateTimePicker extends JPanel {
 	}
 	
 	private UtilDateModel dateModel;
-	private JDatePanelImpl datePanel;
-	private JDatePickerImpl datePicker;
 	private JSpinner timeSpinner;
-	private JSpinner.DateEditor timeEditor;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
 		JLabel lblLabel = new JLabel(label);
@@ -48,12 +45,12 @@ public class DateTimePicker extends JPanel {
 		// - https://stackoverflow.com/questions/26794698/how-do-i-implement-jdatepicker
 		// - https://www.codejava.net/java-se/swing/how-to-use-jdatepicker-to-display-calendar-component
 		dateModel = new UtilDateModel();
-		datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
-		datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
+		JDatePanelImpl datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
+		JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
 		add(datePicker);
 		
 		timeSpinner = new JSpinner(new SpinnerDateModel());
-		timeEditor = new JSpinner.DateEditor(timeSpinner, "h:mma");
+		JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "h:mma");
 		timeSpinner.setEditor(timeEditor);
 		add(timeSpinner);
 		
