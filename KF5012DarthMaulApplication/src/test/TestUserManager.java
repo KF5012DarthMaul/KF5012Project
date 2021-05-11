@@ -2,11 +2,18 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.Test;
+
+import org.junit.Test;
+
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
@@ -18,7 +25,7 @@ import kf5012darthmaulapplication.SecurityManager;
 import kf5012darthmaulapplication.User;
 import kf5012darthmaulapplication.UserManager;
 
-class TestUserManager {
+public class TestUserManager {
 	static DBAbstraction db;
 	
 	static String username = "username1";
@@ -30,7 +37,7 @@ class TestUserManager {
 	
 	UserManager um = new UserManager();
 	
-	@BeforeAll
+	@BeforeClass
 	public static void cleanBeforeRun(){
 		try {
 			db = DBAbstraction.getInstance();
@@ -44,7 +51,7 @@ class TestUserManager {
 		}
 	}
 	
-	@BeforeEach
+	@Before
 	public void setup() {
 		try {
 			String hashedPass = SecurityManager.generatePassword(password);
@@ -68,7 +75,7 @@ class TestUserManager {
 		}
 	}
 	
-	@AfterEach
+	@After
 	public void cleanafter() {
 		if(user != null) {
 			db.deleteUser(user);
@@ -76,7 +83,7 @@ class TestUserManager {
 		db.deleteUser(tempUser);
 	}
 	
-	@AfterAll
+	@AfterClass
 	public static void cleanall() {
 		db.deleteUser(user);
 		db.deleteUser(tempUser);

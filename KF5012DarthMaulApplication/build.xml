@@ -1,12 +1,42 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<project basedir="." default="test" name="KF5012DarthMaulApplication">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. --><project basedir="." default="test" name="KF5012DarthMaulApplication">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="C:/Users/Scrub/eclipse/java-2020-12/eclipse/"/>
-    <property name="junit.output.dir" value="build/jar"/>
+    <property name="junit.output.dir" value="junit"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="15"/>
     <property name="source" value="15"/>
     <path id="JUnit 5.libraryclasspath">
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="C:/Users/Scrub/.p2/pool/plugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+    </path>
+    <path id="KF5012DarthMaulApplication.classpath">
+        <pathelement location="bin"/>
+        <path refid="JUnit 5.libraryclasspath"/>
+        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
+        <pathelement location="miglayout15-swing.jar"/>
+        <pathelement location="jgoodies-forms-1.8.0.jar"/>
+        <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
         <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
         <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
         <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
@@ -18,77 +48,173 @@
         <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
         <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
         <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
-        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
-        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
-        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
-    </path>
-    <path id="KF5012DarthMaulApplication.classpath">
-        <pathelement location="bin"/>
-        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
-        <pathelement location="miglayout15-swing.jar"/>
-        <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
-        <pathelement location="bcprov-jdk15on-160.jar"/>
-        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.KF5012DarthMaulApplication.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="sqlite-jdbc-3.34.0.jar"/>
         <pathelement location="miglayout15-swing.jar"/>
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
         <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
     </path>
     <path id="run.LoginForm.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="sqlite-jdbc-3.34.0.jar"/>
         <pathelement location="miglayout15-swing.jar"/>
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
         <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
     </path>
     <path id="run.MainWindow.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="sqlite-jdbc-3.34.0.jar"/>
         <pathelement location="miglayout15-swing.jar"/>
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
         <pathelement location="jdatepicker-1.3.4.jar"/>
-    </path>
-    <path id="run.TestSecurity.classpath">
-        <path refid="KF5012DarthMaulApplication.classpath"/>
-        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
-        <pathelement location="miglayout15-swing.jar"/>
-        <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
-        <pathelement location="bcprov-jdk15on-160.jar"/>
-        <pathelement location="jdatepicker-1.3.4.jar"/>
-    </path>
-    <path id="run.TestUser.classpath">
-        <path refid="KF5012DarthMaulApplication.classpath"/>
-        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
-        <pathelement location="miglayout15-swing.jar"/>
-        <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
-        <pathelement location="bcprov-jdk15on-160.jar"/>
-        <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
     </path>
     <path id="run.TestDatabase.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="sqlite-jdbc-3.34.0.jar"/>
         <pathelement location="miglayout15-swing.jar"/>
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
-        <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
         <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
+    </path>
+    <path id="run.TestSecurity.classpath">
+        <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
+        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
+        <pathelement location="miglayout15-swing.jar"/>
+        <pathelement location="jgoodies-forms-1.8.0.jar"/>
+        <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
+    </path>
+    <path id="run.TestUser.classpath">
+        <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
+        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
+        <pathelement location="miglayout15-swing.jar"/>
+        <pathelement location="jgoodies-forms-1.8.0.jar"/>
+        <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
+    </path>
+    <path id="run.TestUserManager.classpath">
+        <path refid="KF5012DarthMaulApplication.classpath"/>
+        <path refid="JUnit 5.libraryclasspath"/>
+        <pathelement location="sqlite-jdbc-3.34.0.jar"/>
+        <pathelement location="miglayout15-swing.jar"/>
+        <pathelement location="jgoodies-forms-1.8.0.jar"/>
+        <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
+        <pathelement location="JUnitPlugins/org.apiguardian_1.1.0.v20190826-0900.jar"/>
+        <pathelement location="JUnitPlugins/org.hamcrest.core_1.3.0.v20180420-1519.jar"/>
+        <pathelement location="JUnitPlugins/org.junit_4.13.0.v20200204-1500.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.api_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.migrationsupport_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.jupiter.params_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.commons_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.engine_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.launcher_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.runner_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.platform.suite.api_1.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.junit.vintage.engine_5.7.0.v20201026-1537.jar"/>
+        <pathelement location="JUnitPlugins/org.opentest4j_1.2.0.v20190826-0900.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="src">
+                <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
@@ -135,6 +261,15 @@
             <classpath refid="run.MainWindow.classpath"/>
         </java>
     </target>
+    <target name="TestDatabase">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="test.TestDatabase" todir="${junit.output.dir}"/>
+            <jvmarg line="-ea"/>
+            <classpath refid="run.TestDatabase.classpath"/>
+        </junit>
+    </target>
     <target name="TestSecurity">
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
@@ -153,35 +288,22 @@
             <classpath refid="run.TestUser.classpath"/>
         </junit>
     </target>
-    <target name="TestDatabase">
+    <target name="TestUserManager">
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="xml"/>
-            <test name="test.TestDatabase" todir="${junit.output.dir}"/>
+            <test name="test.TestUserManager" todir="${junit.output.dir}"/>
             <jvmarg line="-ea"/>
-            <classpath refid="run.TestDatabase.classpath"/>
+            <classpath refid="run.TestUserManager.classpath"/>
         </junit>
     </target>
-    <!-- <target name="junitreport">
+    <target name="junitreport">
         <junitreport todir="${junit.output.dir}">
             <fileset dir="${junit.output.dir}">
                 <include name="TEST-*.xml"/>
             </fileset>
             <report format="frames" todir="${junit.output.dir}"/>
         </junitreport>
-    </target> -->
-    <!-- <target name="test" depends="build">
-        <echo message="TESTING BLOCK"/>
-        <mkdir dir="${junit.output.dir}"/>
-        <junit haltonfailure="no" printsummary="true">
-            <classpath>
-                <path refid="KF5012DarthMaulApplication"/>
-            <classname/>
-            <formatter type="xml"/>
-            <batchtest>
-        </junit>
-    </target> -->
-    <target name="test" depends="build, TestUser, TestSecurity, TestDatabase">
-        <echo message="TESTING BLOCK"/>
     </target>
+    <target name="test" depends="build, TestUser, TestSecurity, TestDatabase, TestUserManager"/>
 </project>

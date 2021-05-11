@@ -2,9 +2,12 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
@@ -22,18 +25,17 @@ public class TestDatabase {
 	static AccountType accType = AccountType.CARETAKER;
 	static User tempUser1 = new User("tempUser1", accType);
 	
-	@BeforeAll
+	@BeforeClass
 	static public void getConnection() {
 		try {
 			db = DBAbstraction.getInstance();
 			db.createUser(username,password, PermissionManager.accountTypetoInt(accType));
-			db.createTables();
 		} catch (FailedToConnectException | UserAlreadyExistsException e) {
 			fail(e);
 		}
 	}
 	
-	@AfterAll
+	@AfterClass
 	static public void cleanup() {
 		db.deleteUser(tempUser1);
 	}

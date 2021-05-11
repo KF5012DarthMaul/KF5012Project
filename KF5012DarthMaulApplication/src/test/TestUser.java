@@ -4,11 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 //import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.junit.Test;
+
 import kf5012darthmaulapplication.*;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 
 import java.util.ArrayList;
 import java.util.Random;
+
+//import org.junit.jupiter.api.Test;
 public class TestUser {
 	
 	@Test
