@@ -74,13 +74,15 @@ public class Completion {
 		);
 	}
 
+	// ID management
 	public Integer getID() {
 		return this.id;
 	}
 	public void setID(Integer id) {
 		this.id = id;
 	}
-	
+
+	// Getters
 	public User getStaff() {
 		return this.staff;
 	}
@@ -95,5 +97,22 @@ public class Completion {
 	}
 	public String getNotes() {
 		return this.notes;
+	}
+
+	// Setters
+	public void setStaff(User staff) {
+		this.staff = staff;
+	}
+	public void setStartTime(LocalDateTime startTime) {
+		this.startTime = startTime;
+	}
+	public void setCompletionTime(LocalDateTime completionTime) {
+		this.completionTime = completionTime;
+	}
+	public void setWorkQuality(TaskCompletionQuality workQuality) {
+		this.workQuality = workQuality;
+	}
+	public void setNotes(String notes) {
+		this.notes = notes;
 	}
 }
