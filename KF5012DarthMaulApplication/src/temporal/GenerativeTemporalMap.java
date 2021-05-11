@@ -151,12 +151,6 @@ public class GenerativeTemporalMap<T extends Event>
 		Duration setRefDuration = setRef.duration();
 		Duration setInterval = set.interval();
 
-		Period cSetRef = cSet.referencePeriod();
-		LocalDateTime cSetRefStart = cSetRef.start();
-		LocalDateTime cSetRefEnd = cSetRef.end();
-		Duration cSetRefDuration = cSetRef.duration();
-		Duration cSetInterval = cSet.interval();
-		
 		// Initialise vars
 		LocalDateTime genStart = start;
 		
@@ -200,7 +194,7 @@ public class GenerativeTemporalMap<T extends Event>
 
 		/* Generating based on the period set
 		 * -------------------- */
-		
+
 		// Note that genStart is now guaranteed to be after the last event (if
 		// any) and the period set start.
 
@@ -249,6 +243,13 @@ public class GenerativeTemporalMap<T extends Event>
 		/* Generating for each period in the constraint period set
 		 * -------------------- */
 
+		// cSet != null
+		Period cSetRef = cSet.referencePeriod();
+		LocalDateTime cSetRefStart = cSetRef.start();
+		LocalDateTime cSetRefEnd = cSetRef.end();
+		Duration cSetRefDuration = cSetRef.duration();
+		Duration cSetInterval = cSet.interval();
+		
 		/* For one constraining period
 		 * ---------- */
 		
@@ -299,12 +300,12 @@ public class GenerativeTemporalMap<T extends Event>
 	
 		// Get the earliest time that the periods could start
 		LocalDateTime startCPeriodStart = first(
-			Direction.AT_OR_BEFORE, genStart, setRefStart, cSetInterval
+			Direction.AT_OR_BEFORE, genStart, cSetRefStart, cSetInterval
 		);
 		if (startCPeriodStart == null) {
 			// Cannot return null
 			startCPeriodStart = first(
-				Direction.AT_OR_AFTER, genStart, setRefStart, cSetInterval
+				Direction.AT_OR_AFTER, genStart, cSetRefStart, cSetInterval
 			);
 		}
 
@@ -316,7 +317,7 @@ public class GenerativeTemporalMap<T extends Event>
 				s.isBefore(end); // s < end
 				s = s.plus(cSetInterval) // s += cSetInterval
 		) {
-			LocalDateTime e = cSetRefStart.plus(cSetInterval);
+			LocalDateTime e = s.plus(cSetRefDuration);
 			this.generateBetween(
 				genStart.isAfter(s) ? genStart : s, // max(genStart, s)
 				end.isBefore(e) ? end : e, // min(end, e)
