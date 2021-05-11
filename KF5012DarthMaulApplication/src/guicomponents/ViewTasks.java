@@ -27,11 +27,16 @@ import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
+import domain.Verification;
 import domain.VerificationExecution;
 import exceptions.TaskManagerExceptions;
 import guicomponents.utils.DateRangePicker;
 import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
+import kf5012darthmaulapplication.User;
+import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Event;
+import temporal.IntervaledPeriodSet;
 import temporal.Period;
 import temporal.TemporalList;
 
@@ -239,36 +244,120 @@ public class ViewTasks extends JPanel {
 		// Get tasks and task executions
 		//this.allTasks = db.getTaskList();
 		//this.allTaskExecs = db.getTaskExecutionList();
-		
-		Task t1 = new Task();
-		Task t2 = new Task();
-		Task t3 = new Task();
+
+		//////////////////////////////////////////////////
 		this.allTaskExecs = new ArrayList<>();
-		this.allTaskExecs.add(new TaskExecution(
+		
+		Task t1 = new Task(
+			null,
+			"Check toilets", "",
+			null, null, null,
+			TaskPriority.NORMAL,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+					Duration.ofHours(2)
+				),
+				new IntervaledPeriodSet(
+					new Period(dt("9:00am 9/5/2021"), dt("5:00pm 9/5/2021")),
+					Duration.ofDays(1)
+				)
+			),
+			null, null
+		);
+		
+		// Some on the 9th
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("8:30am 9/5/2021"), dt("11:00am 9/5/2021")),
+			new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("11:30am 9/5/2021"), dt("12:00pm 9/5/2021")),
+			new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("12:30pm 9/5/2021"), dt("1:00pm 9/5/2021")),
+			new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+
+		// Some on the 10th
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
+			null, null, null
+		));
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
+			null, null, null
+		));
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+			null, null, null
+		));
+
+		// A low-priority one-off task without a deadline
+		Task t2 = new Task(
+			null,
+			"Fix Window on bike shed", "",
+			null, null, null,
+			TaskPriority.LOW,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("9:45am 9/5/2021"), (Duration) null), null
+				),
+				null
+			),
+			null, null
+		);
+		
+		allTaskExecs.add(new TaskExecution(
 			null, t2, "", TaskPriority.LOW,
 			new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
-			null, t3, "Important for some reason", TaskPriority.HIGH,
+
+		// A high-priority one-off task with deadline and verification.
+		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
+		
+		Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+		Task t3 = new Task(
+			null,
+			"Fix Broken Pipe",
+			"The waste pipe outside of the toilets on the 3rd floor of Big Building is broken and leaking. Health hazard - fix ASAP.",
+			null, null, null,
+			TaskPriority.HIGH,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("1:32pm 10/5/2021"), dt("5:00pm 10/5/2021")), null
+				),
+				null
+			),
+			null,
+			verification
+		);
+		
+		// The task execution has been allocated to myUser
+		TaskExecution t3Exec = new TaskExecution(
+			null, t3, "", TaskPriority.HIGH,
 			new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
-			null, null, null
-		));
+			myUser,
+			null, null
+		);
+		
+		// The verification execution
+		VerificationExecution t3VerExec = new VerificationExecution(
+			null, verification, t3Exec, "", Duration.ofHours(3), null, null
+		);
+		t3Exec.setVerification(t3VerExec);
+
+		// Add both
+		allTaskExecs.add(t3Exec);
+		//////////////////////////////////////////////////
 		
 		this.refresh();
 	}
