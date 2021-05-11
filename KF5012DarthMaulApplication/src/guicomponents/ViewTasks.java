@@ -56,10 +56,7 @@ public class ViewTasks extends JPanel {
 		gbl_viewTasksPanel.columnWidths = new int[]{0, 0};
 		gbl_viewTasksPanel.rowHeights = new int[]{0, 0, 0, 0};
 		gbl_viewTasksPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		// The 0.15 weight is a hack - there's a bug/miscommunication somewhere
-		// between GridBagLayout and FlowLayout/WrapLayout, but I don't have
-		// time to properly diagnose it.
-		gbl_viewTasksPanel.rowWeights = new double[]{0.15, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_viewTasksPanel.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
 		this.setLayout(gbl_viewTasksPanel);
 
 		// Date Range
