@@ -14,7 +14,7 @@ import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
 
-class TestDatabase {
+public class TestDatabase {
 	
 	static DBAbstraction db;
 	static String username = "tempUser1";
