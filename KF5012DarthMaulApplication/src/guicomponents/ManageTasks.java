@@ -1,10 +1,10 @@
 package guicomponents;
 
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions.FailedToConnectException;
-
 import domain.Task;
 import domain.TaskExecution;
+
+import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions.FailedToConnectException;
 
 import exceptions.TaskManagerExceptions;
 import kf5012darthmaulapplication.ExceptionDialog;
@@ -139,6 +139,9 @@ public class ManageTasks extends JPanel {
 		editTaskComponent = new EditTask();
 		mainPanel.add(editTaskComponent, "editTask");
 
+		editTaskExecComponent = new EditTaskExec();
+		mainPanel.add(editTaskExecComponent, "editTaskExec");
+
 		/* Initialise the data model
 		 * -------------------------------------------------- */
 
@@ -214,8 +217,25 @@ public class ManageTasks extends JPanel {
 				return;
 			}
 			
-			editTaskComponent.updateTask((Task) active);
-			//db.submitTask(active); // TODO
+			Task task = (Task) active;
+			editTaskComponent.updateTask(task);
+			
+			//db.submitTask(task); // TODO
+			
+		} else if (active instanceof TaskExecution) {
+			boolean valid = editTaskExecComponent.validateFields();
+			if (!valid) {
+				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
+				return;
+			}
+			
+			TaskExecution taskExec = (TaskExecution) active;
+			editTaskExecComponent.updateTask(taskExec);
+			
+			//db.submitTaskExecution(taskExec); // TODO
+			
+		} else {
+			throw new TaskManagerExceptions.InvalidTaskTypeException();
 		}
 
 		views.get("viewTasks").run();

@@ -1,30 +1,20 @@
 package guicomponents;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.swing.JScrollPane;
-
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions.FailedToConnectException;
 import domain.TaskExecution;
 import domain.TaskPriority;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
-import kf5012darthmaulapplication.User;
-import javax.swing.JPanel;
-import java.awt.GridBagLayout;
-import javax.swing.JLabel;
-import java.awt.GridBagConstraints;
-import javax.swing.JTextField;
-import java.awt.Insets;
-import javax.swing.SwingConstants;
-import javax.swing.JComboBox;
-import javax.swing.JTextPane;
 
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+
+@SuppressWarnings("serial")
 public class EditTaskExec extends JScrollPane {
-	private boolean usersLoaded;
-	
 	private JTextField txtNotes;
 	private JComboBox<Object> cmbPriority;
 
@@ -32,7 +22,6 @@ public class EditTaskExec extends JScrollPane {
 	 * Create the panel.
 	 */
 	public EditTaskExec() {
-		
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
@@ -78,8 +67,38 @@ public class EditTaskExec extends JScrollPane {
 
 	}
 
-	public void showTaskExec(TaskExecution task) {
-		txtNotes.setText(task.getName());
-		cmbPriority.setSelectedItem(task.getPriority());
+	/**
+	 * Mark the given task execution to be the current task execution to edit.
+	 * 
+	 * @param taskExec The task execution to edit.
+	 */
+	public void showTaskExec(TaskExecution taskExec) {
+		txtNotes.setText(taskExec.getNotes());
+		cmbPriority.setSelectedItem(taskExec.getPriority());
+	}
+
+	/**
+	 * Validate fields and visually mark invalid fields.
+	 * 
+	 * @return True if all fields are valid, false otherwise.
+	 */
+	public boolean validateFields() {
+		boolean valid = true;
+
+		// Notes - no validation
+		// Priority - combo box does validation
+		
+		return valid;
+	}
+
+	/**
+	 * Update the given task execution with the values currently in the editor's
+	 * inputs.
+	 * 
+	 * @param taskExec The task execution to update.
+	 */
+	public void updateTask(TaskExecution taskExec) {
+		taskExec.setNotes(txtNotes.getText());
+		taskExec.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
 	}
 }
