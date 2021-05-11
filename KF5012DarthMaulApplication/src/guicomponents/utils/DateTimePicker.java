@@ -38,6 +38,7 @@ public class DateTimePicker extends JPanel {
 	private JSpinner timeSpinner;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
+		// Idea from https://stackoverflow.com/a/28224244
 		setBorder(new EmptyBorder(-5, -5, -5, -5));
 		
 		if (label != null) {
