@@ -73,6 +73,7 @@ public class ViewTasks extends JPanel {
 		rangePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
 		dateRangePicker = new DateRangePicker();
+		dateRangePicker.addChangeListener((e) -> this.refresh());
 		rangePanel.add(dateRangePicker);
 		
 		JPanel instructionsPanel = new JPanel();
