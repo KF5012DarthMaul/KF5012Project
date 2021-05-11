@@ -8,7 +8,6 @@ import java.awt.Insets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,7 @@ import domain.TaskExecution;
 import domain.TaskPriority;
 import domain.VerificationExecution;
 import exceptions.TaskManagerExceptions;
-import guicomponents.utils.DateTimePicker;
+import guicomponents.utils.DateRangePicker;
 import kf5012darthmaulapplication.ExceptionDialog;
 import temporal.Event;
 import temporal.Period;
@@ -41,8 +40,7 @@ public class ViewTasks extends JPanel {
 	private static final DateTimeFormatter dateTimeFormatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 
-	private DateTimePicker startDateTimePicker;
-	private DateTimePicker endDateTimePicker;
+	private DateRangePicker dateRangePicker;
 
 	private List<TaskExecution> allTaskExecs;
 	private Map<Task, List<TaskExecution>> taskTree;
@@ -74,17 +72,8 @@ public class ViewTasks extends JPanel {
 		this.add(rangePanel, gbc_rangePanel);
 		rangePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-		this.startDateTimePicker = new DateTimePicker(
-			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS), // Start of today
-			"Start Date/Time"
-		);
-		rangePanel.add(startDateTimePicker);
-		
-		this.endDateTimePicker = new DateTimePicker(
-			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1), // End of today
-			"End Date/Time"
-		);
-		rangePanel.add(endDateTimePicker);
+		dateRangePicker = new DateRangePicker();
+		rangePanel.add(dateRangePicker);
 		
 		JPanel instructionsPanel = new JPanel();
 		GridBagConstraints gbc_instructionsPanel = new GridBagConstraints();
@@ -284,8 +273,8 @@ public class ViewTasks extends JPanel {
 		));
 		
 		// Filter list to relevant task executions
-		LocalDateTime start = this.startDateTimePicker.getDateTime();
-		LocalDateTime end = this.endDateTimePicker.getDateTime();
+		LocalDateTime start = this.dateRangePicker.getStartDateTime();
+		LocalDateTime end = this.dateRangePicker.getEndDateTime();
 		
 		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(this.allTaskExecs);
 		List<TaskExecution> execsInRange = taskExecTemporal.getBetween(
