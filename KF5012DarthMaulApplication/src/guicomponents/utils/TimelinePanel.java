@@ -2,7 +2,6 @@ package guicomponents.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -12,9 +11,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import temporal.ChartableEvent;
 import temporal.Event;
@@ -24,12 +26,14 @@ import temporal.Timeline;
 public class TimelinePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
-	/* Retrievable
+	/* Retrievable / Editable
 	 * ---------- */
 	
 	private Timeline<Integer, ChartableEvent> timeline;
 	private LocalDateTime start;
 	private LocalDateTime end;
+	
+	private final List<ChangeListener> changeListeners = new ArrayList<>();
 
 	/* Internal
 	 * ---------- */
@@ -92,6 +96,11 @@ public class TimelinePanel extends JPanel {
 
 	public void setTimeline(Timeline<Integer, ChartableEvent> timeline) {
 		this.timeline = timeline;
+		
+		ChangeEvent e = new ChangeEvent(this);
+		for (ChangeListener changeListener : this.changeListeners) {
+			changeListener.stateChanged(e);
+		}
 	}
 	
 	/**
@@ -123,6 +132,10 @@ public class TimelinePanel extends JPanel {
 	}
 	public LocalDateTime getEnd() {
 		return this.end;
+	}
+	
+	public void addChangeListener(ChangeListener changeListener) {
+		this.changeListeners.add(changeListener);
 	}
 	
 	/* Private / Protected

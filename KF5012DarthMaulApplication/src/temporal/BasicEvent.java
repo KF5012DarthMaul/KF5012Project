@@ -7,7 +7,7 @@ package temporal;
  * 
  * @author William Taylor
  */
-final class BasicEvent implements Event {
+public class BasicEvent implements Event {
 	private Period period;
 	
 	public BasicEvent(Period period) {

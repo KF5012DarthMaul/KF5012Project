@@ -11,13 +11,15 @@ import javax.swing.DefaultListCellRenderer;
 
 import java.awt.GridBagLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import lib.DurationField;
 import guicomponents.utils.BoundedTimelinePanel;
+import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
-
+import guicomponents.utils.TimelinePanel;
 import domain.Task;
 import domain.TaskPriority;
 import dbmgr.DBAbstraction;
@@ -25,9 +27,15 @@ import dbmgr.DBExceptions.FailedToConnectException;
 import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
+import temporal.BasicChartableEvent;
+import temporal.ChartableEvent;
 import temporal.ConstrainedIntervaledPeriodSet;
+import temporal.GenerativeTemporalMap;
 import temporal.IntervaledPeriodSet;
+import temporal.TemporalMap;
+import temporal.Timeline;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.Duration;
@@ -40,6 +48,11 @@ public class EditTask extends JScrollPane {
 	private JTextField txtNotes;
 	private JComboBox<Object> cmbPriority;
 	private JComboBox<Object> cmbAllocationConstraint;
+	
+	private List<ChartableEvent> currentTimelineHistory;
+	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
+	private TimelinePanel timelinePanel;
+	private DateRangePicker dateRangePicker;
 	
 	// dtpSetRefStart is always enabled
 	private JCheckBox chkSetRefDur;
@@ -175,14 +188,49 @@ public class EditTask extends JScrollPane {
 		/* Schedule - Graphical Overview
 		 * -------------------- */
 		
-		BoundedTimelinePanel timelinePanel = new BoundedTimelinePanel();
+		// Don't give it a Timeline yet - that's can only be done when a task is
+		// selected to be edited.
+		timelinePanel = new TimelinePanel();
+		timelinePanel.setPreferredSize(
+			new Dimension(this.getPreferredSize().width, 200)
+		);
+		
+		dateRangePicker = new DateRangePicker("From", "To");
+
+		// If the date/time range of the bounded timeline panel changes, then
+		// regenerate the data to be displayed in the timeline panel completely.
+		// If you don't do this, the generator won't generate events before the
+		// end of the latest event generated.
+		// Note 1: currentTimelineHistory and currentTimelineMap are
+		//         (re)initialised every time the task being edited is changed.
+		// Note 2: This change listener must be added before the dateRangePicker
+		//         is passed to the BoundedTimelinePanel, or the data won't be
+		//         wiped before the bounded timeline panel tries to re-fetch the
+		//         data to re-draw the timeline panel, which may lead to missing
+		//         events.
+		dateRangePicker.addChangeListener((e) -> {
+			currentTimelineHistory.clear();
+			currentTimelineMap.generateBetween(
+				dateRangePicker.getStartDateTime(),
+				dateRangePicker.getEndDateTime()
+			);
+		});
+		
+		// Link together the timeline panel and the date range picker so that
+		// the panel responds to changes in the date range (or if its own
+		// timeline changes).
+		BoundedTimelinePanel boundedTimelinePanel = new BoundedTimelinePanel(
+			timelinePanel, dateRangePicker, true
+		);
+		
+		// Then add as usual
 		GridBagConstraints gbc_timelinePanel = new GridBagConstraints();
 		gbc_timelinePanel.anchor = GridBagConstraints.WEST;
 		gbc_timelinePanel.insets = new Insets(0, 5, 5, 0);
 		gbc_timelinePanel.gridwidth = 3;
 		gbc_timelinePanel.gridx = 0;
 		gbc_timelinePanel.gridy = 5;
-		formPanel.add(timelinePanel, gbc_timelinePanel);
+		formPanel.add(boundedTimelinePanel, gbc_timelinePanel);
 
 		JSeparator sep2 = new JSeparator();
 		GridBagConstraints gbc_sep2 = new GridBagConstraints();
@@ -381,7 +429,7 @@ public class EditTask extends JScrollPane {
 		if (force) {
 			chkCSet.setSelected(enabled);
 		}
-
+		
 		// Show/Hide corresponding items, but keep checkbox values, regardless
 		// of force (they're not controlled by this checkbox).
 		setCSetRefDurEnabled(chkCSetRefDur.isSelected(), false);
@@ -456,6 +504,9 @@ public class EditTask extends JScrollPane {
 	 * @param task The task to edit.
 	 */
 	public void showTask(Task task) {
+		/* Basic fields
+		 * -------------------- */
+		
 		txtName.setText(task.getName());
 		txtNotes.setText(task.getNotes());
 		cmbPriority.setSelectedItem(task.getStandardPriority());
@@ -466,6 +517,26 @@ public class EditTask extends JScrollPane {
 		} else {
 			cmbAllocationConstraint.setSelectedItem(allocConst);
 		}
+		
+		/* Visualising the schedule
+		 * -------------------- */
+		
+		// (Re)Initialise the generative temporal map for this task's schedule
+		// and set the timeline panel to display it.
+		currentTimelineHistory = new ArrayList<>();
+		currentTimelineMap = new GenerativeTemporalMap<>(
+			currentTimelineHistory,
+			task.getScheduleConstraint(),
+			(p) -> new BasicChartableEvent(p, task.getName())
+		);
+		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
+		maps.add(currentTimelineMap);
+		timelinePanel.setTimeline(new Timeline<>(maps));
+		// setTimeline() fires a change event, which the BoundedTimelinePanel
+		// picks up and re-displays the current date range with the new timeline.
+		
+		/* Editing the schedule
+		 * -------------------- */
 		
 		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
 		
