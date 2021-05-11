@@ -85,7 +85,7 @@ public class ManageTasks extends JPanel {
 		
 		/* Button Panel
 		 * -------------------------------------------------- */
-		
+
 		buttonPanel = new JPanel();
 		add(buttonPanel);
 		buttonPanel.setLayout(new CardLayout(0, 0));
@@ -94,8 +94,8 @@ public class ManageTasks extends JPanel {
 		JPanel viewTasksButtonsPanel = new JPanel();
 		buttonPanel.add(viewTasksButtonsPanel, "viewTasksButtons");
 		
-		JButton btnRefresh = new JButton("Refresh");
-		btnRefresh.addActionListener((e) -> refresh());
+		JButton btnRefresh = new JButton("Reload");
+		btnRefresh.addActionListener((e) -> reload());
 		viewTasksButtonsPanel.add(btnRefresh);
 		
 		JButton btnAddTask = new JButton("Add Task");
@@ -145,7 +145,11 @@ public class ManageTasks extends JPanel {
 		/* Initialise the data model
 		 * -------------------------------------------------- */
 
-		refresh();
+		reload();
+	}
+	
+	private void reload() {
+		viewTasksComponent.reload();
 	}
 	
 	private void refresh() {

@@ -211,8 +211,8 @@ public class ViewTasks extends JPanel {
 		this.taskJTree.setRootVisible(false);
 		taskTreeScrollPane.setViewportView(this.taskJTree);
 	}
-
-	public void refresh() {
+	
+	public void reload() {
 		// Try to connect to the DB each time you refresh - if one fails, you
 		// can try again.
 		DBAbstraction db;
@@ -272,6 +272,10 @@ public class ViewTasks extends JPanel {
 			null, null, null
 		));
 		
+		this.refresh();
+	}
+
+	public void refresh() {
 		// Filter list to relevant task executions
 		LocalDateTime start = this.dateRangePicker.getStartDateTime();
 		LocalDateTime end = this.dateRangePicker.getEndDateTime();
