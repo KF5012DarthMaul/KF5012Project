@@ -79,8 +79,8 @@
         <pathelement location="bcprov-jdk15on-160.jar"/>
     </path>
     <target name="init">
-        <mkdir dir="bin"/>
-        <copy includeemptydirs="false" todir="bin">
+        <mkdir dir="${junit.output.dir}"/>
+        <copy includeemptydirs="false" todir="${junit.output.dir}">
             <fileset dir="src">
                 <exclude name="**/*.java"/>
             </fileset>
