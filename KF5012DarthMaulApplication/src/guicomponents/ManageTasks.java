@@ -152,10 +152,6 @@ public class ManageTasks extends JPanel {
 		viewTasksComponent.reload();
 	}
 	
-	private void refresh() {
-		viewTasksComponent.refresh();
-	}
-
 	private void removeTask() {
 		Object obj = viewTasksComponent.getSelectedObject();
 		if (obj == null) {
