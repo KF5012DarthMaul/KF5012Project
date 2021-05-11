@@ -66,19 +66,29 @@ public class VerificationExecution implements ChartableEvent {
 		this.completion = completion;
 	}
 
+	// ID and reference management
 	public Integer getID() {
 		return this.id;
 	}
 	public void setID(Integer id) {
 		this.id = id;
 	}
-	
+
 	public Verification getVerification() {
 		return this.verification;
 	}
+	public void setVerification(Verification verification) {
+		this.verification = verification;
+	}
+	
 	public TaskExecution getTaskExec() {
 		return this.taskExec;
 	}
+	public void setTaskExec(TaskExecution taskExec) {
+		this.taskExec = taskExec;
+	}
+	
+	// Getters
 	public String getNotes() {
 		return this.notes;
 	}
@@ -92,6 +102,7 @@ public class VerificationExecution implements ChartableEvent {
 		return this.completion;
 	}
 
+	// Implemented interfaces
 	@Override
 	public Period getPeriod() {
 		return new Period(this.taskExec.getPeriod().end(), this.deadline);
@@ -105,5 +116,19 @@ public class VerificationExecution implements ChartableEvent {
 	@Override
 	public Color getColor() {
 		return VerificationExecution.color;
+	}
+	
+	// Setters
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
+	public void setDeadline(Duration deadline) {
+		this.deadline = deadline;
+	}
+	public void setAllocation(User allocation) {
+		this.allocation = allocation;
+	}
+	public void setCompletion(Completion completion) {
+		this.completion = completion;
 	}
 }

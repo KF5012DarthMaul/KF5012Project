@@ -60,6 +60,7 @@ public class Verification {
 		);
 	}
 
+	// ID management
 	public Integer getID() {
 		return this.id;
 	}
@@ -67,6 +68,7 @@ public class Verification {
 		this.id = id;
 	}
 	
+	// Getters
 	public String getNotes() {
 		return this.notes;
 	}
@@ -78,5 +80,19 @@ public class Verification {
 	}
 	public User getAllocationConstraint() {
 		return this.allocationConstraint;
+	}
+
+	// Setters
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
+	public void setStandardPriority(TaskPriority standardPriority) {
+		this.standardPriority = standardPriority;
+	}
+	public void setStandardDeadline(Duration standardDeadline) {
+		this.standardDeadline = standardDeadline;
+	}
+	public void setAllocationConstraint(User allocationConstraint) {
+		this.allocationConstraint = allocationConstraint;
 	}
 }
