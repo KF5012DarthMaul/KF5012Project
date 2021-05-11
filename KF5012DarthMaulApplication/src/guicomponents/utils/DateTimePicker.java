@@ -13,6 +13,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.jdatepicker.impl.DateComponentFormatter;
 import org.jdatepicker.impl.JDatePanelImpl;
@@ -56,6 +58,10 @@ public class DateTimePicker extends JPanel {
 		add(timeSpinner);
 		
 		setDateTime(initialTime);
+	}
+	
+	public void addChangeListener(ChangeListener listener) {
+		this.dateModel.addChangeListener(listener);
 	}
 
 	public DateTimePicker(String label) {

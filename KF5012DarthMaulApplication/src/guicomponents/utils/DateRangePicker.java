@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import javax.swing.JPanel;
+import javax.swing.event.ChangeListener;
 import javax.swing.BoxLayout;
 
 @SuppressWarnings("serial")
@@ -65,7 +66,7 @@ public class DateRangePicker extends JPanel {
 	public DateRangePicker() {
 		this(defaultStartLabel, defaultEndLabel);
 	}
-	
+
 	// Getters
 	public LocalDateTime getStartDateTime() {
 		return this.startDateTimePicker.getDateTime();
@@ -80,5 +81,11 @@ public class DateRangePicker extends JPanel {
 	}
 	public void setEndDateTime(LocalDateTime time) {
 		this.endDateTimePicker.setDateTime(time);
+	}
+	
+	// Add change listener
+	public void addChangeListener(ChangeListener listener) {
+		startDateTimePicker.addChangeListener(listener);
+		endDateTimePicker.addChangeListener(listener);
 	}
 }
