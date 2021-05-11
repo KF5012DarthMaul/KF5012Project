@@ -1,5 +1,4 @@
-
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <project basedir="." default="test" name="KF5012DarthMaulApplication">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="C:/Users/Scrub/eclipse/java-2020-12/eclipse/"/>
@@ -151,7 +150,7 @@
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="xml"/>
-            <test name="test.TestUser" todir="${junit.output.dir}"/>
+            <test name="test.TestDatabase" todir="${junit.output.dir}"/>
             <jvmarg line="-ea"/>
             <classpath refid="run.TestDatabase.classpath"/>
         </junit>
@@ -175,7 +174,7 @@
             <batchtest>
         </junit>
     </target> -->
-    <target name="test" depends="build, TestUser, TestSecurity">
+    <target name="test" depends="build, TestUser, TestSecurity, TestDatabase">
         <echo message="TESTING BLOCK"/>
     </target>
 </project>
