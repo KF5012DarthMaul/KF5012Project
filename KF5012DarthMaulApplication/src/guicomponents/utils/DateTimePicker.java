@@ -62,6 +62,7 @@ public class DateTimePicker extends JPanel {
 	
 	public void addChangeListener(ChangeListener listener) {
 		this.dateModel.addChangeListener(listener);
+		this.timeSpinner.addChangeListener(listener);
 	}
 
 	public DateTimePicker(String label) {
