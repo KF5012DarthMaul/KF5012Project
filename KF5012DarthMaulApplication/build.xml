@@ -29,6 +29,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.KF5012DarthMaulApplication.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -37,6 +38,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.LoginForm.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -45,6 +47,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.MainWindow.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -53,6 +56,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.TestSecurity.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -61,6 +65,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.TestUser.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -69,6 +74,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <path id="run.TestDatabase.classpath">
         <path refid="KF5012DarthMaulApplication.classpath"/>
@@ -77,6 +83,7 @@
         <pathelement location="jgoodies-forms-1.8.0.jar"/>
         <path refid="JUnit 5.libraryclasspath"/>
         <pathelement location="bcprov-jdk15on-160.jar"/>
+        <pathelement location="jdatepicker-1.3.4.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
