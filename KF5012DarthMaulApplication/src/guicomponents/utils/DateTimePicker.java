@@ -32,8 +32,9 @@ public class DateTimePicker extends JPanel {
 		datePanelProperties.put("text.month", "Month");
 		datePanelProperties.put("text.year", "Year");
 	}
-	
+
 	private UtilDateModel dateModel;
+	private JDatePickerImpl datePicker;
 	private JSpinner timeSpinner;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
@@ -49,7 +50,7 @@ public class DateTimePicker extends JPanel {
 		// - https://www.codejava.net/java-se/swing/how-to-use-jdatepicker-to-display-calendar-component
 		dateModel = new UtilDateModel();
 		JDatePanelImpl datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
-		JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
+		datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
 		add(datePicker);
 		
 		timeSpinner = new JSpinner(new SpinnerDateModel());
@@ -102,5 +103,10 @@ public class DateTimePicker extends JPanel {
 		
 		long milliTime = time.toEpochSecond(date, offset) * 1000;
 		timeSpinner.setValue(new Date(milliTime));
+	}
+	
+	public void setVisible(boolean visible) {
+		datePicker.setVisible(visible);
+		timeSpinner.setVisible(visible);
 	}
 }
