@@ -1,6 +1,5 @@
 package guicomponents.utils;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,7 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
-import javax.swing.event.ChangeEvent;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeListener;
 
 import org.jdatepicker.impl.DateComponentFormatter;
@@ -38,6 +37,8 @@ public class DateTimePicker extends JPanel {
 	private JSpinner timeSpinner;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
+		setBorder(new EmptyBorder(-5, -5, -5, -5));
+		
 		if (label != null) {
 			JLabel lblLabel = new JLabel(label);
 			add(lblLabel);
