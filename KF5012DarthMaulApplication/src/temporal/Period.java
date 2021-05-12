@@ -20,7 +20,9 @@ public class Period {
 	
 	public Period(LocalDateTime start, LocalDateTime end) {
 		this.start = start;
-		if (this.start.isAfter(end)) {
+		if (end == null) {
+			this.end = null;
+		} else if (this.start.isAfter(end)) {
 			this.end = start;
 		} else {
 			this.end = end;
