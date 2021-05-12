@@ -91,9 +91,9 @@ public class GenerativeTemporalMap<T extends Event>
 	}
 	
 	/**
-	 * Generate all events between start or the end of the last event, whichever
-	 * is earlier, and end based on the constrained intervaled period set of
-	 * this map.
+	 * Generate all events between start or the start of the last event,
+	 * whichever is earlier, and end based on the constrained intervaled period
+	 * set of this map.
 	 * 
 	 * Equivalent to generateBetween(start, end, false).
 	 * 
@@ -109,8 +109,8 @@ public class GenerativeTemporalMap<T extends Event>
 	 * Generate all events between start and end based on the constrained
 	 * intervaled period set of this map.
 	 * 
-	 * If allowNonContiguous is false, then also generate events between the end
-	 * of the last event and start (if last event end < start).
+	 * If allowNonContiguous is false, then also generate events between the
+	 * start of the last event and start (if last event start < start).
 	 * 
 	 * @param start The start of the range to generate within, or null to
 	 * generate as far back as is needed (like a 'generateBefore()' would be).
@@ -160,17 +160,17 @@ public class GenerativeTemporalMap<T extends Event>
 		int size = this.map.size();
 		if (size != 0) {
 			T lastEvent = this.map.get(size - 1);
-			LocalDateTime endOfLastEvent = lastEvent.getPeriod().end();
+			LocalDateTime startOfLastEvent = lastEvent.getPeriod().start();
 			
-			// If genStart < endOfLastEvent, then push forward to endOfLastEvent
-			if (genStart == null || genStart.isBefore(endOfLastEvent)) {
-				genStart = endOfLastEvent;
+			// If genStart < startOfLastEvent, then push forward to startOfLastEvent
+			if (genStart == null || genStart.isBefore(startOfLastEvent)) {
+				genStart = startOfLastEvent;
 			}
 			
-			// If genStart > endOfLastEvent, then push back to endOfLastEvent,
+			// If genStart > startOfLastEvent, then push back to startOfLastEvent,
 			// unless non-contiguity is allowed.
-			if (genStart.isAfter(endOfLastEvent) && !allowNonContiguous) {
-				genStart = endOfLastEvent;
+			if (genStart.isAfter(startOfLastEvent) && !allowNonContiguous) {
+				genStart = startOfLastEvent;
 			}
 		}
 		
