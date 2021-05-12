@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.Duration;
+import java.time.LocalDateTime;
+
 import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
 
@@ -55,17 +57,17 @@ public class EditTask extends JScrollPane {
 	private DateRangePicker dateRangePicker;
 	
 	// dtpSetRefStart is always enabled
-	private JCheckBox chkSetRefDur;
+	private JCheckBox chkSetRefEnd;
 	private JCheckBox chkSetInterval;
 	private JCheckBox chkCSet;
-	private JCheckBox chkCSetRefDur;
+	private JCheckBox chkCSetRefEnd;
 	private JCheckBox chkCSetInterval;
 	
 	private DateTimePicker dtpSetRefStart;
-	private DurationField durSetRefDur;
+	private DateTimePicker dtpSetRefEnd;
 	private DurationField durSetInterval;
 	private DateTimePicker dtpCSetRefStart;
-	private DurationField durCSetRefDur;
+	private DateTimePicker dtpCSetRefEnd;
 	private DurationField durCSetInterval;
 	
 	private boolean usersLoaded = false;
@@ -244,6 +246,7 @@ public class EditTask extends JScrollPane {
 		/* Schedule - Fields
 		 * -------------------- */
 		
+		// Set ref start
 		JLabel lblSetRefStart = new JLabel("Earliest Start Time");
 		GridBagConstraints gbc_lblSetRefStart = new GridBagConstraints();
 		gbc_lblSetRefStart.anchor = GridBagConstraints.EAST;
@@ -260,36 +263,38 @@ public class EditTask extends JScrollPane {
 		gbc_dtpSetRefStart.gridy = 7;
 		formPanel.add(dtpSetRefStart, gbc_dtpSetRefStart);
 		
-		JLabel lblSetRefDur = new JLabel("Maximum Duration");
-		GridBagConstraints gbc_lblSetRefDur = new GridBagConstraints();
-		gbc_lblSetRefDur.anchor = GridBagConstraints.EAST;
-		gbc_lblSetRefDur.insets = new Insets(0, 5, 5, 5);
-		gbc_lblSetRefDur.gridx = 0;
-		gbc_lblSetRefDur.gridy = 8;
-		formPanel.add(lblSetRefDur, gbc_lblSetRefDur);
+		// Set ref end
+		JLabel lblSetRefEnd = new JLabel("Latest End Time");
+		GridBagConstraints gbc_lblSetRefEnd = new GridBagConstraints();
+		gbc_lblSetRefEnd.anchor = GridBagConstraints.EAST;
+		gbc_lblSetRefEnd.insets = new Insets(0, 5, 5, 5);
+		gbc_lblSetRefEnd.gridx = 0;
+		gbc_lblSetRefEnd.gridy = 8;
+		formPanel.add(lblSetRefEnd, gbc_lblSetRefEnd);
 		
-		chkSetRefDur = new JCheckBox("");
-		chkSetRefDur.addItemListener((e) -> {
+		chkSetRefEnd = new JCheckBox("");
+		chkSetRefEnd.addItemListener((e) -> {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setSetRefDurEnabled(true, false);
+				setSetRefEndEnabled(true, false);
 			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setSetRefDurEnabled(false, false);
+				setSetRefEndEnabled(false, false);
 			}
 		});
-		GridBagConstraints gbc_chkSetRefDur = new GridBagConstraints();
-		gbc_chkSetRefDur.insets = new Insets(0, 0, 5, 5);
-		gbc_chkSetRefDur.gridx = 1;
-		gbc_chkSetRefDur.gridy = 8;
-		formPanel.add(chkSetRefDur, gbc_chkSetRefDur);
+		GridBagConstraints gbc_chkSetRefEnd = new GridBagConstraints();
+		gbc_chkSetRefEnd.insets = new Insets(0, 0, 5, 5);
+		gbc_chkSetRefEnd.gridx = 1;
+		gbc_chkSetRefEnd.gridy = 8;
+		formPanel.add(chkSetRefEnd, gbc_chkSetRefEnd);
 
-		durSetRefDur = new DurationField();
-		GridBagConstraints gbc_spnSetRefDur = new GridBagConstraints();
-		gbc_spnSetRefDur.anchor = GridBagConstraints.WEST;
-		gbc_spnSetRefDur.insets = new Insets(0, 5, 5, 0);
-		gbc_spnSetRefDur.gridx = 2;
-		gbc_spnSetRefDur.gridy = 8;
-		formPanel.add(durSetRefDur, gbc_spnSetRefDur);
+		dtpSetRefEnd = new DateTimePicker();
+		GridBagConstraints gbc_dtpSetRefEnd = new GridBagConstraints();
+		gbc_dtpSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_dtpSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_dtpSetRefEnd.gridx = 2;
+		gbc_dtpSetRefEnd.gridy = 8;
+		formPanel.add(dtpSetRefEnd, gbc_dtpSetRefEnd);
 		
+		// Set interval
 		JLabel lblSetInterval = new JLabel("Regularity");
 		GridBagConstraints gbc_lblSetInterval = new GridBagConstraints();
 		gbc_lblSetInterval.anchor = GridBagConstraints.EAST;
@@ -320,13 +325,14 @@ public class EditTask extends JScrollPane {
 		gbc_spnSetInterval.gridy = 9;
 		formPanel.add(durSetInterval, gbc_spnSetInterval);
 		
-		JLabel lblCSetRefBase = new JLabel("Constraint Base Time");
-		GridBagConstraints gbc_lblCSetRefBase = new GridBagConstraints();
-		gbc_lblCSetRefBase.anchor = GridBagConstraints.EAST;
-		gbc_lblCSetRefBase.insets = new Insets(0, 5, 5, 5);
-		gbc_lblCSetRefBase.gridx = 0;
-		gbc_lblCSetRefBase.gridy = 10;
-		formPanel.add(lblCSetRefBase, gbc_lblCSetRefBase);
+		// CSet ref start
+		JLabel lblCSetRefStart = new JLabel("Constraint Start");
+		GridBagConstraints gbc_lblCSetRefStart = new GridBagConstraints();
+		gbc_lblCSetRefStart.anchor = GridBagConstraints.EAST;
+		gbc_lblCSetRefStart.insets = new Insets(0, 5, 5, 5);
+		gbc_lblCSetRefStart.gridx = 0;
+		gbc_lblCSetRefStart.gridy = 10;
+		formPanel.add(lblCSetRefStart, gbc_lblCSetRefStart);
 		
 		chkCSet = new JCheckBox("");
 		chkCSet.addItemListener((e) -> {
@@ -350,36 +356,38 @@ public class EditTask extends JScrollPane {
 		gbc_dtpCSetRefStart.gridy = 10;
 		formPanel.add(dtpCSetRefStart, gbc_dtpCSetRefStart);
 		
-		JLabel lblCSetRefDur = new JLabel("Constraint Duration");
-		GridBagConstraints gbc_lblCSetRefDur = new GridBagConstraints();
-		gbc_lblCSetRefDur.anchor = GridBagConstraints.EAST;
-		gbc_lblCSetRefDur.insets = new Insets(0, 5, 5, 5);
-		gbc_lblCSetRefDur.gridx = 0;
-		gbc_lblCSetRefDur.gridy = 11;
-		formPanel.add(lblCSetRefDur, gbc_lblCSetRefDur);
+		// CSet ref end
+		JLabel lblCSetRefEnd = new JLabel("Constraint End");
+		GridBagConstraints gbc_lblCSetRefEnd = new GridBagConstraints();
+		gbc_lblCSetRefEnd.anchor = GridBagConstraints.EAST;
+		gbc_lblCSetRefEnd.insets = new Insets(0, 5, 5, 5);
+		gbc_lblCSetRefEnd.gridx = 0;
+		gbc_lblCSetRefEnd.gridy = 11;
+		formPanel.add(lblCSetRefEnd, gbc_lblCSetRefEnd);
 		
-		chkCSetRefDur = new JCheckBox("");
-		chkCSetRefDur.addItemListener((e) -> {
+		chkCSetRefEnd = new JCheckBox("");
+		chkCSetRefEnd.addItemListener((e) -> {
 			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setCSetRefDurEnabled(true, false);
+				setCSetRefEndEnabled(true, false);
 			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setCSetRefDurEnabled(false, false);
+				setCSetRefEndEnabled(false, false);
 			}
 		});
-		GridBagConstraints gbc_chkCSetRefDur = new GridBagConstraints();
-		gbc_chkCSetRefDur.insets = new Insets(0, 0, 5, 5);
-		gbc_chkCSetRefDur.gridx = 1;
-		gbc_chkCSetRefDur.gridy = 11;
-		formPanel.add(chkCSetRefDur, gbc_chkCSetRefDur);
+		GridBagConstraints gbc_chkCSetRefEnd = new GridBagConstraints();
+		gbc_chkCSetRefEnd.insets = new Insets(0, 0, 5, 5);
+		gbc_chkCSetRefEnd.gridx = 1;
+		gbc_chkCSetRefEnd.gridy = 11;
+		formPanel.add(chkCSetRefEnd, gbc_chkCSetRefEnd);
+
+		dtpCSetRefEnd = new DateTimePicker();
+		GridBagConstraints gbc_dtpCSetRefEnd = new GridBagConstraints();
+		gbc_dtpCSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_dtpCSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_dtpCSetRefEnd.gridx = 2;
+		gbc_dtpCSetRefEnd.gridy = 11;
+		formPanel.add(dtpCSetRefEnd, gbc_dtpCSetRefEnd);
 		
-		durCSetRefDur = new DurationField();
-		GridBagConstraints gbc_durCSetRefDur = new GridBagConstraints();
-		gbc_durCSetRefDur.insets = new Insets(0, 5, 5, 0);
-		gbc_durCSetRefDur.anchor = GridBagConstraints.WEST;
-		gbc_durCSetRefDur.gridx = 2;
-		gbc_durCSetRefDur.gridy = 11;
-		formPanel.add(durCSetRefDur, gbc_durCSetRefDur);
-		
+		// CSet interval
 		JLabel lblCSetInterval = new JLabel("Constraint Interval");
 		GridBagConstraints gbc_lblCSetInterval = new GridBagConstraints();
 		gbc_lblCSetInterval.anchor = GridBagConstraints.EAST;
@@ -411,11 +419,11 @@ public class EditTask extends JScrollPane {
 		formPanel.add(durCSetInterval, gbc_durCSetInterval);
 	}
 
-	private void setSetRefDurEnabled(boolean enabled, boolean force) {
+	private void setSetRefEndEnabled(boolean enabled, boolean force) {
 		if (force) {
-			chkSetRefDur.setSelected(enabled);
+			chkSetRefEnd.setSelected(enabled);
 		}
-		durSetRefDur.setVisible(enabled);
+		dtpSetRefEnd.setVisible(enabled);
 	}
 	
 	private void setSetIntervalEnabled(boolean enabled, boolean force) {
@@ -432,22 +440,22 @@ public class EditTask extends JScrollPane {
 		
 		// Show/Hide corresponding items, but keep checkbox values, regardless
 		// of force (they're not controlled by this checkbox).
-		setCSetRefDurEnabled(enabled ? chkCSetRefDur.isSelected() : enabled, false);
+		setCSetRefEndEnabled(enabled ? chkCSetRefEnd.isSelected() : enabled, false);
 		setCSetIntervalEnabled(enabled ? chkCSetInterval.isSelected() : enabled, false);
 		
 		// Enable/Disable (but don't show/hide) the checkboxes
-		chkCSetRefDur.setEnabled(enabled);
+		chkCSetRefEnd.setEnabled(enabled);
 		chkCSetInterval.setEnabled(enabled);
 		
 		// Show/Hide cSetStart
 		dtpCSetRefStart.setVisible(enabled);
 	}
 
-	private void setCSetRefDurEnabled(boolean enabled, boolean force) {
+	private void setCSetRefEndEnabled(boolean enabled, boolean force) {
 		if (force) {
-			chkCSetRefDur.setSelected(enabled);
+			chkCSetRefEnd.setSelected(enabled);
 		}
-		durCSetRefDur.setVisible(enabled);
+		dtpCSetRefEnd.setVisible(enabled);
 	}
 	
 	private void setCSetIntervalEnabled(boolean enabled, boolean force) {
@@ -543,14 +551,12 @@ public class EditTask extends JScrollPane {
 		IntervaledPeriodSet set = cips.periodSet();
 		dtpSetRefStart.setDateTime(set.referencePeriod().start());
 		
-		Duration setRefDur = set.referencePeriod().duration();
-		if (setRefDur == null) {
-			setSetRefDurEnabled(false, true);
+		LocalDateTime setRefEnd = set.referencePeriod().end();
+		if (setRefEnd == null) {
+			setSetRefEndEnabled(false, true);
 		} else {
-			setSetRefDurEnabled(true, true);
-			// If these overflow ... it is the user's fault >:(
-			durSetRefDur.setHour((int) setRefDur.getSeconds() / 3600);
-			durSetRefDur.setMinute((int) setRefDur.getSeconds() / 60);
+			setSetRefEndEnabled(true, true);
+			dtpSetRefEnd.setDateTime(setRefEnd);
 		}
 		
 		Duration setInterval = set.interval();
@@ -569,13 +575,12 @@ public class EditTask extends JScrollPane {
 			setCSetEnabled(true, true);
 			dtpCSetRefStart.setDateTime(cSet.referencePeriod().start());
 			
-			Duration cSetRefDur = cSet.referencePeriod().duration();
-			if (cSetRefDur == null) {
-				setCSetRefDurEnabled(false, true);
+			LocalDateTime cSetRefEnd = cSet.referencePeriod().end();
+			if (cSetRefEnd == null) {
+				setCSetRefEndEnabled(false, true);
 			} else {
-				setCSetRefDurEnabled(true, true);
-				durCSetRefDur.setHour((int) cSetRefDur.getSeconds() / 3600);
-				durCSetRefDur.setMinute((int) cSetRefDur.getSeconds() / 60);
+				setCSetRefEndEnabled(true, true);
+				dtpCSetRefEnd.setDateTime(cSetRefEnd);
 			}
 			
 			Duration cSetInterval = cSet.interval();
