@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 
 import java.awt.GridBagLayout;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -19,9 +20,12 @@ import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
 import guicomponents.utils.NullableComboBox;
+import guicomponents.utils.ObjectEditor;
+import guicomponents.utils.ObjectManager;
 import guicomponents.utils.TimelinePanel;
 import domain.Task;
 import domain.TaskPriority;
+import domain.Verification;
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
 import kf5012darthmaulapplication.ExceptionDialog;
@@ -46,7 +50,7 @@ import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public class EditTask extends JScrollPane {
+public class EditTask extends ObjectEditor<Task> {
 	private JTextField txtName;
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbPriority;
@@ -71,14 +75,22 @@ public class EditTask extends JScrollPane {
 	private DateTimePicker dtpCSetRefEnd;
 	private DurationField durCSetInterval;
 	
+	VerificationEditor edtVerification;
+	private ObjectManager<Verification> omgVerification;
+	
 	private boolean usersLoaded = false;
 
 	/**
 	 * Create the panel.
 	 */
 	public EditTask() {
+		setLayout(new BorderLayout(0,0));
+		
+		JScrollPane sclWrapper = new JScrollPane();
+		add(sclWrapper, BorderLayout.CENTER);
+		
 		JPanel formPanel = new JPanel();
-		setViewportView(formPanel);
+		sclWrapper.setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
 		gbl_formPanel.columnWidths = new int[]{0, 0, 0, 0};
 		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -163,15 +175,15 @@ public class EditTask extends JScrollPane {
 		gbc_cmbAllocationConstraint.gridx = 1;
 		gbc_cmbAllocationConstraint.gridy = 3;
 		formPanel.add(ncmbAllocationConstraint, gbc_cmbAllocationConstraint);
-
+		
 		/* Schedule - Graphical Overview
 		 * -------------------- */
 		
 		JSeparator sep1 = new JSeparator();
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
-		gbc_sep1.gridwidth = 3;
 		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sep1.insets = new Insets(0, 5, 5, 0);
+		gbc_sep1.gridwidth = 3;
 		gbc_sep1.gridx = 0;
 		gbc_sep1.gridy = 4;
 		formPanel.add(sep1, gbc_sep1);
@@ -225,7 +237,7 @@ public class EditTask extends JScrollPane {
 
 		/* Schedule - Fields
 		 * -------------------- */
-		
+
 		JSeparator sep2 = new JSeparator();
 		GridBagConstraints gbc_sep2 = new GridBagConstraints();
 		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
@@ -412,13 +424,38 @@ public class EditTask extends JScrollPane {
 		gbc_durCSetInterval.gridx = 2;
 		gbc_durCSetInterval.gridy = 13;
 		formPanel.add(durCSetInterval, gbc_durCSetInterval);
+
+		/* Verification
+		 * -------------------- */
+
+		JSeparator sep3 = new JSeparator();
+		GridBagConstraints gbc_sep3 = new GridBagConstraints();
+		gbc_sep3.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep3.insets = new Insets(0, 5, 5, 0);
+		gbc_sep3.gridwidth = 3;
+		gbc_sep3.gridx = 0;
+		gbc_sep3.gridy = 14;
+		formPanel.add(sep3, gbc_sep3);
+
+		edtVerification = new VerificationEditor();
+		omgVerification = new ObjectManager<>(
+			"Requires Verification", () -> new Verification(), edtVerification
+		);
+		GridBagConstraints gbc_edtVerificationEditor = new GridBagConstraints();
+		gbc_edtVerificationEditor.insets = new Insets(0, 5, 0, 0);
+		gbc_edtVerificationEditor.anchor = GridBagConstraints.WEST;
+		gbc_edtVerificationEditor.gridwidth = 3;
+		gbc_edtVerificationEditor.gridx = 0;
+		gbc_edtVerificationEditor.gridy = 15;
+		formPanel.add(omgVerification, gbc_edtVerificationEditor);
 	}
 
 	/* Allocation combo box management
 	 * -------------------------------------------------- */
 	
 	/**
-	 * Load users into the allocation constraint combo box.
+	 * Load users into the allocation constraint combo box and all other
+	 * components that require them.
 	 * 
 	 * @param reload If users are cached, whether to re-fetch users regardless.
 	 */
@@ -433,17 +470,18 @@ public class EditTask extends JScrollPane {
 				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
 				return;
 			}
-	
+
 			// Get the users
 			List<User> allUsers = db.getAllUsers();
 			List<User> caretakers = (List<User>) allUsers.stream()
 				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
 				.collect(Collectors.toList());
-	
-			// (Re)fill the list
+			
+			// (Re)fill the lists
 			ncmbAllocationConstraint.populate(caretakers);
-
-			usersLoaded  = true;
+			edtVerification.setUsers(caretakers);
+			
+			usersLoaded = true;
 		}
 	}
 	
@@ -458,6 +496,13 @@ public class EditTask extends JScrollPane {
 	/* Timeline Management
 	 * -------------------------------------------------- */
 	
+	/**
+	 * (Re)Initialise the generative temporal map of the timeline panel and set
+	 * the timeline panel to track the new map.
+	 * 
+	 * @param name The name to give events in the timeline.
+	 * @param cips The task schedule constraint to use for the timeline.
+	 */
 	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
 		currentTimelineHistory = new ArrayList<>();
 		currentTimelineMap = new GenerativeTemporalMap<>(
@@ -466,11 +511,17 @@ public class EditTask extends JScrollPane {
 		);
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
 		maps.add(currentTimelineMap);
-		timelinePanel.setTimeline(new Timeline<>(maps));
+
 		// setTimeline() fires a change event, which the BoundedTimelinePanel
 		// picks up and re-displays the current date range with the new timeline.
+		timelinePanel.setTimeline(new Timeline<>(maps));
 	}
 	
+	/**
+	 * Clear the events in the generative temporal map of the timeline panel,
+	 * and regenerate the events within its current date range, without changing
+	 * the map being used.
+	 */
 	private void resetTimeline() {
 		// Note: currentTimelineHistory and currentTimelineMap are
 		//       (re)initialised every time the task being edited is changed.
@@ -530,6 +581,13 @@ public class EditTask extends JScrollPane {
 		durCSetInterval.setVisible(enabled);
 	}
 
+	/* Verification value/display management
+	 * -------------------------------------------------- */
+	
+	private void setVerification(Verification verification) {
+		omgVerification.setObject(verification);
+	}
+	
 	/* Task get/validate/update cycle
 	 * -------------------------------------------------- */
 	
@@ -538,7 +596,8 @@ public class EditTask extends JScrollPane {
 	 * 
 	 * @param task The task to edit.
 	 */
-	public void showTask(Task task) {
+	@Override
+	public void showObject(Task task) {
 		/* Basic fields
 		 * -------------------- */
 		
@@ -551,13 +610,75 @@ public class EditTask extends JScrollPane {
 		 * -------------------- */
 
 		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
-		
+				
 		// Visualising the schedule
-		// (Re)Initialise the generative temporal map for this task's schedule
-		// and set the timeline panel to display it.
-		updateTimeline(task.getName(), cips);
+		this.updateTimeline(task.getName(), cips);
 		
 		// Editing the schedule
+		this.setScheduleConstraint(cips);
+
+		/* Verification
+		 * -------------------- */
+		
+		this.setVerification(task.getVerification());
+	}
+
+	/**
+	 * Validate fields and visually mark invalid fields.
+	 * 
+	 * @return True if all fields are valid, false otherwise.
+	 */
+	@Override
+	public boolean validateFields() {
+		boolean valid = true;
+		
+		// Name
+		String name = txtName.getText();
+		if (name.isEmpty()) valid = false;
+		
+		// Notes - no validation
+		// Standard Priority - combo box does validation
+		// Allocation Constraint - combo box does validation
+		
+		// setRefStart - date/time picker does validation
+		// setRefEnd - date/time picker does validation
+		// setInterval - duration field does validation
+		// setCRefStart - date/time picker does validation
+		// setCRefEnd - date/time picker does validation
+		// setCInterval - duration field does validation
+
+		if (!edtVerification.validateFields()) valid = false;
+		
+		return valid;
+	}
+	
+	/**
+	 * Update the given task with the values currently in the editor's inputs.
+	 * 
+	 * @param task The task to update.
+	 */
+	@Override
+	public void updateObject(Task task) {
+		// Basic fields
+		task.setName(txtName.getText());
+		task.setNotes(txtNotes.getText());
+		task.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
+		task.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
+		
+		// Schedule constraint fields
+		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
+		// problematic memory-wise, and is less complicated than checking to see
+		// if it's changed.
+		task.setScheduleConstraint(this.getScheduleConstraint());
+		
+		// Verification
+		task.setVerification(omgVerification.getObject());
+	}
+
+	/* Utilities used in multiple places
+	 * -------------------------------------------------- */
+	
+	private void setScheduleConstraint(ConstrainedIntervaledPeriodSet cips) {
 		IntervaledPeriodSet set = cips.periodSet();
 		dtpSetRefStart.setDateTime(set.referencePeriod().start());
 		
@@ -603,54 +724,6 @@ public class EditTask extends JScrollPane {
 			}
 		}
 	}
-
-	/**
-	 * Validate fields and visually mark invalid fields.
-	 * 
-	 * @return True if all fields are valid, false otherwise.
-	 */
-	public boolean validateFields() {
-		boolean valid = true;
-		
-		// Name
-		String name = txtName.getText();
-		if (name.isEmpty()) valid = false;
-		
-		// Notes - no validation
-		// Standard Priority - combo box does validation
-		// Allocation Constraint - combo box does validation
-		
-		// setRefStart - date/time picker does validation
-		// setRefEnd - date/time picker does validation
-		// setInterval - duration field does validation
-		// setCRefStart - date/time picker does validation
-		// setCRefEnd - date/time picker does validation
-		// setCInterval - duration field does validation
-		
-		return valid;
-	}
-	
-	/**
-	 * Update the given task with the values currently in the editor's inputs.
-	 * 
-	 * @param task The task to update.
-	 */
-	public void updateTask(Task task) {
-		// Basic fields
-		task.setName(txtName.getText());
-		task.setNotes(txtNotes.getText());
-		task.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
-		task.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
-		
-		// Schedule constraint fields
-		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
-		// problematic memory-wise, and is less complicated than checking to see
-		// if it's changed.
-		task.setScheduleConstraint(this.getScheduleConstraint());
-	}
-
-	/* Utilities used in multiple places
-	 * -------------------------------------------------- */
 	
 	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
 		// Period set

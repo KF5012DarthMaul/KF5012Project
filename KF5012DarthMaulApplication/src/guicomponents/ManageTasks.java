@@ -172,7 +172,7 @@ public class ManageTasks extends JPanel {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
 		active = newTask; // Keep a reference to it (the task being edited)
 		views.get("editTask").run(); // Show the edit view
-		editTaskComponent.showTask(newTask); // Set up the edit view to edit that task
+		editTaskComponent.showObject(newTask); // Set up the edit view to edit that task
 	}
 
 	private void editTask() {
@@ -183,7 +183,7 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof Task) {
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
-			editTaskComponent.showTask((Task) obj); // Set up the edit view to edit that task
+			editTaskComponent.showObject((Task) obj); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
@@ -218,7 +218,7 @@ public class ManageTasks extends JPanel {
 			}
 			
 			Task task = (Task) active;
-			editTaskComponent.updateTask(task);
+			editTaskComponent.updateObject(task);
 			
 			//db.submitTask(task); // TODO
 			
