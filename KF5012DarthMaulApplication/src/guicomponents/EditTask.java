@@ -46,8 +46,6 @@ import java.time.LocalDateTime;
 
 import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 @SuppressWarnings("serial")
 public class EditTask extends JScrollPane {
