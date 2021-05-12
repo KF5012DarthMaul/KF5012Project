@@ -30,7 +30,7 @@ public class DurationField extends AbstractTimeField {
         int hour = getHour();
         int minute = getMinute();
         
-        return (hour * 60 * 60 * 1000) + (minute * 60 * 1000);
+        return (hour * 60 * 60) + (minute * 60);
     }
 
     @Override

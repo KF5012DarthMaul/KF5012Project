@@ -32,6 +32,7 @@ import temporal.ChartableEvent;
 import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.GenerativeTemporalMap;
 import temporal.IntervaledPeriodSet;
+import temporal.Period;
 import temporal.TemporalMap;
 import temporal.Timeline;
 
@@ -610,6 +611,13 @@ public class EditTask extends JScrollPane {
 		// Standard Priority - combo box does validation
 		// Allocation Constraint - combo box does validation
 		
+		// setRefStart - date/time picker does validation
+		// setRefEnd - date/time picker does validation
+		// setInterval - duration field does validation
+		// setCRefStart - date/time picker does validation
+		// setCRefEnd - date/time picker does validation
+		// setCInterval - duration field does validation
+		
 		return valid;
 	}
 	
@@ -619,6 +627,7 @@ public class EditTask extends JScrollPane {
 	 * @param task The task to update.
 	 */
 	public void updateTask(Task task) {
+		// Basic fields
 		task.setName(txtName.getText());
 		task.setNotes(txtNotes.getText());
 		task.setStandardPriority(
@@ -630,5 +639,47 @@ public class EditTask extends JScrollPane {
 		} else {
 			task.setAllocationConstraint((User) obj);
 		}
+		
+		// Schedule constraint fields
+		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
+		// problematic memory-wise, and is less complicated than checking to see
+		// if it's changed.
+		
+		// Period set
+		LocalDateTime setRefStart = dtpSetRefStart.getDateTime();
+		LocalDateTime setRefEnd = null;
+		if (chkSetRefEnd.isSelected()) {
+			setRefEnd = dtpSetRefEnd.getDateTime();
+		}
+		Duration setInterval = null;
+		if (chkSetInterval.isSelected()) {
+			setInterval = Duration.ofSeconds(durSetInterval.getDuration());
+		}
+
+		// Create the set
+		IntervaledPeriodSet set = new IntervaledPeriodSet(
+			new Period(setRefStart, setRefEnd), setInterval
+		);
+
+		// Constraint period set
+		IntervaledPeriodSet cSet = null;
+		if (chkCSet.isSelected()) {
+			LocalDateTime cSetRefStart = dtpCSetRefStart.getDateTime();
+			LocalDateTime cSetRefEnd = null;
+			if (chkCSetRefEnd.isSelected()) {
+				cSetRefEnd = dtpCSetRefEnd.getDateTime();
+			}
+			Duration cSetInterval = null;
+			if (chkCSetInterval.isSelected()) {
+				cSetInterval = Duration.ofSeconds(durCSetInterval.getDuration());
+			}
+
+			// Create the constraint set (if needed)
+			cSet = new IntervaledPeriodSet(
+				new Period(cSetRefStart, cSetRefEnd), cSetInterval
+			);
+		}
+		
+		task.setScheduleConstraint(new ConstrainedIntervaledPeriodSet(set, cSet));
 	}
 }
