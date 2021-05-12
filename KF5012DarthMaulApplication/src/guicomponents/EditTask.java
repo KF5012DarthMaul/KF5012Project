@@ -644,7 +644,10 @@ public class EditTask extends JScrollPane {
 		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
 		// problematic memory-wise, and is less complicated than checking to see
 		// if it's changed.
-		
+		task.setScheduleConstraint(this.getScheduleConstraint());
+	}
+
+	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
 		// Period set
 		LocalDateTime setRefStart = dtpSetRefStart.getDateTime();
 		LocalDateTime setRefEnd = null;
@@ -680,6 +683,6 @@ public class EditTask extends JScrollPane {
 			);
 		}
 		
-		task.setScheduleConstraint(new ConstrainedIntervaledPeriodSet(set, cSet));
+		return new ConstrainedIntervaledPeriodSet(set, cSet);
 	}
 }
