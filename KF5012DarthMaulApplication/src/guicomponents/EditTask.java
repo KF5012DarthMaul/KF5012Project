@@ -121,6 +121,8 @@ public class EditTask extends JScrollPane {
 		formPanel.add(lblNotes, gbc_lblNotes);
 		
 		txtNotes = new JTextArea();
+		txtNotes.setLineWrap(true);
+		txtNotes.setWrapStyleWord(true);
 		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
 		gbc_txtNotes.gridwidth = 2;
 		gbc_txtNotes.anchor = GridBagConstraints.WEST;
