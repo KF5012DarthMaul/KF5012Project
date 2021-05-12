@@ -7,12 +7,9 @@ import javax.swing.JTextArea;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 
 import java.awt.GridBagLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -21,6 +18,7 @@ import lib.DurationField;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
+import guicomponents.utils.NullableComboBox;
 import guicomponents.utils.TimelinePanel;
 import domain.Task;
 import domain.TaskPriority;
@@ -52,7 +50,7 @@ public class EditTask extends JScrollPane {
 	private JTextField txtName;
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbPriority;
-	private JComboBox<Object> cmbAllocationConstraint;
+	private NullableComboBox<User> ncmbAllocationConstraint;
 	
 	private List<ChartableEvent> currentTimelineHistory;
 	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
@@ -102,9 +100,9 @@ public class EditTask extends JScrollPane {
 		txtName = new JTextField();
 		lblName.setLabelFor(txtName);
 		GridBagConstraints gbc_txtName = new GridBagConstraints();
-		gbc_txtName.gridwidth = 2;
 		gbc_txtName.anchor = GridBagConstraints.WEST;
 		gbc_txtName.insets = new Insets(5, 5, 5, 0);
+		gbc_txtName.gridwidth = 2;
 		gbc_txtName.gridx = 1;
 		gbc_txtName.gridy = 0;
 		formPanel.add(txtName, gbc_txtName);
@@ -141,9 +139,9 @@ public class EditTask extends JScrollPane {
 		
 		cmbPriority = new JComboBox<>(TaskPriority.values());
 		GridBagConstraints gbc_cmbPriority = new GridBagConstraints();
-		gbc_cmbPriority.gridwidth = 2;
 		gbc_cmbPriority.anchor = GridBagConstraints.WEST;
 		gbc_cmbPriority.insets = new Insets(0, 5, 5, 0);
+		gbc_cmbPriority.gridwidth = 2;
 		gbc_cmbPriority.gridx = 1;
 		gbc_cmbPriority.gridy = 2;
 		formPanel.add(cmbPriority, gbc_cmbPriority);
@@ -155,35 +153,20 @@ public class EditTask extends JScrollPane {
 		gbc_lblAllocationConstraint.gridy = 3;
 		formPanel.add(lblAllocationConstraint, gbc_lblAllocationConstraint);
 
-		cmbAllocationConstraint = new JComboBox<>();
-		cmbAllocationConstraint.setRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(
-					JList<?> list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus
-			) {
-				super.getListCellRendererComponent(
-					list, value, index, isSelected, cellHasFocus);
-				
-				// If it is the string "", then ...
-				if (value == "") {
-					setText("No Allocation Constraint");
-				} else {
-					User user = (User) value;
-					setText(user.getUsername());
-				}
-				
-				return this;
-			}
+		ncmbAllocationConstraint = new NullableComboBox<>((user) -> {
+			return user == null ? "No Allocation Constraint" : user.getUsername();
 		});
 		GridBagConstraints gbc_cmbAllocationConstraint = new GridBagConstraints();
-		gbc_cmbAllocationConstraint.gridwidth = 2;
 		gbc_cmbAllocationConstraint.anchor = GridBagConstraints.WEST;
 		gbc_cmbAllocationConstraint.insets = new Insets(0, 5, 5, 0);
+		gbc_cmbAllocationConstraint.gridwidth = 2;
 		gbc_cmbAllocationConstraint.gridx = 1;
 		gbc_cmbAllocationConstraint.gridy = 3;
-		formPanel.add(cmbAllocationConstraint, gbc_cmbAllocationConstraint);
+		formPanel.add(ncmbAllocationConstraint, gbc_cmbAllocationConstraint);
 
+		/* Schedule - Graphical Overview
+		 * -------------------- */
+		
 		JSeparator sep1 = new JSeparator();
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
 		gbc_sep1.gridwidth = 3;
@@ -193,9 +176,6 @@ public class EditTask extends JScrollPane {
 		gbc_sep1.gridy = 4;
 		formPanel.add(sep1, gbc_sep1);
 
-		/* Schedule - Graphical Overview
-		 * -------------------- */
-		
 		// Don't give it a Timeline yet - that's can only be done when a task is
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
@@ -243,19 +223,20 @@ public class EditTask extends JScrollPane {
 		gbc_btnUpdateTimeline.gridy = 6;
 		formPanel.add(btnUpdateTimeline, gbc_btnUpdateTimeline);
 
+		/* Schedule - Fields
+		 * -------------------- */
+		
 		JSeparator sep2 = new JSeparator();
 		GridBagConstraints gbc_sep2 = new GridBagConstraints();
-		gbc_sep2.gridwidth = 3;
 		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sep2.insets = new Insets(0, 5, 5, 0);
+		gbc_sep2.gridwidth = 3;
 		gbc_sep2.gridx = 0;
 		gbc_sep2.gridy = 7;
 		formPanel.add(sep2, gbc_sep2);
 
-		/* Schedule - Fields
-		 * -------------------- */
-		
 		// Set ref start
+		
 		JLabel lblSetRefStart = new JLabel("Earliest Start Time");
 		GridBagConstraints gbc_lblSetRefStart = new GridBagConstraints();
 		gbc_lblSetRefStart.anchor = GridBagConstraints.EAST;
@@ -273,6 +254,7 @@ public class EditTask extends JScrollPane {
 		formPanel.add(dtpSetRefStart, gbc_dtpSetRefStart);
 		
 		// Set ref end
+		
 		JLabel lblSetRefEnd = new JLabel("Latest End Time");
 		GridBagConstraints gbc_lblSetRefEnd = new GridBagConstraints();
 		gbc_lblSetRefEnd.anchor = GridBagConstraints.EAST;
@@ -304,6 +286,7 @@ public class EditTask extends JScrollPane {
 		formPanel.add(dtpSetRefEnd, gbc_dtpSetRefEnd);
 		
 		// Set interval
+		
 		JLabel lblSetInterval = new JLabel("Regularity");
 		GridBagConstraints gbc_lblSetInterval = new GridBagConstraints();
 		gbc_lblSetInterval.anchor = GridBagConstraints.EAST;
@@ -335,6 +318,7 @@ public class EditTask extends JScrollPane {
 		formPanel.add(durSetInterval, gbc_spnSetInterval);
 		
 		// CSet ref start
+		
 		JLabel lblCSetRefStart = new JLabel("Constraint Start");
 		GridBagConstraints gbc_lblCSetRefStart = new GridBagConstraints();
 		gbc_lblCSetRefStart.anchor = GridBagConstraints.EAST;
@@ -366,6 +350,7 @@ public class EditTask extends JScrollPane {
 		formPanel.add(dtpCSetRefStart, gbc_dtpCSetRefStart);
 		
 		// CSet ref end
+		
 		JLabel lblCSetRefEnd = new JLabel("Constraint End");
 		GridBagConstraints gbc_lblCSetRefEnd = new GridBagConstraints();
 		gbc_lblCSetRefEnd.anchor = GridBagConstraints.EAST;
@@ -397,6 +382,7 @@ public class EditTask extends JScrollPane {
 		formPanel.add(dtpCSetRefEnd, gbc_dtpCSetRefEnd);
 		
 		// CSet interval
+		
 		JLabel lblCSetInterval = new JLabel("Constraint Interval");
 		GridBagConstraints gbc_lblCSetInterval = new GridBagConstraints();
 		gbc_lblCSetInterval.anchor = GridBagConstraints.EAST;
@@ -455,11 +441,8 @@ public class EditTask extends JScrollPane {
 				.collect(Collectors.toList());
 	
 			// (Re)fill the list
-			cmbAllocationConstraint.removeAllItems();
-			for (User user : caretakers) {
-				cmbAllocationConstraint.addItem(user);
-			}
-			cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
+			ncmbAllocationConstraint.populate(caretakers);
+
 			usersLoaded  = true;
 		}
 	}
@@ -489,15 +472,13 @@ public class EditTask extends JScrollPane {
 	}
 	
 	private void resetTimeline() {
-		// Note 1: currentTimelineHistory and currentTimelineMap are
-		//         (re)initialised every time the task being edited is changed.
-		{
-			currentTimelineHistory.clear();
-			currentTimelineMap.generateBetween(
-				dateRangePicker.getStartDateTime(),
-				dateRangePicker.getEndDateTime()
-			);
-		}
+		// Note: currentTimelineHistory and currentTimelineMap are
+		//       (re)initialised every time the task being edited is changed.
+		currentTimelineHistory.clear();
+		currentTimelineMap.generateBetween(
+			dateRangePicker.getStartDateTime(),
+			dateRangePicker.getEndDateTime()
+		);
 	}
 
 	/* Schedule value/display management
@@ -564,13 +545,7 @@ public class EditTask extends JScrollPane {
 		txtName.setText(task.getName());
 		txtNotes.setText(task.getNotes());
 		cmbPriority.setSelectedItem(task.getStandardPriority());
-		
-		User allocConst = task.getAllocationConstraint();
-		if (allocConst == null) {
-			cmbAllocationConstraint.setSelectedItem(""); // null -> ""
-		} else {
-			cmbAllocationConstraint.setSelectedItem(allocConst);
-		}
+		ncmbAllocationConstraint.setSelection(task.getAllocationConstraint());
 
 		/* Schedule
 		 * -------------------- */
@@ -665,13 +640,7 @@ public class EditTask extends JScrollPane {
 		task.setName(txtName.getText());
 		task.setNotes(txtNotes.getText());
 		task.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
-		
-		Object obj = cmbAllocationConstraint.getSelectedItem();
-		if (obj instanceof String && obj.equals("")) {
-			task.setAllocationConstraint(null);
-		} else {
-			task.setAllocationConstraint((User) obj);
-		}
+		task.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
 		
 		// Schedule constraint fields
 		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
