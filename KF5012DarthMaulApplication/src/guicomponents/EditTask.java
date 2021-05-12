@@ -565,7 +565,7 @@ public class EditTask extends JScrollPane {
 		} else {
 			setSetIntervalEnabled(true, true);
 			durSetInterval.setHour((int) setInterval.getSeconds() / 3600);
-			durSetInterval.setMinute((int) setInterval.getSeconds() / 60);
+			durSetInterval.setMinute((int) setInterval.getSeconds() % 3600 / 60);
 		}
 
 		IntervaledPeriodSet cSet = cips.periodSetConstraint();
@@ -589,7 +589,7 @@ public class EditTask extends JScrollPane {
 			} else {
 				setCSetIntervalEnabled(true, true);
 				durCSetInterval.setHour((int) cSetInterval.getSeconds() / 3600);
-				durCSetInterval.setMinute((int) cSetInterval.getSeconds() / 60);
+				durCSetInterval.setMinute((int) cSetInterval.getSeconds() % 3600 / 60);
 			}
 		}
 	}
