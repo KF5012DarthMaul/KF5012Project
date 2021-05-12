@@ -65,18 +65,14 @@ public class ViewTasks extends JPanel {
 		this.setLayout(gbl_viewTasksPanel);
 
 		// Date Range
-		JPanel rangePanel = new JPanel();
-		GridBagConstraints gbc_rangePanel = new GridBagConstraints();
-		gbc_rangePanel.fill = GridBagConstraints.BOTH;
-		gbc_rangePanel.insets = new Insets(0, 0, 5, 0);
-		gbc_rangePanel.gridx = 0;
-		gbc_rangePanel.gridy = 0;
-		this.add(rangePanel, gbc_rangePanel);
-		rangePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-
 		dateRangePicker = new DateRangePicker();
 		dateRangePicker.addChangeListener((e) -> this.refresh());
-		rangePanel.add(dateRangePicker);
+		GridBagConstraints gbc_dateRangePicker = new GridBagConstraints();
+		gbc_dateRangePicker.fill = GridBagConstraints.HORIZONTAL;
+		gbc_dateRangePicker.insets = new Insets(0, 0, 5, 0);
+		gbc_dateRangePicker.gridx = 0;
+		gbc_dateRangePicker.gridy = 0;
+		this.add(dateRangePicker, gbc_dateRangePicker);
 		
 		JPanel instructionsPanel = new JPanel();
 		GridBagConstraints gbc_instructionsPanel = new GridBagConstraints();

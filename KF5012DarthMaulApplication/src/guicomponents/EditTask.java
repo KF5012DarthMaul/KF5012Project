@@ -230,7 +230,7 @@ public class EditTask extends JScrollPane {
 		
 		// Then add as usual
 		GridBagConstraints gbc_timelinePanel = new GridBagConstraints();
-		gbc_timelinePanel.anchor = GridBagConstraints.WEST;
+		gbc_timelinePanel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_timelinePanel.insets = new Insets(0, 5, 5, 0);
 		gbc_timelinePanel.gridwidth = 3;
 		gbc_timelinePanel.gridx = 0;
