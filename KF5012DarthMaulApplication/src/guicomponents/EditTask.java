@@ -432,8 +432,8 @@ public class EditTask extends JScrollPane {
 		
 		// Show/Hide corresponding items, but keep checkbox values, regardless
 		// of force (they're not controlled by this checkbox).
-		setCSetRefDurEnabled(chkCSetRefDur.isSelected(), false);
-		setCSetIntervalEnabled(chkCSetInterval.isSelected(), false);
+		setCSetRefDurEnabled(enabled ? chkCSetRefDur.isSelected() : enabled, false);
+		setCSetIntervalEnabled(enabled ? chkCSetInterval.isSelected() : enabled, false);
 		
 		// Enable/Disable (but don't show/hide) the checkboxes
 		chkCSetRefDur.setEnabled(enabled);
