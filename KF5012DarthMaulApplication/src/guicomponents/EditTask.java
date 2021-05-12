@@ -666,10 +666,9 @@ public class EditTask extends JScrollPane {
 		// Basic fields
 		task.setName(txtName.getText());
 		task.setNotes(txtNotes.getText());
-		task.setStandardPriority(
-			(TaskPriority) cmbPriority.getSelectedObjects()[0]);
+		task.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
 		
-		Object obj = cmbAllocationConstraint.getSelectedObjects()[0];
+		Object obj = cmbAllocationConstraint.getSelectedItem();
 		if (obj instanceof String && obj.equals("")) {
 			task.setAllocationConstraint(null);
 		} else {
