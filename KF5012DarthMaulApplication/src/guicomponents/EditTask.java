@@ -3,6 +3,7 @@ package guicomponents;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextArea;
 import javax.swing.JComboBox;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -48,7 +49,7 @@ import java.awt.event.ItemEvent;
 @SuppressWarnings("serial")
 public class EditTask extends JScrollPane {
 	private JTextField txtName;
-	private JTextField txtNotes;
+	private JTextArea txtNotes;
 	private JComboBox<Object> cmbPriority;
 	private JComboBox<Object> cmbAllocationConstraint;
 	
@@ -106,7 +107,7 @@ public class EditTask extends JScrollPane {
 		gbc_txtName.gridx = 1;
 		gbc_txtName.gridy = 0;
 		formPanel.add(txtName, gbc_txtName);
-		txtName.setColumns(10);
+		txtName.setColumns(40);
 		
 		JLabel lblNotes = new JLabel("Notes");
 		GridBagConstraints gbc_lblNotes = new GridBagConstraints();
@@ -116,7 +117,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblNotes.gridy = 1;
 		formPanel.add(lblNotes, gbc_lblNotes);
 		
-		txtNotes = new JTextField();
+		txtNotes = new JTextArea();
 		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
 		gbc_txtNotes.gridwidth = 2;
 		gbc_txtNotes.anchor = GridBagConstraints.WEST;
@@ -124,7 +125,8 @@ public class EditTask extends JScrollPane {
 		gbc_txtNotes.gridx = 1;
 		gbc_txtNotes.gridy = 1;
 		formPanel.add(txtNotes, gbc_txtNotes);
-		txtNotes.setColumns(10);
+		txtNotes.setColumns(40);
+		txtNotes.setRows(6);
 		
 		JLabel lblPriority = new JLabel("Priority");
 		GridBagConstraints gbc_lblPriority = new GridBagConstraints();
