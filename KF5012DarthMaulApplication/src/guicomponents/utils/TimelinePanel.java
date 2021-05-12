@@ -367,7 +367,7 @@ public class TimelinePanel extends JPanel {
 			startTime = start;
 			startTruncated = true;
 		}
-		if (endTime.isAfter(end)) {
+		if (endTime == null || endTime.isAfter(end)) {
 			// Truncate to the end, but show this has been done
 			endTime = end;
 			endTruncated = true;
