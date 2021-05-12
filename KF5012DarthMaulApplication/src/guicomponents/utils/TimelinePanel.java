@@ -25,6 +25,12 @@ import temporal.Timeline;
 
 public class TimelinePanel extends JPanel {
 	private static final long serialVersionUID = 1L;
+	
+	private enum Align {
+		LEFT,
+		CENTER,
+		RIGHT
+	}
 
 	/* Retrievable / Editable
 	 * ---------- */
@@ -76,7 +82,7 @@ public class TimelinePanel extends JPanel {
 	 * Create the panel.
 	 */
 	public TimelinePanel() {
-		this.margin = 50;
+		this.margin = 20;
 		this.tickLength = 20;
 		this.hangingTickLength = 40;
 	}
@@ -284,7 +290,10 @@ public class TimelinePanel extends JPanel {
 
 		// Total axis height
 		int longestTickLength = tickLength;
-		if (hangingTickLength > tickLength) {
+		if (
+				hangingTickLength > tickLength && // If its longer
+				(hangingStartTick || hangingEndTick) // And one will be shown
+		) {
 			longestTickLength = hangingTickLength;
 		}
 		xAxisHeight = longestTickLength + metrics.getHeight();
@@ -299,28 +308,42 @@ public class TimelinePanel extends JPanel {
 		int i = 0;
 		
 		if (hangingStartTick) {
-			drawTick(g2d, x, y, hangingTickLength, xAxis[i]);
+			drawTick(g2d, x, y, hangingTickLength, xAxis[i], Align.LEFT);
 			x += hangingStartTickIntervalPx;
 			i++;
 		}
 		for (int t = 0; t < numTicks; t += 1, i += 1, x += tickIntervalPx) {
-			drawTick(g2d, x, y, tickLength, xAxis[i]);
+			Align align = Align.CENTER;
+			if (t == 0) {
+				align = Align.LEFT;
+			} else if (t == numTicks - 1) {
+				align = Align.RIGHT;
+			}
+			
+			drawTick(g2d, x, y, tickLength, xAxis[i], align);
 		}
 		x -= tickIntervalPx;
 		if (hangingEndTick) {
 			x += hangingEndTickIntervalPx;
-			drawTick(g2d, x, y, hangingTickLength, xAxis[i]);
+			drawTick(g2d, x, y, hangingTickLength, xAxis[i], Align.RIGHT);
 		}
 		
 		g2d.drawLine(initialX, y, x, y);
 	}
 	
 	private void drawTick(
-			Graphics2D g2d, int x, int y, int length, String label
+			Graphics2D g2d, int x, int y, int length, String label, Align align
 	) {
 		g2d.drawLine(x, y, x, y + length);
-		int labelx = x - metrics.stringWidth(label) / 2;
+
 		int labely = y + length + metrics.getHeight();
+		int labelx = x; // align == Align.LEFT
+		if (align == Align.CENTER) {
+			labelx -= metrics.stringWidth(label) / 2;
+		} else if (align == Align.RIGHT) {
+			labelx -= metrics.stringWidth(label);
+		}
+		
 		g2d.drawString(label, labelx, labely);
 	}
 
@@ -332,13 +355,12 @@ public class TimelinePanel extends JPanel {
 		}
 
 		timelineHeight = plotHeight - xAxisHeight;
-		
-		int pixelsPerTimeline = timelineHeight / allMaps.size();
+		int pixelsPerTimeline = timelineHeight / allMaps.size() + 1;
 
 		g2d.setStroke(timelineStroke);
 
 		int x = margin;
-		int y = margin;
+		int y = margin + pixelsPerTimeline / 2;
 		for (TemporalMap<Integer, ChartableEvent> map : allMaps) {
 			List<ChartableEvent> events = map.getBetween(
 				start, end, Event.byPeriodDefaultZero, true, true

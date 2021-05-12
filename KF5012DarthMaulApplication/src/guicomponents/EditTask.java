@@ -200,7 +200,7 @@ public class EditTask extends JScrollPane {
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
 		timelinePanel.setPreferredSize(
-			new Dimension(this.getPreferredSize().width, 200)
+			new Dimension(this.getPreferredSize().width, 100)
 		);
 		
 		dateRangePicker = new DateRangePicker("From", "To");
