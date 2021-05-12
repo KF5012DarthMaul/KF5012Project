@@ -9,6 +9,7 @@ import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
 
 import java.awt.GridBagLayout;
 import java.awt.Component;
@@ -45,6 +46,8 @@ import java.time.LocalDateTime;
 
 import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 @SuppressWarnings("serial")
 public class EditTask extends JScrollPane {
@@ -206,20 +209,12 @@ public class EditTask extends JScrollPane {
 		// regenerate the data to be displayed in the timeline panel completely.
 		// If you don't do this, the generator won't generate events before the
 		// end of the latest event generated.
-		// Note 1: currentTimelineHistory and currentTimelineMap are
-		//         (re)initialised every time the task being edited is changed.
 		// Note 2: This change listener must be added before the dateRangePicker
 		//         is passed to the BoundedTimelinePanel, or the data won't be
 		//         wiped before the bounded timeline panel tries to re-fetch the
 		//         data to re-draw the timeline panel, which may lead to missing
 		//         events.
-		dateRangePicker.addChangeListener((e) -> {
-			currentTimelineHistory.clear();
-			currentTimelineMap.generateBetween(
-				dateRangePicker.getStartDateTime(),
-				dateRangePicker.getEndDateTime()
-			);
-		});
+		dateRangePicker.addChangeListener((e) -> this.resetTimeline());
 		
 		// Link together the timeline panel and the date range picker so that
 		// the panel responds to changes in the date range (or if its own
@@ -237,13 +232,24 @@ public class EditTask extends JScrollPane {
 		gbc_timelinePanel.gridy = 5;
 		formPanel.add(boundedTimelinePanel, gbc_timelinePanel);
 
+		JButton btnUpdateTimeline = new JButton("Update Timeline");
+		btnUpdateTimeline.addActionListener((e) -> {
+			this.updateTimeline(txtName.getText(), getScheduleConstraint());
+		});
+		GridBagConstraints gbc_btnUpdateTimeline = new GridBagConstraints();
+		gbc_btnUpdateTimeline.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnUpdateTimeline.insets = new Insets(0, 5, 5, 0);
+		gbc_btnUpdateTimeline.gridx = 0;
+		gbc_btnUpdateTimeline.gridy = 6;
+		formPanel.add(btnUpdateTimeline, gbc_btnUpdateTimeline);
+
 		JSeparator sep2 = new JSeparator();
 		GridBagConstraints gbc_sep2 = new GridBagConstraints();
 		gbc_sep2.gridwidth = 3;
 		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sep2.insets = new Insets(0, 5, 5, 0);
 		gbc_sep2.gridx = 0;
-		gbc_sep2.gridy = 6;
+		gbc_sep2.gridy = 7;
 		formPanel.add(sep2, gbc_sep2);
 
 		/* Schedule - Fields
@@ -255,7 +261,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblSetRefStart.anchor = GridBagConstraints.EAST;
 		gbc_lblSetRefStart.insets = new Insets(0, 5, 5, 5);
 		gbc_lblSetRefStart.gridx = 0;
-		gbc_lblSetRefStart.gridy = 7;
+		gbc_lblSetRefStart.gridy = 8;
 		formPanel.add(lblSetRefStart, gbc_lblSetRefStart);
 		
 		dtpSetRefStart = new DateTimePicker();
@@ -263,7 +269,7 @@ public class EditTask extends JScrollPane {
 		gbc_dtpSetRefStart.insets = new Insets(0, 5, 5, 0);
 		gbc_dtpSetRefStart.anchor = GridBagConstraints.WEST;
 		gbc_dtpSetRefStart.gridx = 2;
-		gbc_dtpSetRefStart.gridy = 7;
+		gbc_dtpSetRefStart.gridy = 8;
 		formPanel.add(dtpSetRefStart, gbc_dtpSetRefStart);
 		
 		// Set ref end
@@ -272,7 +278,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblSetRefEnd.anchor = GridBagConstraints.EAST;
 		gbc_lblSetRefEnd.insets = new Insets(0, 5, 5, 5);
 		gbc_lblSetRefEnd.gridx = 0;
-		gbc_lblSetRefEnd.gridy = 8;
+		gbc_lblSetRefEnd.gridy = 9;
 		formPanel.add(lblSetRefEnd, gbc_lblSetRefEnd);
 		
 		chkSetRefEnd = new JCheckBox("");
@@ -286,7 +292,7 @@ public class EditTask extends JScrollPane {
 		GridBagConstraints gbc_chkSetRefEnd = new GridBagConstraints();
 		gbc_chkSetRefEnd.insets = new Insets(0, 0, 5, 5);
 		gbc_chkSetRefEnd.gridx = 1;
-		gbc_chkSetRefEnd.gridy = 8;
+		gbc_chkSetRefEnd.gridy = 9;
 		formPanel.add(chkSetRefEnd, gbc_chkSetRefEnd);
 
 		dtpSetRefEnd = new DateTimePicker();
@@ -294,7 +300,7 @@ public class EditTask extends JScrollPane {
 		gbc_dtpSetRefEnd.insets = new Insets(0, 5, 5, 0);
 		gbc_dtpSetRefEnd.anchor = GridBagConstraints.WEST;
 		gbc_dtpSetRefEnd.gridx = 2;
-		gbc_dtpSetRefEnd.gridy = 8;
+		gbc_dtpSetRefEnd.gridy = 9;
 		formPanel.add(dtpSetRefEnd, gbc_dtpSetRefEnd);
 		
 		// Set interval
@@ -303,7 +309,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblSetInterval.anchor = GridBagConstraints.EAST;
 		gbc_lblSetInterval.insets = new Insets(0, 5, 5, 5);
 		gbc_lblSetInterval.gridx = 0;
-		gbc_lblSetInterval.gridy = 9;
+		gbc_lblSetInterval.gridy = 10;
 		formPanel.add(lblSetInterval, gbc_lblSetInterval);
 		
 		chkSetInterval = new JCheckBox("");
@@ -317,7 +323,7 @@ public class EditTask extends JScrollPane {
 		GridBagConstraints gbc_chkSetInterval = new GridBagConstraints();
 		gbc_chkSetInterval.insets = new Insets(0, 0, 5, 5);
 		gbc_chkSetInterval.gridx = 1;
-		gbc_chkSetInterval.gridy = 9;
+		gbc_chkSetInterval.gridy = 10;
 		formPanel.add(chkSetInterval, gbc_chkSetInterval);
 
 		durSetInterval = new DurationField();
@@ -325,7 +331,7 @@ public class EditTask extends JScrollPane {
 		gbc_spnSetInterval.anchor = GridBagConstraints.WEST;
 		gbc_spnSetInterval.insets = new Insets(0, 5, 5, 0);
 		gbc_spnSetInterval.gridx = 2;
-		gbc_spnSetInterval.gridy = 9;
+		gbc_spnSetInterval.gridy = 10;
 		formPanel.add(durSetInterval, gbc_spnSetInterval);
 		
 		// CSet ref start
@@ -334,7 +340,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblCSetRefStart.anchor = GridBagConstraints.EAST;
 		gbc_lblCSetRefStart.insets = new Insets(0, 5, 5, 5);
 		gbc_lblCSetRefStart.gridx = 0;
-		gbc_lblCSetRefStart.gridy = 10;
+		gbc_lblCSetRefStart.gridy = 11;
 		formPanel.add(lblCSetRefStart, gbc_lblCSetRefStart);
 		
 		chkCSet = new JCheckBox("");
@@ -348,7 +354,7 @@ public class EditTask extends JScrollPane {
 		GridBagConstraints gbc_chkCSet = new GridBagConstraints();
 		gbc_chkCSet.insets = new Insets(0, 0, 5, 5);
 		gbc_chkCSet.gridx = 1;
-		gbc_chkCSet.gridy = 10;
+		gbc_chkCSet.gridy = 11;
 		formPanel.add(chkCSet, gbc_chkCSet);
 		
 		dtpCSetRefStart = new DateTimePicker();
@@ -356,7 +362,7 @@ public class EditTask extends JScrollPane {
 		gbc_dtpCSetRefStart.anchor = GridBagConstraints.WEST;
 		gbc_dtpCSetRefStart.insets = new Insets(0, 5, 5, 0);
 		gbc_dtpCSetRefStart.gridx = 2;
-		gbc_dtpCSetRefStart.gridy = 10;
+		gbc_dtpCSetRefStart.gridy = 11;
 		formPanel.add(dtpCSetRefStart, gbc_dtpCSetRefStart);
 		
 		// CSet ref end
@@ -365,7 +371,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblCSetRefEnd.anchor = GridBagConstraints.EAST;
 		gbc_lblCSetRefEnd.insets = new Insets(0, 5, 5, 5);
 		gbc_lblCSetRefEnd.gridx = 0;
-		gbc_lblCSetRefEnd.gridy = 11;
+		gbc_lblCSetRefEnd.gridy = 12;
 		formPanel.add(lblCSetRefEnd, gbc_lblCSetRefEnd);
 		
 		chkCSetRefEnd = new JCheckBox("");
@@ -379,7 +385,7 @@ public class EditTask extends JScrollPane {
 		GridBagConstraints gbc_chkCSetRefEnd = new GridBagConstraints();
 		gbc_chkCSetRefEnd.insets = new Insets(0, 0, 5, 5);
 		gbc_chkCSetRefEnd.gridx = 1;
-		gbc_chkCSetRefEnd.gridy = 11;
+		gbc_chkCSetRefEnd.gridy = 12;
 		formPanel.add(chkCSetRefEnd, gbc_chkCSetRefEnd);
 
 		dtpCSetRefEnd = new DateTimePicker();
@@ -387,7 +393,7 @@ public class EditTask extends JScrollPane {
 		gbc_dtpCSetRefEnd.insets = new Insets(0, 5, 5, 0);
 		gbc_dtpCSetRefEnd.anchor = GridBagConstraints.WEST;
 		gbc_dtpCSetRefEnd.gridx = 2;
-		gbc_dtpCSetRefEnd.gridy = 11;
+		gbc_dtpCSetRefEnd.gridy = 12;
 		formPanel.add(dtpCSetRefEnd, gbc_dtpCSetRefEnd);
 		
 		// CSet interval
@@ -396,7 +402,7 @@ public class EditTask extends JScrollPane {
 		gbc_lblCSetInterval.anchor = GridBagConstraints.EAST;
 		gbc_lblCSetInterval.insets = new Insets(0, 5, 0, 5);
 		gbc_lblCSetInterval.gridx = 0;
-		gbc_lblCSetInterval.gridy = 12;
+		gbc_lblCSetInterval.gridy = 13;
 		formPanel.add(lblCSetInterval, gbc_lblCSetInterval);
 		
 		chkCSetInterval = new JCheckBox("");
@@ -410,7 +416,7 @@ public class EditTask extends JScrollPane {
 		GridBagConstraints gbc_chkCSetInterval = new GridBagConstraints();
 		gbc_chkCSetInterval.insets = new Insets(0, 0, 0, 5);
 		gbc_chkCSetInterval.gridx = 1;
-		gbc_chkCSetInterval.gridy = 12;
+		gbc_chkCSetInterval.gridy = 13;
 		formPanel.add(chkCSetInterval, gbc_chkCSetInterval);
 		
 		durCSetInterval = new DurationField();
@@ -418,10 +424,85 @@ public class EditTask extends JScrollPane {
 		gbc_durCSetInterval.insets = new Insets(0, 5, 0, 0);
 		gbc_durCSetInterval.anchor = GridBagConstraints.WEST;
 		gbc_durCSetInterval.gridx = 2;
-		gbc_durCSetInterval.gridy = 12;
+		gbc_durCSetInterval.gridy = 13;
 		formPanel.add(durCSetInterval, gbc_durCSetInterval);
 	}
 
+	/* Allocation combo box management
+	 * -------------------------------------------------- */
+	
+	/**
+	 * Load users into the allocation constraint combo box.
+	 * 
+	 * @param reload If users are cached, whether to re-fetch users regardless.
+	 */
+	public void loadUsers(boolean reload) {
+		if (!usersLoaded || reload) {
+			// Try to connect to the DB to get users - if that fails, you won't be
+			// able to edit the user, but can try again.
+			DBAbstraction db;
+			try {
+				db = DBAbstraction.getInstance();
+			} catch (FailedToConnectException e) {
+				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
+				return;
+			}
+	
+			// Get the users
+			List<User> allUsers = db.getAllUsers();
+			List<User> caretakers = (List<User>) allUsers.stream()
+				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
+				.collect(Collectors.toList());
+	
+			// (Re)fill the list
+			cmbAllocationConstraint.removeAllItems();
+			for (User user : caretakers) {
+				cmbAllocationConstraint.addItem(user);
+			}
+			cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
+			usersLoaded  = true;
+		}
+	}
+	
+	/**
+	 * Load users into the allocation constraint combo box. If already loaded,
+	 * do not reload.
+	 */
+	public void loadUsers() {
+		loadUsers(false);
+	}
+	
+	/* Timeline Management
+	 * -------------------------------------------------- */
+	
+	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
+		currentTimelineHistory = new ArrayList<>();
+		currentTimelineMap = new GenerativeTemporalMap<>(
+			currentTimelineHistory, cips,
+			(p) -> new BasicChartableEvent(p, name)
+		);
+		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
+		maps.add(currentTimelineMap);
+		timelinePanel.setTimeline(new Timeline<>(maps));
+		// setTimeline() fires a change event, which the BoundedTimelinePanel
+		// picks up and re-displays the current date range with the new timeline.
+	}
+	
+	private void resetTimeline() {
+		// Note 1: currentTimelineHistory and currentTimelineMap are
+		//         (re)initialised every time the task being edited is changed.
+		{
+			currentTimelineHistory.clear();
+			currentTimelineMap.generateBetween(
+				dateRangePicker.getStartDateTime(),
+				dateRangePicker.getEndDateTime()
+			);
+		}
+	}
+
+	/* Schedule value/display management
+	 * -------------------------------------------------- */
+	
 	private void setSetRefEndEnabled(boolean enabled, boolean force) {
 		if (force) {
 			chkSetRefEnd.setSelected(enabled);
@@ -468,46 +549,8 @@ public class EditTask extends JScrollPane {
 		durCSetInterval.setVisible(enabled);
 	}
 
-	/**
-	 * Load users into the allocation constraint combo box.
-	 * 
-	 * @param reload If users are cached, whether to re-fetch users regardless.
-	 */
-	public void loadUsers(boolean reload) {
-		if (!usersLoaded || reload) {
-			// Try to connect to the DB to get users - if that fails, you won't be
-			// able to edit the user, but can try again.
-			DBAbstraction db;
-			try {
-				db = DBAbstraction.getInstance();
-			} catch (FailedToConnectException e) {
-				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
-				return;
-			}
-	
-			// Get the users
-			List<User> allUsers = db.getAllUsers();
-			List<User> caretakers = (List<User>) allUsers.stream()
-				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
-				.collect(Collectors.toList());
-	
-			// (Re)fill the list
-			cmbAllocationConstraint.removeAllItems();
-			for (User user : caretakers) {
-				cmbAllocationConstraint.addItem(user);
-			}
-			cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
-			usersLoaded  = true;
-		}
-	}
-	
-	/**
-	 * Load users into the allocation constraint combo box. If already loaded,
-	 * do not reload.
-	 */
-	public void loadUsers() {
-		loadUsers(false);
-	}
+	/* Task get/validate/update cycle
+	 * -------------------------------------------------- */
 	
 	/**
 	 * Mark the given task to be the current task to edit.
@@ -528,29 +571,18 @@ public class EditTask extends JScrollPane {
 		} else {
 			cmbAllocationConstraint.setSelectedItem(allocConst);
 		}
-		
-		/* Visualising the schedule
+
+		/* Schedule
 		 * -------------------- */
-		
-		// (Re)Initialise the generative temporal map for this task's schedule
-		// and set the timeline panel to display it.
-		currentTimelineHistory = new ArrayList<>();
-		currentTimelineMap = new GenerativeTemporalMap<>(
-			currentTimelineHistory,
-			task.getScheduleConstraint(),
-			(p) -> new BasicChartableEvent(p, task.getName())
-		);
-		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
-		maps.add(currentTimelineMap);
-		timelinePanel.setTimeline(new Timeline<>(maps));
-		// setTimeline() fires a change event, which the BoundedTimelinePanel
-		// picks up and re-displays the current date range with the new timeline.
-		
-		/* Editing the schedule
-		 * -------------------- */
-		
+
 		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
 		
+		// Visualising the schedule
+		// (Re)Initialise the generative temporal map for this task's schedule
+		// and set the timeline panel to display it.
+		updateTimeline(task.getName(), cips);
+		
+		// Editing the schedule
 		IntervaledPeriodSet set = cips.periodSet();
 		dtpSetRefStart.setDateTime(set.referencePeriod().start());
 		
@@ -649,6 +681,9 @@ public class EditTask extends JScrollPane {
 		task.setScheduleConstraint(this.getScheduleConstraint());
 	}
 
+	/* Utilities used in multiple places
+	 * -------------------------------------------------- */
+	
 	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
 		// Period set
 		LocalDateTime setRefStart = dtpSetRefStart.getDateTime();
