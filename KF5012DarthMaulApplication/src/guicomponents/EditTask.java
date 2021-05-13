@@ -588,7 +588,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		 * -------------------- */
 
 		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
-				
+		
 		// Visualising the schedule
 		this.updateTimeline(task.getName(), cips);
 		
