@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 
 import guicomponents.utils.ObjectEditor;
@@ -22,13 +23,16 @@ import temporal.Period;
  * 
  * @author William Taylor
  */
-@SuppressWarnings("serial")
 public class IntervaledPeriodSetEditor
 		implements ObjectEditor<IntervaledPeriodSet>
 {
 	private LocalDateTimeEditor ldteRefStart;
 	private LocalDateTimeEditor ldteRefEnd;
 	private DurationEditor dureInterval;
+
+	private JCheckBox chkRefEnd;
+	private JCheckBox chkInterval;
+	
 	private ObjectManager<LocalDateTime> refEndManager;
 	private ObjectManager<Duration> intervalManager;
 	
@@ -36,6 +40,9 @@ public class IntervaledPeriodSetEditor
 		LocalDateTimeEditor ldteRefStart,
 		LocalDateTimeEditor ldteRefEnd,
 		DurationEditor dureInterval,
+
+		JCheckBox chkRefEnd,
+		JCheckBox chkInterval,
 		
 		ObjectManager<LocalDateTime> refEndManager,
 		ObjectManager<Duration> intervalManager
@@ -43,6 +50,9 @@ public class IntervaledPeriodSetEditor
 		this.ldteRefStart = ldteRefStart;
 		this.ldteRefEnd = ldteRefEnd;
 		this.dureInterval = dureInterval;
+		
+		this.chkRefEnd = chkRefEnd;
+		this.chkInterval = chkInterval;
 		
 		this.refEndManager = refEndManager;
 		this.intervalManager = intervalManager;
@@ -60,9 +70,16 @@ public class IntervaledPeriodSetEditor
 	@Override
 	public List<JComponent> getEditorComponents() {
 		List<JComponent> arr = new ArrayList<>();
+		
+		// Hide all the editors
 		arr.add(ldteRefStart);
 		arr.add(ldteRefEnd);
 		arr.add(dureInterval);
+		
+		// Also hide the checkboxes
+		arr.add(chkRefEnd);
+		arr.add(chkInterval);
+		
 		return arr;
 	}
 

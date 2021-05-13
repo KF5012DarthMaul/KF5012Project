@@ -332,6 +332,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		
 		setEditor = new IntervaledPeriodSetEditor(
 			ldteSetRefStart, ldteSetRefEnd, dureSetInterval,
+			chkSetRefEnd, chkSetInterval,
 			setRefEndManager, setIntervalManager
 		);
 		
@@ -422,6 +423,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		
 		IntervaledPeriodSetEditor cSetEditor = new IntervaledPeriodSetEditor(
 			ldteCSetRefStart, ldteCSetRefEnd, dureCSetInterval,
+			chkCSetRefEnd, chkCSetInterval,
 			cSetRefEndManager, cSetIntervalManager
 		);
 		
