@@ -12,7 +12,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
 import java.awt.GridBagLayout;
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -52,7 +51,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @SuppressWarnings("serial")
-public class EditTask extends JPanel implements ObjectEditor<Task> {
+public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	// Basic fields
 	private JTextField txtName;
 	private JTextArea txtNotes;
@@ -91,13 +90,8 @@ public class EditTask extends JPanel implements ObjectEditor<Task> {
 	 * Set up the Edit Task panel.
 	 */
 	public EditTask() {
-		setLayout(new BorderLayout(0,0));
-		
-		JScrollPane sclWrapper = new JScrollPane();
-		add(sclWrapper, BorderLayout.CENTER);
-		
 		JPanel formPanel = new JPanel();
-		sclWrapper.setViewportView(formPanel);
+		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
 		gbl_formPanel.columnWidths = new int[]{0, 0, 0, 0};
 		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
