@@ -4,7 +4,6 @@ import domain.TaskExecution;
 import domain.TaskPriority;
 import guicomponents.ome.ListSelectionEditor;
 import guicomponents.ome.LongTextEditor;
-import guicomponents.ome.TextEditor;
 import guicomponents.utils.ObjectEditor;
 
 import java.awt.GridBagLayout;
@@ -14,12 +13,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
@@ -42,8 +39,8 @@ public class EditTaskExec
 		GridBagLayout gbl_formPanel = new GridBagLayout();
 		gbl_formPanel.columnWidths = new int[]{0, 0, 0};
 		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0};
-		gbl_formPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_formPanel.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
+		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, 1.0, Double.MIN_VALUE};
 		formPanel.setLayout(gbl_formPanel);
 		
 		JLabel lblNotes = new JLabel("Notes");
@@ -56,7 +53,7 @@ public class EditTaskExec
 		
 		txteNotes = new LongTextEditor();
 		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
-		gbc_txteNotes.insets = new Insets(5, 5, 5, 0);
+		gbc_txteNotes.insets = new Insets(5, 5, 5, 5);
 		gbc_txteNotes.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txteNotes.gridx = 1;
 		gbc_txteNotes.gridy = 0;
@@ -72,17 +69,25 @@ public class EditTaskExec
 		gbc_lblPriority.gridx = 0;
 		gbc_lblPriority.gridy = 1;
 		formPanel.add(lblPriority, gbc_lblPriority);
-		
+
 		lstePriority = new ListSelectionEditor<>(
 			(taskPriority) -> taskPriority.toString()
 		);
 		lstePriority.populate(Arrays.asList(TaskPriority.values()));
 		GridBagConstraints gbc_cmbPriority = new GridBagConstraints();
 		gbc_cmbPriority.fill = GridBagConstraints.HORIZONTAL;
-		gbc_cmbPriority.insets = new Insets(0, 5, 5, 0);
+		gbc_cmbPriority.insets = new Insets(5, 5, 5, 5);
 		gbc_cmbPriority.gridx = 1;
 		gbc_cmbPriority.gridy = 1;
 		formPanel.add(lstePriority, gbc_cmbPriority);
+		
+		JLabel lblNewLabel = new JLabel("<html><strong>Note:</strong> You can edit this task execution's allocation information (time and caretaker) in the \"Allocate Tasks\" tab on the left.</html>");
+		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
+		gbc_lblNewLabel.insets = new Insets(10, 5, 10, 5);
+		gbc_lblNewLabel.gridwidth = 2;
+		gbc_lblNewLabel.gridx = 0;
+		gbc_lblNewLabel.gridy = 2;
+		formPanel.add(lblNewLabel, gbc_lblNewLabel);
 	}
 
 	@Override
