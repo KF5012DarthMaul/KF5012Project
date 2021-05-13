@@ -435,9 +435,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 			() -> new IntervaledPeriodSet(
 				new Period(
 					ldteCSetRefStart.getObject(),
-					ldteCSetRefEnd.getObject()
+					cSetRefEndManager.getObject()
 				),
-				dureCSetInterval.getObject()
+				cSetIntervalManager.getObject()
 			)
 		);
 		
