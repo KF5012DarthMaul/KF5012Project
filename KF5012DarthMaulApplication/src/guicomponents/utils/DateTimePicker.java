@@ -25,6 +25,7 @@ import org.jdatepicker.impl.UtilDateModel;
  * 
  * @author William Taylor
  */
+@SuppressWarnings("serial")
 public class DateTimePicker extends JPanel {
 	public static final Properties datePanelProperties = new Properties();
 	static {
