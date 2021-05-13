@@ -20,6 +20,7 @@ import guicomponents.utils.ObjectEditor;
 import lib.DurationField;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
@@ -142,8 +143,10 @@ public class VerificationEditor
 	}
 
 	@Override
-	public JComponent getComponent() {
-		return this;
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(this);
+		return arr;
 	}
 	
 	public void setUsers(List<User> users) {

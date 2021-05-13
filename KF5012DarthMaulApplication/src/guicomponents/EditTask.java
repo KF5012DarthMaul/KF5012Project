@@ -3,10 +3,7 @@ package guicomponents;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JTextArea;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -17,13 +14,19 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import lib.DurationField;
-import guicomponents.ome.DomainObjectManager;
+import guicomponents.ome.TextEditor;
+import guicomponents.ome.LocalDateTimeEditor;
+import guicomponents.ome.LongTextEditor;
 import guicomponents.ome.VerificationEditor;
+import guicomponents.ome.DomainObjectManager;
+import guicomponents.ome.DurationEditor;
+import guicomponents.ome.IntervaledPeriodSetEditor;
+import guicomponents.ome.ListSelectionEditor;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
-import guicomponents.utils.NullableComboBox;
 import guicomponents.utils.ObjectEditor;
+import guicomponents.utils.ObjectManager;
 import guicomponents.utils.TimelinePanel;
 import kf5012darthmaulapplication.ExceptionDialog;
 
@@ -45,6 +48,7 @@ import temporal.TemporalMap;
 import temporal.Timeline;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.time.Duration;
@@ -55,10 +59,10 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	private Task active;
 	
 	// Basic fields
-	private JTextField txtName;
-	private JTextArea txtNotes;
-	private JComboBox<Object> cmbPriority;
-	private NullableComboBox<User> ncmbAllocationConstraint;
+	private TextEditor txteName;
+	private LongTextEditor txteNotes;
+	private ListSelectionEditor<TaskPriority> lstePriority;
+	private ListSelectionEditor<User> lsteAllocationConstraint;
 	
 	// Timeline
 	private List<ChartableEvent> currentTimelineHistory;
@@ -66,21 +70,11 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	private TimelinePanel timelinePanel;
 	private DateRangePicker dateRangePicker;
 	
-	// Schedule fields
-	// dtpSetRefStart is always enabled
-	private JCheckBox chkSetRefEnd;
-	private JCheckBox chkSetInterval;
-	private JCheckBox chkCSet;
-	private JCheckBox chkCSetRefEnd;
-	private JCheckBox chkCSetInterval;
-	
-	private DateTimePicker dtpSetRefStart;
-	private DateTimePicker dtpSetRefEnd;
-	private DurationField durSetInterval;
-	private DateTimePicker dtpCSetRefStart;
-	private DateTimePicker dtpCSetRefEnd;
-	private DurationField durCSetInterval;
-	
+	// Schedule fields (nested)
+	// not ipseSet because IntervaledPeriodSetEditor is not a JComponent
+	private IntervaledPeriodSetEditor setEditor;
+	private ObjectManager<IntervaledPeriodSet> cSetManager;
+
 	// Verification editor
 	private VerificationEditor verificationEditor;
 	private DomainObjectManager<Verification> omgVerification;
@@ -112,16 +106,15 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblName.gridy = 0;
 		formPanel.add(lblName, gbc_lblName);
 		
-		txtName = new JTextField();
-		lblName.setLabelFor(txtName);
-		GridBagConstraints gbc_txtName = new GridBagConstraints();
-		gbc_txtName.anchor = GridBagConstraints.WEST;
-		gbc_txtName.insets = new Insets(5, 5, 5, 0);
-		gbc_txtName.gridwidth = 2;
-		gbc_txtName.gridx = 1;
-		gbc_txtName.gridy = 0;
-		formPanel.add(txtName, gbc_txtName);
-		txtName.setColumns(40);
+		txteName = new TextEditor((s) -> !s.isEmpty()); // Must be non-empty
+		GridBagConstraints gbc_txteName = new GridBagConstraints();
+		gbc_txteName.anchor = GridBagConstraints.WEST;
+		gbc_txteName.insets = new Insets(5, 5, 5, 0);
+		gbc_txteName.gridwidth = 2;
+		gbc_txteName.gridx = 1;
+		gbc_txteName.gridy = 0;
+		formPanel.add(txteName, gbc_txteName);
+		txteName.setColumns(40);
 		
 		JLabel lblNotes = new JLabel("Notes");
 		GridBagConstraints gbc_lblNotes = new GridBagConstraints();
@@ -131,18 +124,18 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblNotes.gridy = 1;
 		formPanel.add(lblNotes, gbc_lblNotes);
 		
-		txtNotes = new JTextArea();
-		txtNotes.setLineWrap(true);
-		txtNotes.setWrapStyleWord(true);
-		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
-		gbc_txtNotes.gridwidth = 2;
-		gbc_txtNotes.anchor = GridBagConstraints.WEST;
-		gbc_txtNotes.insets = new Insets(0, 5, 5, 0);
-		gbc_txtNotes.gridx = 1;
-		gbc_txtNotes.gridy = 1;
-		formPanel.add(txtNotes, gbc_txtNotes);
-		txtNotes.setColumns(40);
-		txtNotes.setRows(6);
+		txteNotes = new LongTextEditor();
+		txteNotes.setLineWrap(true);
+		txteNotes.setWrapStyleWord(true);
+		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
+		gbc_txteNotes.gridwidth = 2;
+		gbc_txteNotes.anchor = GridBagConstraints.WEST;
+		gbc_txteNotes.insets = new Insets(0, 5, 5, 0);
+		gbc_txteNotes.gridx = 1;
+		gbc_txteNotes.gridy = 1;
+		formPanel.add(txteNotes, gbc_txteNotes);
+		txteNotes.setColumns(40);
+		txteNotes.setRows(6);
 		
 		JLabel lblPriority = new JLabel("Priority");
 		GridBagConstraints gbc_lblPriority = new GridBagConstraints();
@@ -152,14 +145,17 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblPriority.gridy = 2;
 		formPanel.add(lblPriority, gbc_lblPriority);
 		
-		cmbPriority = new JComboBox<>(TaskPriority.values());
-		GridBagConstraints gbc_cmbPriority = new GridBagConstraints();
-		gbc_cmbPriority.anchor = GridBagConstraints.WEST;
-		gbc_cmbPriority.insets = new Insets(0, 5, 5, 0);
-		gbc_cmbPriority.gridwidth = 2;
-		gbc_cmbPriority.gridx = 1;
-		gbc_cmbPriority.gridy = 2;
-		formPanel.add(cmbPriority, gbc_cmbPriority);
+		lstePriority = new ListSelectionEditor<TaskPriority>(
+			(taskPriority) -> taskPriority.toString()
+		);
+		lstePriority.populate(Arrays.asList(TaskPriority.values()));
+		GridBagConstraints gbc_lstePriority = new GridBagConstraints();
+		gbc_lstePriority.anchor = GridBagConstraints.WEST;
+		gbc_lstePriority.insets = new Insets(0, 5, 5, 0);
+		gbc_lstePriority.gridwidth = 2;
+		gbc_lstePriority.gridx = 1;
+		gbc_lstePriority.gridy = 2;
+		formPanel.add(lstePriority, gbc_lstePriority);
 		
 		JLabel lblAllocationConstraint = new JLabel("Allocation Constraint");
 		GridBagConstraints gbc_lblAllocationConstraint = new GridBagConstraints();
@@ -168,16 +164,22 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblAllocationConstraint.gridy = 3;
 		formPanel.add(lblAllocationConstraint, gbc_lblAllocationConstraint);
 
-		ncmbAllocationConstraint = new NullableComboBox<>((user) -> {
-			return user == null ? "No Allocation Constraint" : user.getUsername();
-		});
-		GridBagConstraints gbc_cmbAllocationConstraint = new GridBagConstraints();
-		gbc_cmbAllocationConstraint.anchor = GridBagConstraints.WEST;
-		gbc_cmbAllocationConstraint.insets = new Insets(0, 5, 5, 0);
-		gbc_cmbAllocationConstraint.gridwidth = 2;
-		gbc_cmbAllocationConstraint.gridx = 1;
-		gbc_cmbAllocationConstraint.gridy = 3;
-		formPanel.add(ncmbAllocationConstraint, gbc_cmbAllocationConstraint);
+		lsteAllocationConstraint = new ListSelectionEditor<>(
+			(user) -> {
+				if (user == null) {
+					return "No Allocation Constraint";
+				} else {
+					return user.getUsername();
+				}
+			}
+		);
+		GridBagConstraints gbc_lsteAllocationConstraint = new GridBagConstraints();
+		gbc_lsteAllocationConstraint.anchor = GridBagConstraints.WEST;
+		gbc_lsteAllocationConstraint.insets = new Insets(0, 5, 5, 0);
+		gbc_lsteAllocationConstraint.gridwidth = 2;
+		gbc_lsteAllocationConstraint.gridx = 1;
+		gbc_lsteAllocationConstraint.gridy = 3;
+		formPanel.add(lsteAllocationConstraint, gbc_lsteAllocationConstraint);
 		
 		/* Schedule - Graphical Overview
 		 * -------------------- */
@@ -229,7 +231,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 
 		JButton btnUpdateTimeline = new JButton("Update Timeline");
 		btnUpdateTimeline.addActionListener((e) -> {
-			this.updateTimeline(txtName.getText(), getScheduleConstraint());
+			this.updateTimeline(txteName.getObject(), getScheduleConstraint());
 		});
 		GridBagConstraints gbc_btnUpdateTimeline = new GridBagConstraints();
 		gbc_btnUpdateTimeline.fill = GridBagConstraints.HORIZONTAL;
@@ -260,13 +262,13 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblSetRefStart.gridy = 8;
 		formPanel.add(lblSetRefStart, gbc_lblSetRefStart);
 		
-		dtpSetRefStart = new DateTimePicker();
-		GridBagConstraints gbc_dtpSetRefStart = new GridBagConstraints();
-		gbc_dtpSetRefStart.insets = new Insets(0, 5, 5, 0);
-		gbc_dtpSetRefStart.anchor = GridBagConstraints.WEST;
-		gbc_dtpSetRefStart.gridx = 2;
-		gbc_dtpSetRefStart.gridy = 8;
-		formPanel.add(dtpSetRefStart, gbc_dtpSetRefStart);
+		LocalDateTimeEditor ldteSetRefStart = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteSetRefStart = new GridBagConstraints();
+		gbc_ldteSetRefStart.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteSetRefStart.anchor = GridBagConstraints.WEST;
+		gbc_ldteSetRefStart.gridx = 2;
+		gbc_ldteSetRefStart.gridy = 8;
+		formPanel.add(ldteSetRefStart, gbc_ldteSetRefStart);
 		
 		// Set ref end
 		
@@ -278,27 +280,20 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblSetRefEnd.gridy = 9;
 		formPanel.add(lblSetRefEnd, gbc_lblSetRefEnd);
 		
-		chkSetRefEnd = new JCheckBox("");
-		chkSetRefEnd.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setSetRefEndEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setSetRefEndEnabled(false, false);
-			}
-		});
+		JCheckBox chkSetRefEnd = new JCheckBox("");
 		GridBagConstraints gbc_chkSetRefEnd = new GridBagConstraints();
 		gbc_chkSetRefEnd.insets = new Insets(0, 0, 5, 5);
 		gbc_chkSetRefEnd.gridx = 1;
 		gbc_chkSetRefEnd.gridy = 9;
 		formPanel.add(chkSetRefEnd, gbc_chkSetRefEnd);
 
-		dtpSetRefEnd = new DateTimePicker();
-		GridBagConstraints gbc_dtpSetRefEnd = new GridBagConstraints();
-		gbc_dtpSetRefEnd.insets = new Insets(0, 5, 5, 0);
-		gbc_dtpSetRefEnd.anchor = GridBagConstraints.WEST;
-		gbc_dtpSetRefEnd.gridx = 2;
-		gbc_dtpSetRefEnd.gridy = 9;
-		formPanel.add(dtpSetRefEnd, gbc_dtpSetRefEnd);
+		LocalDateTimeEditor ldteSetRefEnd = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteSetRefEnd = new GridBagConstraints();
+		gbc_ldteSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_ldteSetRefEnd.gridx = 2;
+		gbc_ldteSetRefEnd.gridy = 9;
+		formPanel.add(ldteSetRefEnd, gbc_ldteSetRefEnd);
 		
 		// Set interval
 		
@@ -309,28 +304,36 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblSetInterval.gridx = 0;
 		gbc_lblSetInterval.gridy = 10;
 		formPanel.add(lblSetInterval, gbc_lblSetInterval);
-		
-		chkSetInterval = new JCheckBox("");
-		chkSetInterval.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setSetIntervalEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setSetIntervalEnabled(false, false);
-			}
-		});
+
+		JCheckBox chkSetInterval = new JCheckBox("");
 		GridBagConstraints gbc_chkSetInterval = new GridBagConstraints();
 		gbc_chkSetInterval.insets = new Insets(0, 0, 5, 5);
 		gbc_chkSetInterval.gridx = 1;
 		gbc_chkSetInterval.gridy = 10;
 		formPanel.add(chkSetInterval, gbc_chkSetInterval);
 
-		durSetInterval = new DurationField();
+		DurationEditor dureSetInterval = new DurationEditor();
 		GridBagConstraints gbc_spnSetInterval = new GridBagConstraints();
 		gbc_spnSetInterval.anchor = GridBagConstraints.WEST;
 		gbc_spnSetInterval.insets = new Insets(0, 5, 5, 0);
 		gbc_spnSetInterval.gridx = 2;
 		gbc_spnSetInterval.gridy = 10;
-		formPanel.add(durSetInterval, gbc_spnSetInterval);
+		formPanel.add(dureSetInterval, gbc_spnSetInterval);
+
+		// Create managers for set
+		
+		ObjectManager<LocalDateTime> setRefEndManager = new ObjectManager<>(
+			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getDateTime()
+		);
+		
+		ObjectManager<Duration> setIntervalManager = new ObjectManager<>(
+			chkSetInterval, dureSetInterval, () -> dureSetInterval.getObject()
+		);
+		
+		setEditor = new IntervaledPeriodSetEditor(
+			ldteSetRefStart, ldteSetRefEnd, dureSetInterval,
+			setRefEndManager, setIntervalManager
+		);
 		
 		// CSet ref start
 		
@@ -342,27 +345,20 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblCSetRefStart.gridy = 11;
 		formPanel.add(lblCSetRefStart, gbc_lblCSetRefStart);
 		
-		chkCSet = new JCheckBox("");
-		chkCSet.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setCSetEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setCSetEnabled(false, false);
-			}
-		});
+		JCheckBox chkCSet = new JCheckBox("");
 		GridBagConstraints gbc_chkCSet = new GridBagConstraints();
 		gbc_chkCSet.insets = new Insets(0, 0, 5, 5);
 		gbc_chkCSet.gridx = 1;
 		gbc_chkCSet.gridy = 11;
 		formPanel.add(chkCSet, gbc_chkCSet);
 		
-		dtpCSetRefStart = new DateTimePicker();
-		GridBagConstraints gbc_dtpCSetRefStart = new GridBagConstraints();
-		gbc_dtpCSetRefStart.anchor = GridBagConstraints.WEST;
-		gbc_dtpCSetRefStart.insets = new Insets(0, 5, 5, 0);
-		gbc_dtpCSetRefStart.gridx = 2;
-		gbc_dtpCSetRefStart.gridy = 11;
-		formPanel.add(dtpCSetRefStart, gbc_dtpCSetRefStart);
+		LocalDateTimeEditor ldteCSetRefStart = new LocalDateTimeEditor((ldt) -> true);
+		GridBagConstraints gbc_ldteCSetRefStart = new GridBagConstraints();
+		gbc_ldteCSetRefStart.anchor = GridBagConstraints.WEST;
+		gbc_ldteCSetRefStart.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteCSetRefStart.gridx = 2;
+		gbc_ldteCSetRefStart.gridy = 11;
+		formPanel.add(ldteCSetRefStart, gbc_ldteCSetRefStart);
 		
 		// CSet ref end
 		
@@ -374,27 +370,20 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblCSetRefEnd.gridy = 12;
 		formPanel.add(lblCSetRefEnd, gbc_lblCSetRefEnd);
 		
-		chkCSetRefEnd = new JCheckBox("");
-		chkCSetRefEnd.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setCSetRefEndEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setCSetRefEndEnabled(false, false);
-			}
-		});
+		JCheckBox chkCSetRefEnd = new JCheckBox("");
 		GridBagConstraints gbc_chkCSetRefEnd = new GridBagConstraints();
 		gbc_chkCSetRefEnd.insets = new Insets(0, 0, 5, 5);
 		gbc_chkCSetRefEnd.gridx = 1;
 		gbc_chkCSetRefEnd.gridy = 12;
 		formPanel.add(chkCSetRefEnd, gbc_chkCSetRefEnd);
 
-		dtpCSetRefEnd = new DateTimePicker();
-		GridBagConstraints gbc_dtpCSetRefEnd = new GridBagConstraints();
-		gbc_dtpCSetRefEnd.insets = new Insets(0, 5, 5, 0);
-		gbc_dtpCSetRefEnd.anchor = GridBagConstraints.WEST;
-		gbc_dtpCSetRefEnd.gridx = 2;
-		gbc_dtpCSetRefEnd.gridy = 12;
-		formPanel.add(dtpCSetRefEnd, gbc_dtpCSetRefEnd);
+		LocalDateTimeEditor ldteCSetRefEnd = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteCSetRefEnd = new GridBagConstraints();
+		gbc_ldteCSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteCSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_ldteCSetRefEnd.gridx = 2;
+		gbc_ldteCSetRefEnd.gridy = 12;
+		formPanel.add(ldteCSetRefEnd, gbc_ldteCSetRefEnd);
 		
 		// CSet interval
 		
@@ -406,28 +395,50 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblCSetInterval.gridy = 13;
 		formPanel.add(lblCSetInterval, gbc_lblCSetInterval);
 		
-		chkCSetInterval = new JCheckBox("");
-		chkCSetInterval.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				setCSetIntervalEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				setCSetIntervalEnabled(false, false);
-			}
-		});
+		JCheckBox chkCSetInterval = new JCheckBox("");
 		GridBagConstraints gbc_chkCSetInterval = new GridBagConstraints();
 		gbc_chkCSetInterval.insets = new Insets(0, 0, 0, 5);
 		gbc_chkCSetInterval.gridx = 1;
 		gbc_chkCSetInterval.gridy = 13;
 		formPanel.add(chkCSetInterval, gbc_chkCSetInterval);
 		
-		durCSetInterval = new DurationField();
-		GridBagConstraints gbc_durCSetInterval = new GridBagConstraints();
-		gbc_durCSetInterval.insets = new Insets(0, 5, 0, 0);
-		gbc_durCSetInterval.anchor = GridBagConstraints.WEST;
-		gbc_durCSetInterval.gridx = 2;
-		gbc_durCSetInterval.gridy = 13;
-		formPanel.add(durCSetInterval, gbc_durCSetInterval);
+		DurationEditor dureCSetInterval = new DurationEditor();
+		GridBagConstraints gbc_dureCSetInterval = new GridBagConstraints();
+		gbc_dureCSetInterval.insets = new Insets(0, 5, 0, 0);
+		gbc_dureCSetInterval.anchor = GridBagConstraints.WEST;
+		gbc_dureCSetInterval.gridx = 2;
+		gbc_dureCSetInterval.gridy = 13;
+		formPanel.add(dureCSetInterval, gbc_dureCSetInterval);
 
+		// Create managers for cSet
+		
+		ObjectManager<LocalDateTime> cSetRefEndManager = new ObjectManager<>(
+			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getDateTime()
+		);
+		
+		ObjectManager<Duration> cSetIntervalManager = new ObjectManager<>(
+			chkCSetInterval, dureCSetInterval, () -> dureCSetInterval.getObject()
+		);
+		
+		IntervaledPeriodSetEditor cSetEditor = new IntervaledPeriodSetEditor(
+			ldteCSetRefStart, ldteCSetRefEnd, dureCSetInterval,
+			cSetRefEndManager, cSetIntervalManager
+		);
+		
+		cSetManager = new ObjectManager<IntervaledPeriodSet>(
+			chkCSet, cSetEditor,
+			
+			// On re-activation, get the object from what the editors were
+			// before deactivation (ie. don't reset their values to default).
+			() -> new IntervaledPeriodSet(
+				new Period(
+					ldteCSetRefStart.getObject(),
+					ldteCSetRefEnd.getObject()
+				),
+				dureCSetInterval.getObject()
+			)
+		);
+		
 		/* Verification
 		 * -------------------- */
 
@@ -454,8 +465,10 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	}
 
 	@Override
-	public JComponent getComponent() {
-		return this;
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(this);
+		return arr;
 	}
 
 	/* Allocation combo box management
@@ -486,7 +499,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 				.collect(Collectors.toList());
 			
 			// (Re)fill the lists
-			ncmbAllocationConstraint.populate(caretakers);
+			lsteAllocationConstraint.populate(caretakers);
 			verificationEditor.setUsers(caretakers);
 			
 			usersLoaded = true;
@@ -540,55 +553,6 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 	}
 
-	/* Schedule value/display management
-	 * -------------------------------------------------- */
-	
-	private void setSetRefEndEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkSetRefEnd.setSelected(enabled);
-		}
-		dtpSetRefEnd.setVisible(enabled);
-	}
-	
-	private void setSetIntervalEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkSetInterval.setSelected(enabled);
-		}
-		durSetInterval.setVisible(enabled);
-	}
-
-	private void setCSetEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkCSet.setSelected(enabled);
-		}
-		
-		// Show/Hide corresponding items, but keep checkbox values, regardless
-		// of force (they're not controlled by this checkbox).
-		setCSetRefEndEnabled(enabled ? chkCSetRefEnd.isSelected() : enabled, false);
-		setCSetIntervalEnabled(enabled ? chkCSetInterval.isSelected() : enabled, false);
-		
-		// Enable/Disable (but don't show/hide) the checkboxes
-		chkCSetRefEnd.setEnabled(enabled);
-		chkCSetInterval.setEnabled(enabled);
-		
-		// Show/Hide cSetStart
-		dtpCSetRefStart.setVisible(enabled);
-	}
-
-	private void setCSetRefEndEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkCSetRefEnd.setSelected(enabled);
-		}
-		dtpCSetRefEnd.setVisible(enabled);
-	}
-	
-	private void setCSetIntervalEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkCSetInterval.setSelected(enabled);
-		}
-		durCSetInterval.setVisible(enabled);
-	}
-
 	/* Verification value/display management
 	 * -------------------------------------------------- */
 	
@@ -611,10 +575,10 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		/* Basic fields
 		 * -------------------- */
 		
-		txtName.setText(task.getName());
-		txtNotes.setText(task.getNotes());
-		cmbPriority.setSelectedItem(task.getStandardPriority());
-		ncmbAllocationConstraint.setSelection(task.getAllocationConstraint());
+		txteName.setObject(task.getName());
+		txteNotes.setObject(task.getNotes());
+		lstePriority.setObject(task.getStandardPriority());
+		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
 
 		/* Schedule
 		 * -------------------- */
@@ -625,7 +589,8 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		this.updateTimeline(task.getName(), cips);
 		
 		// Editing the schedule
-		this.setScheduleConstraint(cips);
+		this.setEditor.setObject(cips.periodSet());
+		this.cSetManager.setObject(cips.periodSetConstraint());
 
 		/* Verification
 		 * -------------------- */
@@ -643,9 +608,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		boolean valid = true;
 		
 		// Name
-		String name = txtName.getText();
-		if (name.isEmpty()) valid = false;
+		if (!txteName.validateFields()) valid = false;
 		
+		// TODO - add all of these
 		// Notes - no validation
 		// Standard Priority - combo box does validation
 		// Allocation Constraint - combo box does validation
@@ -670,10 +635,10 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	@Override
 	public Task getObject() {
 		// Basic fields
-		active.setName(txtName.getText());
-		active.setNotes(txtNotes.getText());
-		active.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
-		active.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
+		active.setName(txteName.getObject());
+		active.setNotes(txteNotes.getObject());
+		active.setStandardPriority(lstePriority.getObject());
+		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
 		
 		// Schedule constraint fields
 		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
@@ -690,89 +655,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	/* Utilities used in multiple places
 	 * -------------------------------------------------- */
 	
-	private void setScheduleConstraint(ConstrainedIntervaledPeriodSet cips) {
-		IntervaledPeriodSet set = cips.periodSet();
-		dtpSetRefStart.setDateTime(set.referencePeriod().start());
-		
-		LocalDateTime setRefEnd = set.referencePeriod().end();
-		if (setRefEnd == null) {
-			setSetRefEndEnabled(false, true);
-		} else {
-			setSetRefEndEnabled(true, true);
-			dtpSetRefEnd.setDateTime(setRefEnd);
-		}
-		
-		Duration setInterval = set.interval();
-		if (setInterval == null) {
-			setSetIntervalEnabled(false, true);
-		} else {
-			setSetIntervalEnabled(true, true);
-			durSetInterval.setHour((int) setInterval.getSeconds() / 3600);
-			durSetInterval.setMinute((int) setInterval.getSeconds() % 3600 / 60);
-		}
-
-		IntervaledPeriodSet cSet = cips.periodSetConstraint();
-		if (cSet == null) {
-			setCSetEnabled(false, true);
-		} else {
-			setCSetEnabled(true, true);
-			dtpCSetRefStart.setDateTime(cSet.referencePeriod().start());
-			
-			LocalDateTime cSetRefEnd = cSet.referencePeriod().end();
-			if (cSetRefEnd == null) {
-				setCSetRefEndEnabled(false, true);
-			} else {
-				setCSetRefEndEnabled(true, true);
-				dtpCSetRefEnd.setDateTime(cSetRefEnd);
-			}
-			
-			Duration cSetInterval = cSet.interval();
-			if (cSetInterval == null) {
-				setCSetIntervalEnabled(false, true);
-			} else {
-				setCSetIntervalEnabled(true, true);
-				durCSetInterval.setHour((int) cSetInterval.getSeconds() / 3600);
-				durCSetInterval.setMinute((int) cSetInterval.getSeconds() % 3600 / 60);
-			}
-		}
-	}
-	
 	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
-		// Period set
-		LocalDateTime setRefStart = dtpSetRefStart.getDateTime();
-		LocalDateTime setRefEnd = null;
-		if (chkSetRefEnd.isSelected()) {
-			setRefEnd = dtpSetRefEnd.getDateTime();
-		}
-		Duration setInterval = null;
-		if (chkSetInterval.isSelected()) {
-			setInterval = Duration.ofSeconds(durSetInterval.getDuration());
-		}
-
-		// Create the set
-		IntervaledPeriodSet set = new IntervaledPeriodSet(
-			new Period(setRefStart, setRefEnd), setInterval
+		return new ConstrainedIntervaledPeriodSet(
+			setEditor.getObject(), cSetManager.getObject()
 		);
-
-		// Constraint period set
-		IntervaledPeriodSet cSet = null;
-		if (chkCSet.isSelected()) {
-			LocalDateTime cSetRefStart = dtpCSetRefStart.getDateTime();
-			LocalDateTime cSetRefEnd = null;
-			if (chkCSetRefEnd.isSelected()) {
-				cSetRefEnd = dtpCSetRefEnd.getDateTime();
-			}
-			Duration cSetInterval = null;
-			if (chkCSetInterval.isSelected()) {
-				cSetInterval = Duration.ofSeconds(durCSetInterval.getDuration());
-			}
-
-			// Create the constraint set (if needed)
-			cSet = new IntervaledPeriodSet(
-				new Period(cSetRefStart, cSetRefEnd), cSetInterval
-			);
-		}
-		
-		return new ConstrainedIntervaledPeriodSet(set, cSet);
 	}
 }

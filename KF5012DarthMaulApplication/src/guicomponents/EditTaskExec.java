@@ -8,6 +8,9 @@ import guicomponents.utils.ObjectEditor;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -76,8 +79,10 @@ public class EditTaskExec
 	}
 
 	@Override
-	public JComponent getComponent() {
-		return this;
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(this);
+		return arr;
 	}
 
 	/**

@@ -95,7 +95,9 @@ public class ObjectManager<T> {
 		if (force) {
 			chkExists.setSelected(exists);
 		}
-		editorPanel.getComponent().setVisible(exists);
+		editorPanel.getEditorComponents().forEach(
+			(comp) -> comp.setVisible(exists)
+		);
 		if (exists) {
 			editorPanel.setObject(obj);
 		}
@@ -110,5 +112,9 @@ public class ObjectManager<T> {
 			return editorPanel.getObject();
 		}
 		return obj;
+	}
+	
+	public ObjectEditor<T> getEditor() {
+		return editorPanel;
 	}
 }

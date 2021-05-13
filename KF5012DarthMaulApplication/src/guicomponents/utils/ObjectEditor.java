@@ -1,5 +1,7 @@
 package guicomponents.utils;
 
+import java.util.List;
+
 import javax.swing.JComponent;
 
 public interface ObjectEditor<T> {
@@ -11,11 +13,11 @@ public interface ObjectEditor<T> {
 	//           SomethingEditor  ---extends--->  JPanel
 	
 	/**
-	 * Return the component for this editor.
+	 * Return the components for this editor.
 	 * 
-	 * @return The component for this editor.
+	 * @return The components for this editor.
 	 */
-	public JComponent getComponent();
+	public List<JComponent> getEditorComponents();
 	
 	/**
 	 * Show the given object in the editor.

@@ -43,11 +43,14 @@ public class DomainObjectManager<T> extends JPanel {
 		gbc_buttonPanel.gridy = 0;
 		add(chkExists, gbc_buttonPanel);
 		
+		JPanel panel = new JPanel();
 		GridBagConstraints gbc_editorPanel = new GridBagConstraints();
 		gbc_buttonPanel.fill = GridBagConstraints.BOTH;
 		gbc_editorPanel.gridx = 0;
 		gbc_editorPanel.gridy = 1;
-		add(editor.getComponent(), gbc_editorPanel);
+		add(panel, gbc_editorPanel);
+		
+		editor.getEditorComponents().forEach((comp) -> panel.add(comp));
 
 		this.objManager = new ObjectManager<>(chkExists, editor, activationFactory);
 	}
