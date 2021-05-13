@@ -5,22 +5,19 @@ import domain.Verification;
 import kf5012darthmaulapplication.User;
 
 import java.awt.Insets;
-import java.awt.event.ItemEvent;
+import java.time.Duration;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
-import javax.swing.JTextArea;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 
-import guicomponents.utils.NullableComboBox;
 import guicomponents.utils.ObjectEditor;
-import lib.DurationField;
+import guicomponents.utils.ObjectManager;
 
-import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("serial")
@@ -31,10 +28,10 @@ public class VerificationEditor
 	private Verification active;
 	
 	// Basic fields
-	private JTextArea txtNotes;
-	private JComboBox<Object> cmbStandardPriority;
-	private NullableComboBox<User> cmbAllocationConstraint;
-	private DurationField durStandardDeadline;
+	private LongTextEditor txteNotes;
+	private ListSelectionEditor<TaskPriority> lsteStandardPriority;
+	private ListSelectionEditor<User> lsteAllocationConstraint;
+	private ObjectManager<Duration> durationManager;
 
 	private JCheckBox chkStandardDeadline;
 	
@@ -59,14 +56,14 @@ public class VerificationEditor
 		gbc_lblNotes.gridy = 0;
 		add(lblNotes, gbc_lblNotes);
 		
-		txtNotes = new JTextArea();
-		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
-		gbc_txtNotes.insets = new Insets(0, 0, 5, 0);
-		gbc_txtNotes.fill = GridBagConstraints.HORIZONTAL;
-		gbc_txtNotes.gridwidth = 2;
-		gbc_txtNotes.gridx = 1;
-		gbc_txtNotes.gridy = 0;
-		add(txtNotes, gbc_txtNotes);
+		txteNotes = new LongTextEditor();
+		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
+		gbc_txteNotes.insets = new Insets(0, 0, 5, 0);
+		gbc_txteNotes.fill = GridBagConstraints.HORIZONTAL;
+		gbc_txteNotes.gridwidth = 2;
+		gbc_txteNotes.gridx = 1;
+		gbc_txteNotes.gridy = 0;
+		add(txteNotes, gbc_txteNotes);
 		
 		// Standard Priority
 		
@@ -78,14 +75,17 @@ public class VerificationEditor
 		gbc_lblStandardPriority.gridy = 1;
 		add(lblStandardPriority, gbc_lblStandardPriority);
 		
-		cmbStandardPriority = new JComboBox<>(TaskPriority.values());
-		GridBagConstraints gbc_cmbStandardPriority = new GridBagConstraints();
-		gbc_cmbStandardPriority.insets = new Insets(0, 0, 5, 0);
-		gbc_cmbStandardPriority.anchor = GridBagConstraints.WEST;
-		gbc_cmbStandardPriority.gridwidth = 2;
-		gbc_cmbStandardPriority.gridx = 1;
-		gbc_cmbStandardPriority.gridy = 1;
-		add(cmbStandardPriority, gbc_cmbStandardPriority);
+		lsteStandardPriority = new ListSelectionEditor<>(
+			(taskPriority) -> taskPriority.toString()
+		);
+		lsteStandardPriority.populate(Arrays.asList(TaskPriority.values()));
+		GridBagConstraints gbc_lsteStandardPriority = new GridBagConstraints();
+		gbc_lsteStandardPriority.insets = new Insets(0, 0, 5, 0);
+		gbc_lsteStandardPriority.anchor = GridBagConstraints.WEST;
+		gbc_lsteStandardPriority.gridwidth = 2;
+		gbc_lsteStandardPriority.gridx = 1;
+		gbc_lsteStandardPriority.gridy = 1;
+		add(lsteStandardPriority, gbc_lsteStandardPriority);
 		
 		// Allocation constraint
 
@@ -97,16 +97,22 @@ public class VerificationEditor
 		gbc_lblAllocationConstraint.gridy = 2;
 		add(lblAllocationConstraint, gbc_lblAllocationConstraint);
 
-		cmbAllocationConstraint = new NullableComboBox<>((user) -> {
-			return user == null ? "No Allocation Constraint" : user.getUsername();
-		});
-		GridBagConstraints gbc_cmbAllocationConstraint = new GridBagConstraints();
-		gbc_cmbAllocationConstraint.insets = new Insets(0, 0, 5, 0);
-		gbc_cmbAllocationConstraint.anchor = GridBagConstraints.WEST;
-		gbc_cmbAllocationConstraint.gridwidth = 2;
-		gbc_cmbAllocationConstraint.gridx = 1;
-		gbc_cmbAllocationConstraint.gridy = 2;
-		add(cmbAllocationConstraint, gbc_cmbAllocationConstraint);
+		lsteAllocationConstraint = new ListSelectionEditor<>(
+			(user) -> {
+				if (user == null) {
+					return "No Allocation Constraint";
+				} else {
+					return user.getUsername();
+				}
+			}
+		);
+		GridBagConstraints gbc_lsteAllocationConstraint = new GridBagConstraints();
+		gbc_lsteAllocationConstraint.insets = new Insets(0, 0, 5, 0);
+		gbc_lsteAllocationConstraint.anchor = GridBagConstraints.WEST;
+		gbc_lsteAllocationConstraint.gridwidth = 2;
+		gbc_lsteAllocationConstraint.gridx = 1;
+		gbc_lsteAllocationConstraint.gridy = 2;
+		add(lsteAllocationConstraint, gbc_lsteAllocationConstraint);
 		
 		// Standard deadline
 
@@ -119,13 +125,6 @@ public class VerificationEditor
 		add(lblStandardDeadline, gbc_lblStandardDeadline);
 
 		chkStandardDeadline = new JCheckBox("");
-		chkStandardDeadline.addItemListener((e) -> {
-			if (e.getStateChange() == ItemEvent.SELECTED) {
-				standardDeadlineEnabled(true, false);
-			} else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				standardDeadlineEnabled(false, false);
-			}
-		});
 		GridBagConstraints gbc_chkStandardDeadline = new GridBagConstraints();
 		gbc_chkStandardDeadline.insets = new Insets(0, 0, 5, 5);
 		gbc_chkStandardDeadline.anchor = GridBagConstraints.WEST;
@@ -133,13 +132,18 @@ public class VerificationEditor
 		gbc_chkStandardDeadline.gridy = 3;
 		add(chkStandardDeadline, gbc_chkStandardDeadline);
 		
-		durStandardDeadline = new DurationField();
-		GridBagConstraints gbc_durStandardDeadline = new GridBagConstraints();
-		gbc_durStandardDeadline.insets = new Insets(0, 0, 5, 5);
-		gbc_durStandardDeadline.anchor = GridBagConstraints.WEST;
-		gbc_durStandardDeadline.gridx = 2;
-		gbc_durStandardDeadline.gridy = 3;
-		add(durStandardDeadline, gbc_durStandardDeadline);
+		DurationEditor dureStandardDeadline = new DurationEditor();
+		GridBagConstraints gbc_dureStandardDeadline = new GridBagConstraints();
+		gbc_dureStandardDeadline.insets = new Insets(0, 0, 5, 5);
+		gbc_dureStandardDeadline.anchor = GridBagConstraints.WEST;
+		gbc_dureStandardDeadline.gridx = 2;
+		gbc_dureStandardDeadline.gridy = 3;
+		add(dureStandardDeadline, gbc_dureStandardDeadline);
+		
+		durationManager = new ObjectManager<>(
+			chkStandardDeadline, dureStandardDeadline,
+			() -> dureStandardDeadline.getObject()
+		);
 	}
 
 	@Override
@@ -150,53 +154,38 @@ public class VerificationEditor
 	}
 	
 	public void setUsers(List<User> users) {
-		cmbAllocationConstraint.populate(users);
+		lsteAllocationConstraint.populate(users);
 	}
 
-	private void standardDeadlineEnabled(boolean enabled, boolean force) {
-		if (force) {
-			chkStandardDeadline.setSelected(enabled);
-		}
-		durStandardDeadline.setVisible(enabled);
-	}
-	
 	@Override
 	public void setObject(Verification obj) {
 		active = obj;
 		
 		// Basic Fields
-		txtNotes.setText(obj.getNotes());
-		cmbStandardPriority.setSelectedItem(obj.getStandardPriority());
-		cmbAllocationConstraint.setSelection(obj.getAllocationConstraint());
-
-		Duration standardDeadline = obj.getStandardDeadline();
-		if (standardDeadline == null) {
-			standardDeadlineEnabled(false, true);
-		} else {
-			standardDeadlineEnabled(true, true);
-			durStandardDeadline.setHour((int) standardDeadline.getSeconds() / 3600);
-			durStandardDeadline.setMinute((int) standardDeadline.getSeconds() % 3600 / 60);
-		}
+		txteNotes.setObject(obj.getNotes());
+		lsteStandardPriority.setObject(obj.getStandardPriority());
+		lsteAllocationConstraint.setObject(obj.getAllocationConstraint());
+		durationManager.setObject(obj.getStandardDeadline());
 	}
 
 	@Override
 	public boolean validateFields() {
 		boolean valid = true;
 		
-		// Notes - no validation required
-		// Standard Priority - combo box does validation
-		// Allocation Constraint - combo box does validation
-		// Standard Deadline - duration field does validation
+		if (!txteNotes.validateFields()) valid = false;
+		if (!lsteStandardPriority.validateFields()) valid = false;
+		if (!lsteAllocationConstraint.validateFields()) valid = false;
+		if (!durationManager.getEditor().validateFields()) valid = false;
 		
 		return valid;
 	}
 
 	@Override
 	public Verification getObject() {
-		active.setNotes(txtNotes.getText());
-		active.setStandardPriority((TaskPriority) cmbStandardPriority.getSelectedItem());
-		active.setAllocationConstraint(cmbAllocationConstraint.getSelection());
-		active.setStandardDeadline(Duration.ofSeconds(durStandardDeadline.getDuration()));
+		active.setNotes(txteNotes.getObject());
+		active.setStandardPriority(lsteStandardPriority.getObject());
+		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
+		active.setStandardDeadline(durationManager.getObject());
 		
 		return active;
 	}
