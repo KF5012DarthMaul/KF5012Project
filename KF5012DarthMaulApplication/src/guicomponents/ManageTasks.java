@@ -28,7 +28,7 @@ public class ManageTasks extends JPanel {
 	// Main Panel
 	private ViewTasks viewTasksComponent;
 	private EditTask edtTask;
-	private EditTaskExec editTaskExecComponent;
+	private EditTaskExec edtTaskExecution;
 	
 	private Object active; // Nullable
 	
@@ -139,8 +139,8 @@ public class ManageTasks extends JPanel {
 		edtTask = new EditTask();
 		mainPanel.add(edtTask, "editTask");
 
-		editTaskExecComponent = new EditTaskExec();
-		mainPanel.add(editTaskExecComponent, "editTaskExec");
+		edtTaskExecution = new EditTaskExec();
+		mainPanel.add(edtTaskExecution, "editTaskExec");
 
 		/* Initialise the data model
 		 * -------------------------------------------------- */
@@ -188,7 +188,7 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
 			views.get("editTaskInstance").run(); // Show the edit view
-			editTaskExecComponent.showTaskExec((TaskExecution) obj);
+			edtTaskExecution.showObject((TaskExecution) obj);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -223,14 +223,14 @@ public class ManageTasks extends JPanel {
 			//db.submitTask(task); // TODO
 			
 		} else if (active instanceof TaskExecution) {
-			boolean valid = editTaskExecComponent.validateFields();
+			boolean valid = edtTaskExecution.validateFields();
 			if (!valid) {
 				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
 				return;
 			}
 			
 			TaskExecution taskExec = (TaskExecution) active;
-			editTaskExecComponent.updateTask(taskExec);
+			edtTaskExecution.updateObject(taskExec);
 			
 			//db.submitTaskExecution(taskExec); // TODO
 			

@@ -3,10 +3,13 @@ package guicomponents;
 import domain.TaskExecution;
 import domain.TaskPriority;
 
+import guicomponents.utils.ObjectEditor;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -14,7 +17,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
-public class EditTaskExec extends JScrollPane {
+public class EditTaskExec
+		extends JScrollPane
+		implements ObjectEditor<TaskExecution>
+{
 	private JTextField txtNotes;
 	private JComboBox<Object> cmbPriority;
 
@@ -64,7 +70,11 @@ public class EditTaskExec extends JScrollPane {
 		gbc_cmbPriority.gridx = 1;
 		gbc_cmbPriority.gridy = 1;
 		formPanel.add(cmbPriority, gbc_cmbPriority);
+	}
 
+	@Override
+	public JComponent getComponent() {
+		return this;
 	}
 
 	/**
@@ -72,7 +82,8 @@ public class EditTaskExec extends JScrollPane {
 	 * 
 	 * @param taskExec The task execution to edit.
 	 */
-	public void showTaskExec(TaskExecution taskExec) {
+	@Override
+	public void showObject(TaskExecution taskExec) {
 		txtNotes.setText(taskExec.getNotes());
 		cmbPriority.setSelectedItem(taskExec.getPriority());
 	}
@@ -82,6 +93,7 @@ public class EditTaskExec extends JScrollPane {
 	 * 
 	 * @return True if all fields are valid, false otherwise.
 	 */
+	@Override
 	public boolean validateFields() {
 		boolean valid = true;
 
@@ -97,7 +109,8 @@ public class EditTaskExec extends JScrollPane {
 	 * 
 	 * @param taskExec The task execution to update.
 	 */
-	public void updateTask(TaskExecution taskExec) {
+	@Override
+	public void updateObject(TaskExecution taskExec) {
 		taskExec.setNotes(txtNotes.getText());
 		taskExec.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
 	}
