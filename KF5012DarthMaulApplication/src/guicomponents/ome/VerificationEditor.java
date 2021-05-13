@@ -64,6 +64,8 @@ public class VerificationEditor
 		gbc_txteNotes.gridx = 1;
 		gbc_txteNotes.gridy = 0;
 		add(txteNotes, gbc_txteNotes);
+		txteNotes.setColumns(40);
+		txteNotes.setRows(6);
 		
 		// Standard Priority
 		
