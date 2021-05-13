@@ -114,8 +114,8 @@ public class EditTaskExec
 	public boolean validateFields() {
 		boolean valid = true;
 
-		// Notes - no validation
-		// Priority - combo box does validation
+		if (!txteNotes.validateFields()) valid = false;
+		if (!lstePriority.validateFields()) valid = false;
 		
 		return valid;
 	}
