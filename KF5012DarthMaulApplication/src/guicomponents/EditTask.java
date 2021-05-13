@@ -611,21 +611,14 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	public boolean validateFields() {
 		boolean valid = true;
 		
-		// Name
 		if (!txteName.validateFields()) valid = false;
-		
-		// TODO - add all of these
-		// Notes - no validation
-		// Standard Priority - combo box does validation
-		// Allocation Constraint - combo box does validation
-		
-		// setRefStart - date/time picker does validation
-		// setRefEnd - date/time picker does validation
-		// setInterval - duration field does validation
-		// setCRefStart - date/time picker does validation
-		// setCRefEnd - date/time picker does validation
-		// setCInterval - duration field does validation
+		if (!txteNotes.validateFields()) valid = false;
+		if (!lstePriority.validateFields()) valid = false;
+		if (!lsteAllocationConstraint.validateFields()) valid = false;
 
+		if (!setEditor.validateFields()) valid = false;
+		if (!cSetManager.getEditor().validateFields()) valid = false;
+		
 		if (!verificationEditor.validateFields()) valid = false;
 		
 		return valid;
