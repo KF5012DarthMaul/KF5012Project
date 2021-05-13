@@ -97,7 +97,7 @@ public class ObjectManager<T> {
 		}
 		editorPanel.getComponent().setVisible(exists);
 		if (exists) {
-			editorPanel.showObject(obj);
+			editorPanel.setObject(obj);
 		}
 	}
 
@@ -107,7 +107,7 @@ public class ObjectManager<T> {
 	
 	public T getObject() {
 		if (obj != null) {
-			editorPanel.updateObject(obj);
+			return editorPanel.getObject();
 		}
 		return obj;
 	}

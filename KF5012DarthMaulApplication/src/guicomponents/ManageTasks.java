@@ -172,7 +172,7 @@ public class ManageTasks extends JPanel {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
 		active = newTask; // Keep a reference to it (the task being edited)
 		views.get("editTask").run(); // Show the edit view
-		edtTask.showObject(newTask); // Set up the edit view to edit that task
+		edtTask.setObject(newTask); // Set up the edit view to edit that task
 	}
 
 	private void editTask() {
@@ -183,12 +183,12 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof Task) {
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
-			edtTask.showObject((Task) obj); // Set up the edit view to edit that task
+			edtTask.setObject((Task) obj); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
 			views.get("editTaskInstance").run(); // Show the edit view
-			edtTaskExecution.showObject((TaskExecution) obj);
+			edtTaskExecution.setObject((TaskExecution) obj);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -217,9 +217,7 @@ public class ManageTasks extends JPanel {
 				return;
 			}
 			
-			Task task = (Task) active;
-			edtTask.updateObject(task);
-			
+			Task task = edtTask.getObject();
 			//db.submitTask(task); // TODO
 			
 		} else if (active instanceof TaskExecution) {
@@ -229,9 +227,7 @@ public class ManageTasks extends JPanel {
 				return;
 			}
 			
-			TaskExecution taskExec = (TaskExecution) active;
-			edtTaskExecution.updateObject(taskExec);
-			
+			TaskExecution taskExec = edtTaskExecution.getObject();
 			//db.submitTaskExecution(taskExec); // TODO
 			
 		} else {

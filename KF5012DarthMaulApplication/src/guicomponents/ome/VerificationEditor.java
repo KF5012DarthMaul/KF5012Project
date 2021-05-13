@@ -27,6 +27,9 @@ public class VerificationEditor
 	extends JPanel
 	implements ObjectEditor<Verification>
 {
+	private Verification active;
+	
+	// Basic fields
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbStandardPriority;
 	private NullableComboBox<User> cmbAllocationConstraint;
@@ -155,7 +158,10 @@ public class VerificationEditor
 	}
 	
 	@Override
-	public void showObject(Verification obj) {
+	public void setObject(Verification obj) {
+		active = obj;
+		
+		// Basic Fields
 		txtNotes.setText(obj.getNotes());
 		cmbStandardPriority.setSelectedItem(obj.getStandardPriority());
 		cmbAllocationConstraint.setSelection(obj.getAllocationConstraint());
@@ -183,10 +189,12 @@ public class VerificationEditor
 	}
 
 	@Override
-	public void updateObject(Verification obj) {
-		obj.setNotes(txtNotes.getText());
-		obj.setStandardPriority((TaskPriority) cmbStandardPriority.getSelectedItem());
-		obj.setAllocationConstraint(cmbAllocationConstraint.getSelection());
-		obj.setStandardDeadline(Duration.ofSeconds(durStandardDeadline.getDuration()));
+	public Verification getObject() {
+		active.setNotes(txtNotes.getText());
+		active.setStandardPriority((TaskPriority) cmbStandardPriority.getSelectedItem());
+		active.setAllocationConstraint(cmbAllocationConstraint.getSelection());
+		active.setStandardDeadline(Duration.ofSeconds(durStandardDeadline.getDuration()));
+		
+		return active;
 	}
 }

@@ -52,6 +52,8 @@ import java.time.LocalDateTime;
 
 @SuppressWarnings("serial")
 public class EditTask extends JScrollPane implements ObjectEditor<Task> {
+	private Task active;
+	
 	// Basic fields
 	private JTextField txtName;
 	private JTextArea txtNotes;
@@ -603,7 +605,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 * @param task The task to edit.
 	 */
 	@Override
-	public void showObject(Task task) {
+	public void setObject(Task task) {
+		active = task;
+		
 		/* Basic fields
 		 * -------------------- */
 		
@@ -664,21 +668,23 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 * @param task The task to update.
 	 */
 	@Override
-	public void updateObject(Task task) {
+	public Task getObject() {
 		// Basic fields
-		task.setName(txtName.getText());
-		task.setNotes(txtNotes.getText());
-		task.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
-		task.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
+		active.setName(txtName.getText());
+		active.setNotes(txtNotes.getText());
+		active.setStandardPriority((TaskPriority) cmbPriority.getSelectedItem());
+		active.setAllocationConstraint(ncmbAllocationConstraint.getSelection());
 		
 		// Schedule constraint fields
 		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
 		// problematic memory-wise, and is less complicated than checking to see
 		// if it's changed.
-		task.setScheduleConstraint(this.getScheduleConstraint());
+		active.setScheduleConstraint(this.getScheduleConstraint());
 		
 		// Verification
-		task.setVerification(omgVerification.getObjectManager().getObject());
+		active.setVerification(omgVerification.getObjectManager().getObject());
+		
+		return active;
 	}
 
 	/* Utilities used in multiple places

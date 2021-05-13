@@ -21,6 +21,9 @@ public class EditTaskExec
 		extends JScrollPane
 		implements ObjectEditor<TaskExecution>
 {
+	private TaskExecution active;
+	
+	// Basic Fields
 	private JTextField txtNotes;
 	private JComboBox<Object> cmbPriority;
 
@@ -83,7 +86,9 @@ public class EditTaskExec
 	 * @param taskExec The task execution to edit.
 	 */
 	@Override
-	public void showObject(TaskExecution taskExec) {
+	public void setObject(TaskExecution taskExec) {
+		active = taskExec;
+		
 		txtNotes.setText(taskExec.getNotes());
 		cmbPriority.setSelectedItem(taskExec.getPriority());
 	}
@@ -110,8 +115,10 @@ public class EditTaskExec
 	 * @param taskExec The task execution to update.
 	 */
 	@Override
-	public void updateObject(TaskExecution taskExec) {
-		taskExec.setNotes(txtNotes.getText());
-		taskExec.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
+	public TaskExecution getObject() {
+		active.setNotes(txtNotes.getText());
+		active.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
+		
+		return active;
 	}
 }
