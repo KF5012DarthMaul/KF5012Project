@@ -496,13 +496,15 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 
 			// Get the users
 			List<User> allUsers = db.getAllUsers();
-			List<User> caretakers = (List<User>) allUsers.stream()
+			List<User> caretakersAndNull = nullable(
+				allUsers.stream()
 				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
-				.collect(Collectors.toList());
+				.collect(Collectors.toList())
+			);
 			
 			// (Re)fill the lists
-			lsteAllocationConstraint.populate(caretakers);
-			verificationEditor.setUsers(caretakers);
+			lsteAllocationConstraint.populate(caretakersAndNull);
+			verificationEditor.setUsers(caretakersAndNull);
 			
 			usersLoaded = true;
 		}
@@ -661,5 +663,11 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		return new ConstrainedIntervaledPeriodSet(
 			setEditor.getObject(), cSetManager.getObject()
 		);
+	}
+
+	private static <T> List<T> nullable(List<T> list) {
+		List<T> fullList = list;
+		fullList.add(null);
+		return fullList;
 	}
 }
