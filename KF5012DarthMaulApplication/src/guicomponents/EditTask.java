@@ -5,6 +5,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JButton;
@@ -16,6 +17,8 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import lib.DurationField;
+import guicomponents.subcomponents.DomainObjectManager;
+import guicomponents.subcomponents.VerificationEditor;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
@@ -50,17 +53,22 @@ import javax.swing.JCheckBox;
 import java.awt.event.ItemEvent;
 
 @SuppressWarnings("serial")
-public class EditTask extends ObjectEditor<Task> {
+public class EditTask implements ObjectEditor<Task> {
+	private JPanel component;
+	
+	// Basic fields
 	private JTextField txtName;
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbPriority;
 	private NullableComboBox<User> ncmbAllocationConstraint;
 	
+	// Timeline
 	private List<ChartableEvent> currentTimelineHistory;
 	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
 	private TimelinePanel timelinePanel;
 	private DateRangePicker dateRangePicker;
 	
+	// Schedule fields
 	// dtpSetRefStart is always enabled
 	private JCheckBox chkSetRefEnd;
 	private JCheckBox chkSetInterval;
@@ -75,19 +83,22 @@ public class EditTask extends ObjectEditor<Task> {
 	private DateTimePicker dtpCSetRefEnd;
 	private DurationField durCSetInterval;
 	
-	VerificationEditor edtVerification;
-	private ObjectManager<Verification> omgVerification;
+	// Verification editor
+	private VerificationEditor verificationEditor;
+	private DomainObjectManager<Verification> omgVerification;
 	
+	// Loading of users for various components
 	private boolean usersLoaded = false;
 
 	/**
-	 * Create the panel.
+	 * Set up the Edit Task panel.
 	 */
 	public EditTask() {
-		setLayout(new BorderLayout(0,0));
+		component = new JPanel();
+		component.setLayout(new BorderLayout(0,0));
 		
 		JScrollPane sclWrapper = new JScrollPane();
-		add(sclWrapper, BorderLayout.CENTER);
+		component.add(sclWrapper, BorderLayout.CENTER);
 		
 		JPanel formPanel = new JPanel();
 		sclWrapper.setViewportView(formPanel);
@@ -192,7 +203,7 @@ public class EditTask extends ObjectEditor<Task> {
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
 		timelinePanel.setPreferredSize(
-			new Dimension(this.getPreferredSize().width, 100)
+			new Dimension(component.getPreferredSize().width, 100)
 		);
 		
 		dateRangePicker = new DateRangePicker("From", "To");
@@ -437,9 +448,9 @@ public class EditTask extends ObjectEditor<Task> {
 		gbc_sep3.gridy = 14;
 		formPanel.add(sep3, gbc_sep3);
 
-		edtVerification = new VerificationEditor();
-		omgVerification = new ObjectManager<>(
-			"Requires Verification", () -> new Verification(), edtVerification
+		verificationEditor = new VerificationEditor();
+		omgVerification = new DomainObjectManager<>(
+			"Requires Verification", verificationEditor, () -> new Verification()
 		);
 		GridBagConstraints gbc_edtVerificationEditor = new GridBagConstraints();
 		gbc_edtVerificationEditor.insets = new Insets(0, 5, 0, 0);
@@ -448,6 +459,11 @@ public class EditTask extends ObjectEditor<Task> {
 		gbc_edtVerificationEditor.gridx = 0;
 		gbc_edtVerificationEditor.gridy = 15;
 		formPanel.add(omgVerification, gbc_edtVerificationEditor);
+	}
+
+	@Override
+	public JComponent getComponent() {
+		return component;
 	}
 
 	/* Allocation combo box management
@@ -479,7 +495,7 @@ public class EditTask extends ObjectEditor<Task> {
 			
 			// (Re)fill the lists
 			ncmbAllocationConstraint.populate(caretakers);
-			edtVerification.setUsers(caretakers);
+			verificationEditor.setUsers(caretakers);
 			
 			usersLoaded = true;
 		}
@@ -585,7 +601,7 @@ public class EditTask extends ObjectEditor<Task> {
 	 * -------------------------------------------------- */
 	
 	private void setVerification(Verification verification) {
-		omgVerification.setObject(verification);
+		omgVerification.getObjectManager().setObject(verification);
 	}
 	
 	/* Task get/validate/update cycle
@@ -647,7 +663,7 @@ public class EditTask extends ObjectEditor<Task> {
 		// setCRefEnd - date/time picker does validation
 		// setCInterval - duration field does validation
 
-		if (!edtVerification.validateFields()) valid = false;
+		if (!verificationEditor.validateFields()) valid = false;
 		
 		return valid;
 	}
@@ -672,7 +688,7 @@ public class EditTask extends ObjectEditor<Task> {
 		task.setScheduleConstraint(this.getScheduleConstraint());
 		
 		// Verification
-		task.setVerification(omgVerification.getObject());
+		task.setVerification(omgVerification.getObjectManager().getObject());
 	}
 
 	/* Utilities used in multiple places

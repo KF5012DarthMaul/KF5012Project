@@ -1,4 +1,4 @@
-package guicomponents;
+package guicomponents.subcomponents;
 
 import domain.TaskPriority;
 import domain.Verification;
@@ -10,8 +10,10 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import javax.swing.JTextArea;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 
 import guicomponents.utils.NullableComboBox;
 import guicomponents.utils.ObjectEditor;
@@ -21,24 +23,26 @@ import java.time.Duration;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class VerificationEditor extends ObjectEditor<Verification> {
+public class VerificationEditor implements ObjectEditor<Verification> {
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbStandardPriority;
 	private NullableComboBox<User> cmbAllocationConstraint;
 	private DurationField durStandardDeadline;
 
+	private JPanel component;
 	private JCheckBox chkStandardDeadline;
 	
 	/**
 	 * Create the panel.
 	 */
 	public VerificationEditor() {
+		component = new JPanel();
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 0, 0, 0, 0};
 		gridBagLayout.columnWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
-		setLayout(gridBagLayout);
+		component.setLayout(gridBagLayout);
 		
 		// Notes
 		
@@ -48,7 +52,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_lblNotes.insets = new Insets(0, 5, 5, 5);
 		gbc_lblNotes.gridx = 0;
 		gbc_lblNotes.gridy = 0;
-		add(lblNotes, gbc_lblNotes);
+		component.add(lblNotes, gbc_lblNotes);
 		
 		txtNotes = new JTextArea();
 		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
@@ -57,7 +61,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_txtNotes.gridwidth = 2;
 		gbc_txtNotes.gridx = 1;
 		gbc_txtNotes.gridy = 0;
-		add(txtNotes, gbc_txtNotes);
+		component.add(txtNotes, gbc_txtNotes);
 		
 		// Standard Priority
 		
@@ -67,7 +71,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_lblStandardPriority.insets = new Insets(0, 5, 5, 5);
 		gbc_lblStandardPriority.gridx = 0;
 		gbc_lblStandardPriority.gridy = 1;
-		add(lblStandardPriority, gbc_lblStandardPriority);
+		component.add(lblStandardPriority, gbc_lblStandardPriority);
 		
 		cmbStandardPriority = new JComboBox<>(TaskPriority.values());
 		GridBagConstraints gbc_cmbStandardPriority = new GridBagConstraints();
@@ -76,7 +80,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_cmbStandardPriority.gridwidth = 2;
 		gbc_cmbStandardPriority.gridx = 1;
 		gbc_cmbStandardPriority.gridy = 1;
-		add(cmbStandardPriority, gbc_cmbStandardPriority);
+		component.add(cmbStandardPriority, gbc_cmbStandardPriority);
 		
 		// Allocation constraint
 
@@ -86,7 +90,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_lblAllocationConstraint.insets = new Insets(0, 5, 5, 5);
 		gbc_lblAllocationConstraint.gridx = 0;
 		gbc_lblAllocationConstraint.gridy = 2;
-		add(lblAllocationConstraint, gbc_lblAllocationConstraint);
+		component.add(lblAllocationConstraint, gbc_lblAllocationConstraint);
 
 		cmbAllocationConstraint = new NullableComboBox<>((user) -> {
 			return user == null ? "No Allocation Constraint" : user.getUsername();
@@ -97,7 +101,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_cmbAllocationConstraint.gridwidth = 2;
 		gbc_cmbAllocationConstraint.gridx = 1;
 		gbc_cmbAllocationConstraint.gridy = 2;
-		add(cmbAllocationConstraint, gbc_cmbAllocationConstraint);
+		component.add(cmbAllocationConstraint, gbc_cmbAllocationConstraint);
 		
 		// Standard deadline
 
@@ -107,7 +111,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_lblStandardDeadline.anchor = GridBagConstraints.EAST;
 		gbc_lblStandardDeadline.gridx = 0;
 		gbc_lblStandardDeadline.gridy = 3;
-		add(lblStandardDeadline, gbc_lblStandardDeadline);
+		component.add(lblStandardDeadline, gbc_lblStandardDeadline);
 
 		chkStandardDeadline = new JCheckBox("");
 		chkStandardDeadline.addItemListener((e) -> {
@@ -122,7 +126,7 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_chkStandardDeadline.anchor = GridBagConstraints.WEST;
 		gbc_chkStandardDeadline.gridx = 1;
 		gbc_chkStandardDeadline.gridy = 3;
-		this.add(chkStandardDeadline, gbc_chkStandardDeadline);
+		component.add(chkStandardDeadline, gbc_chkStandardDeadline);
 		
 		durStandardDeadline = new DurationField();
 		GridBagConstraints gbc_durStandardDeadline = new GridBagConstraints();
@@ -130,7 +134,12 @@ public class VerificationEditor extends ObjectEditor<Verification> {
 		gbc_durStandardDeadline.anchor = GridBagConstraints.WEST;
 		gbc_durStandardDeadline.gridx = 2;
 		gbc_durStandardDeadline.gridy = 3;
-		add(durStandardDeadline, gbc_durStandardDeadline);
+		component.add(durStandardDeadline, gbc_durStandardDeadline);
+	}
+
+	@Override
+	public JComponent getComponent() {
+		return component;
 	}
 	
 	public void setUsers(List<User> users) {
