@@ -27,7 +27,7 @@ public class ManageTasks extends JPanel {
 	
 	// Main Panel
 	private ViewTasks viewTasksComponent;
-	private EditTask taskEditor;
+	private EditTask edtTask;
 	private EditTaskExec editTaskExecComponent;
 	
 	private Object active; // Nullable
@@ -64,7 +64,7 @@ public class ManageTasks extends JPanel {
 				layout = (CardLayout) buttonPanel.getLayout();
 				layout.show(buttonPanel, "editTaskOrExecButtons");
 
-				taskEditor.loadUsers(); // In case they weren't already
+				edtTask.loadUsers(); // In case they weren't already
 				layout = (CardLayout) mainPanel.getLayout();
 				layout.show(mainPanel, "editTask");
 			}
@@ -136,8 +136,8 @@ public class ManageTasks extends JPanel {
 		viewTasksComponent = new ViewTasks();
 		mainPanel.add(viewTasksComponent, "viewTasks");
 		
-		taskEditor = new EditTask();
-		mainPanel.add(taskEditor.getComponent(), "editTask");
+		edtTask = new EditTask();
+		mainPanel.add(edtTask, "editTask");
 
 		editTaskExecComponent = new EditTaskExec();
 		mainPanel.add(editTaskExecComponent, "editTaskExec");
@@ -172,7 +172,7 @@ public class ManageTasks extends JPanel {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
 		active = newTask; // Keep a reference to it (the task being edited)
 		views.get("editTask").run(); // Show the edit view
-		taskEditor.showObject(newTask); // Set up the edit view to edit that task
+		edtTask.showObject(newTask); // Set up the edit view to edit that task
 	}
 
 	private void editTask() {
@@ -183,7 +183,7 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof Task) {
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
-			taskEditor.showObject((Task) obj); // Set up the edit view to edit that task
+			edtTask.showObject((Task) obj); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
@@ -211,14 +211,14 @@ public class ManageTasks extends JPanel {
 		}
 		
 		if (active instanceof Task) {
-			boolean valid = taskEditor.validateFields();
+			boolean valid = edtTask.validateFields();
 			if (!valid) {
 				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
 				return;
 			}
 			
 			Task task = (Task) active;
-			taskEditor.updateObject(task);
+			edtTask.updateObject(task);
 			
 			//db.submitTask(task); // TODO
 			

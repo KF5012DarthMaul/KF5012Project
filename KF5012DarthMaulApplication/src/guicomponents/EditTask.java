@@ -51,9 +51,8 @@ import java.util.stream.Collectors;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-public class EditTask implements ObjectEditor<Task> {
-	private JPanel component;
-	
+@SuppressWarnings("serial")
+public class EditTask extends JPanel implements ObjectEditor<Task> {
 	// Basic fields
 	private JTextField txtName;
 	private JTextArea txtNotes;
@@ -92,11 +91,10 @@ public class EditTask implements ObjectEditor<Task> {
 	 * Set up the Edit Task panel.
 	 */
 	public EditTask() {
-		component = new JPanel();
-		component.setLayout(new BorderLayout(0,0));
+		setLayout(new BorderLayout(0,0));
 		
 		JScrollPane sclWrapper = new JScrollPane();
-		component.add(sclWrapper, BorderLayout.CENTER);
+		add(sclWrapper, BorderLayout.CENTER);
 		
 		JPanel formPanel = new JPanel();
 		sclWrapper.setViewportView(formPanel);
@@ -201,7 +199,7 @@ public class EditTask implements ObjectEditor<Task> {
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
 		timelinePanel.setPreferredSize(
-			new Dimension(component.getPreferredSize().width, 100)
+			new Dimension(this.getPreferredSize().width, 100)
 		);
 		
 		dateRangePicker = new DateRangePicker("From", "To");
@@ -461,7 +459,7 @@ public class EditTask implements ObjectEditor<Task> {
 
 	@Override
 	public JComponent getComponent() {
-		return component;
+		return this;
 	}
 
 	/* Allocation combo box management
