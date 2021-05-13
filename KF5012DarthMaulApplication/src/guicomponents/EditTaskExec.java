@@ -2,13 +2,16 @@ package guicomponents;
 
 import domain.TaskExecution;
 import domain.TaskPriority;
-
+import guicomponents.ome.ListSelectionEditor;
+import guicomponents.ome.LongTextEditor;
+import guicomponents.ome.TextEditor;
 import guicomponents.utils.ObjectEditor;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComboBox;
@@ -27,8 +30,8 @@ public class EditTaskExec
 	private TaskExecution active;
 	
 	// Basic Fields
-	private JTextField txtNotes;
-	private JComboBox<Object> cmbPriority;
+	private LongTextEditor txteNotes;
+	private ListSelectionEditor<TaskPriority> lstePriority;
 
 	/**
 	 * Create the panel.
@@ -51,14 +54,15 @@ public class EditTaskExec
 		gbc_lblNotes.gridy = 0;
 		formPanel.add(lblNotes, gbc_lblNotes);
 		
-		txtNotes = new JTextField();
-		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
-		gbc_txtNotes.insets = new Insets(5, 5, 5, 0);
-		gbc_txtNotes.fill = GridBagConstraints.HORIZONTAL;
-		gbc_txtNotes.gridx = 1;
-		gbc_txtNotes.gridy = 0;
-		formPanel.add(txtNotes, gbc_txtNotes);
-		txtNotes.setColumns(10);
+		txteNotes = new LongTextEditor();
+		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
+		gbc_txteNotes.insets = new Insets(5, 5, 5, 0);
+		gbc_txteNotes.fill = GridBagConstraints.HORIZONTAL;
+		gbc_txteNotes.gridx = 1;
+		gbc_txteNotes.gridy = 0;
+		formPanel.add(txteNotes, gbc_txteNotes);
+		txteNotes.setColumns(40);
+		txteNotes.setRows(6);
 		
 		JLabel lblPriority = new JLabel("Priority");
 		lblPriority.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -69,13 +73,16 @@ public class EditTaskExec
 		gbc_lblPriority.gridy = 1;
 		formPanel.add(lblPriority, gbc_lblPriority);
 		
-		cmbPriority = new JComboBox<>(TaskPriority.values());
+		lstePriority = new ListSelectionEditor<>(
+			(taskPriority) -> taskPriority.toString()
+		);
+		lstePriority.populate(Arrays.asList(TaskPriority.values()));
 		GridBagConstraints gbc_cmbPriority = new GridBagConstraints();
 		gbc_cmbPriority.fill = GridBagConstraints.HORIZONTAL;
 		gbc_cmbPriority.insets = new Insets(0, 5, 5, 0);
 		gbc_cmbPriority.gridx = 1;
 		gbc_cmbPriority.gridy = 1;
-		formPanel.add(cmbPriority, gbc_cmbPriority);
+		formPanel.add(lstePriority, gbc_cmbPriority);
 	}
 
 	@Override
@@ -94,8 +101,8 @@ public class EditTaskExec
 	public void setObject(TaskExecution taskExec) {
 		active = taskExec;
 		
-		txtNotes.setText(taskExec.getNotes());
-		cmbPriority.setSelectedItem(taskExec.getPriority());
+		txteNotes.setObject(taskExec.getNotes());
+		lstePriority.setObject(taskExec.getPriority());
 	}
 
 	/**
@@ -121,8 +128,8 @@ public class EditTaskExec
 	 */
 	@Override
 	public TaskExecution getObject() {
-		active.setNotes(txtNotes.getText());
-		active.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
+		active.setNotes(txteNotes.getObject());
+		active.setPriority(lstePriority.getObject());
 		
 		return active;
 	}
