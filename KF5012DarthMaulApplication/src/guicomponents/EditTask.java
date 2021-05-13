@@ -18,8 +18,8 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
 import lib.DurationField;
-import guicomponents.subcomponents.DomainObjectManager;
-import guicomponents.subcomponents.VerificationEditor;
+import guicomponents.ome.DomainObjectManager;
+import guicomponents.ome.VerificationEditor;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;

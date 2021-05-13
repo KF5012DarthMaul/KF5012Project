@@ -1,4 +1,4 @@
-package guicomponents.subcomponents;
+package guicomponents.ome;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;

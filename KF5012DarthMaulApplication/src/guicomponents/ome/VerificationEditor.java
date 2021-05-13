@@ -1,4 +1,4 @@
-package guicomponents.subcomponents;
+package guicomponents.ome;
 
 import domain.TaskPriority;
 import domain.Verification;
