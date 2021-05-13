@@ -9,7 +9,8 @@ import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JButton;
-
+import javax.swing.JCheckBox;
+import java.awt.event.ItemEvent;
 import java.awt.GridBagLayout;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -24,16 +25,17 @@ import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.DateTimePicker;
 import guicomponents.utils.NullableComboBox;
 import guicomponents.utils.ObjectEditor;
-import guicomponents.utils.ObjectManager;
 import guicomponents.utils.TimelinePanel;
+import kf5012darthmaulapplication.ExceptionDialog;
+
 import domain.Task;
 import domain.TaskPriority;
 import domain.Verification;
+import kf5012darthmaulapplication.User;
+import kf5012darthmaulapplication.PermissionManager;
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
-import kf5012darthmaulapplication.User;
+
 import temporal.BasicChartableEvent;
 import temporal.ChartableEvent;
 import temporal.ConstrainedIntervaledPeriodSet;
@@ -49,10 +51,6 @@ import java.util.stream.Collectors;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import javax.swing.JCheckBox;
-import java.awt.event.ItemEvent;
-
-@SuppressWarnings("serial")
 public class EditTask implements ObjectEditor<Task> {
 	private JPanel component;
 	

@@ -22,7 +22,6 @@ import lib.DurationField;
 import java.time.Duration;
 import java.util.List;
 
-@SuppressWarnings("serial")
 public class VerificationEditor implements ObjectEditor<Verification> {
 	private JTextArea txtNotes;
 	private JComboBox<Object> cmbStandardPriority;

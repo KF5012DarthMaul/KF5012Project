@@ -2,7 +2,6 @@ package guicomponents.utils;
 
 import javax.swing.JComponent;
 
-@SuppressWarnings("serial")
 public interface ObjectEditor<T> {
 	// Note: getComponent() is a work-around to avoid the diamond pattern:
 	//           ObjectEditor<T>  ---extends--->  JComponent
