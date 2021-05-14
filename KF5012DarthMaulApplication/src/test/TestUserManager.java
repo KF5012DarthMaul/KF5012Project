@@ -46,9 +46,12 @@ public class TestUserManager {
 		} catch (FailedToConnectException e) {
 			System.out.println("Error with TestUserManager BeforeAll Setup function");
 			fail(e);
+			e.printStackTrace();
 		} catch (Exception e) {
 			System.out.println("Error with TestUserManager BeforeAll Setup function");
 			fail(e);
+			e.printStackTrace();
+
 		}
 	}
 	
@@ -58,8 +61,10 @@ public class TestUserManager {
 			String hashedPass = SecurityManager.generatePassword(password);
 			db.createUser(user, hashedPass);
 		} catch (Exception e) {
-			System.out.println("Error with TestUserManager BeforeEach Setup function");
-			fail(e);
+			// IF USER ALREADY EXISTS CONTINUE
+//			System.out.println("Error with TestUserManager BeforeEach Setup function");
+//			fail(e);
+//			e.printStackTrace();
 		}
 		
 		if(!db.doesUserExist(tempUser)) {
@@ -69,18 +74,19 @@ public class TestUserManager {
 			} catch (UserAlreadyExistsException e) {
 				System.out.println("Error with testRemoveUser: User Already exists");
 				fail(e);
+				e.printStackTrace();
 			} catch (Exception e) {
 				System.out.println("Error with testRemoveUser: "+ e);
 				fail(e);
+				e.printStackTrace();
+
 			}
 		}
 	}
 	
 	@After
 	public void cleanafter() {
-		if(user != null) {
-			db.deleteUser(user);
-		}
+		db.deleteUser(user);
 		db.deleteUser(tempUser);
 	}
 	
