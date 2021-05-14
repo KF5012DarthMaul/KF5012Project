@@ -93,7 +93,7 @@ public class EditTaskExec
 		gbc_cmbPriority.gridy = 1;
 		formPanel.add(lstePriority, gbc_cmbPriority);
 
-		JLabel lblNewLabel = new JLabel("<html><strong>Note:</strong> You can edit this task execution's allocation information (time and caretaker) in the \"Allocate Tasks\" tab on the left.</html>");
+		JLabel lblNewLabel = new JLabel("<html><strong>Note:</strong> You can edit this task execution's allocation information (time and caretaker) in the \"Allocations\" tab on the left.</html>");
 		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
 		gbc_lblNewLabel.insets = new Insets(10, 5, 10, 5);
 		gbc_lblNewLabel.gridwidth = 2;
