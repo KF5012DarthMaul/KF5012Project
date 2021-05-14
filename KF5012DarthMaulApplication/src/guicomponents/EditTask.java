@@ -554,13 +554,6 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 	}
 
-	/* Verification value/display management
-	 * -------------------------------------------------- */
-	
-	private void setVerification(Verification verification) {
-		omgVerification.getObjectManager().setObject(verification);
-	}
-	
 	/* Task get/validate/update cycle
 	 * -------------------------------------------------- */
 	
@@ -573,16 +566,14 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	public void setObject(Task task) {
 		active = task;
 		
-		/* Basic fields
-		 * -------------------- */
+		// Basic fields
 		
 		txteName.setObject(task.getName());
 		txteNotes.setObject(task.getNotes());
 		lstePriority.setObject(task.getStandardPriority());
 		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
 
-		/* Schedule
-		 * -------------------- */
+		// Schedule
 
 		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
 		
@@ -590,13 +581,12 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		this.updateTimeline(task.getName(), cips);
 		
 		// Editing the schedule
-		this.setEditor.setObject(cips.periodSet());
-		this.cSetManager.setObject(cips.periodSetConstraint());
+		setEditor.setObject(cips.periodSet());
+		cSetManager.setObject(cips.periodSetConstraint());
 
-		/* Verification
-		 * -------------------- */
+		// Verification
 		
-		this.setVerification(task.getVerification());
+		omgVerification.getObjectManager().setObject(task.getVerification());
 	}
 
 	/**
