@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -54,8 +55,10 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	private ListSelectionEditor<User> lsteAllocationConstraint;
 	
 	// Timeline
-	private List<ChartableEvent> currentTimelineHistory;
-	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
+	private List<ChartableEvent> currentTaskTimelineHistory;
+	private List<ChartableEvent> currentVerTimelineHistory;
+	private GenerativeTemporalMap<ChartableEvent> currentTaskTimelineMap;
+	private GenerativeTemporalMap<ChartableEvent> currentVerTimelineMap;
 	private TimelinePanel timelinePanel;
 	private DateRangePicker dateRangePicker;
 	
@@ -186,7 +189,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
 		timelinePanel.setPreferredSize(
-			new Dimension(this.getPreferredSize().width, 100)
+			new Dimension(this.getPreferredSize().width, 150)
 		);
 		
 		dateRangePicker = new DateRangePicker("From", "To");
@@ -516,13 +519,86 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	 * @param cips The task schedule constraint to use for the timeline.
 	 */
 	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
-		currentTimelineHistory = new ArrayList<>();
-		currentTimelineMap = new GenerativeTemporalMap<>(
-			currentTimelineHistory, cips,
-			(p) -> new BasicChartableEvent(p, name)
-		);
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
-		maps.add(currentTimelineMap);
+		
+		currentTaskTimelineHistory = new ArrayList<>();
+		currentTaskTimelineMap = new GenerativeTemporalMap<>(
+			currentTaskTimelineHistory, cips,
+			(p) -> new BasicChartableEvent(p, name, Color.CYAN)
+		);
+		maps.add(currentTaskTimelineMap);
+		
+		if (!omgVerification.getObjectManager().isObjectNull()) {
+			Verification ver = omgVerification.getObjectManager().getObject();
+			
+			Duration setRefDur = cips.periodSet().referencePeriod().duration();
+			
+			// Push back the start to the end of the task, or leave it at the
+			// start if there is no end.
+			
+			LocalDateTime verSetRefStart = cips.periodSet().referencePeriod().start();
+			if (setRefDur != null) {
+				verSetRefStart = verSetRefStart.plus(setRefDur);
+			};
+			
+			// Deal with verCSet
+
+			IntervaledPeriodSet cSet = cips.periodSetConstraint();
+			IntervaledPeriodSet verCSet;
+			if (cSet == null) {
+				// If the task set has no constraint, then the verification set
+				// has no constraint.
+				verCSet = null;
+				
+			} else {
+				LocalDateTime cSetRefStart = cips.periodSetConstraint().referencePeriod().start();
+				Duration cSetRefDur = cips.periodSetConstraint().referencePeriod().duration();
+				Duration cSetInterval = cips.periodSetConstraint().interval();
+
+				Duration verStdDeadline = ver.getStandardDeadline();
+				
+				if (setRefDur != null) {
+					// Push forward the constraint set start by the length of
+					// the task.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart.plus(setRefDur), cSetRefDur),
+						cSetInterval
+					);
+				
+				} else if (verStdDeadline != null) {
+					// If the task has no deadline, then push forward by the
+					// duration of the verification.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart.plus(verStdDeadline), cSetRefDur),
+						cSetInterval
+					);
+					
+				} else {
+					// If the verification has no deadline, then use the current
+					// cSet start, but add a second to the end to make the last
+					// event in each constraint period be generated.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart, cSetRefDur.plusSeconds(1)),
+						cSetInterval
+					);
+				}
+			}
+			
+			ConstrainedIntervaledPeriodSet verificationCips = new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(verSetRefStart, ver.getStandardDeadline()),
+					cips.periodSet().interval()
+				),
+				verCSet
+			);
+			
+			currentVerTimelineHistory = new ArrayList<>();
+			currentVerTimelineMap = new GenerativeTemporalMap<>(
+				currentVerTimelineHistory, verificationCips,
+				(p) -> new BasicChartableEvent(p, name+" Verification", Color.MAGENTA)
+			);
+			maps.add(currentVerTimelineMap);
+		}
 
 		// setTimeline() fires a change event, which the BoundedTimelinePanel
 		// picks up and re-displays the current date range with the new timeline.
@@ -535,13 +611,27 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	 * the map being used.
 	 */
 	private void resetTimeline() {
-		// Note: currentTimelineHistory and currentTimelineMap are
-		//       (re)initialised every time the task being edited is changed.
-		currentTimelineHistory.clear();
-		currentTimelineMap.generateBetween(
+		// Note: currentTaskTimelineHistory, currentVerTimelineHistory,
+		//       currentTaskTimelineMap and currentVerTimelineMap are
+		//       (re)initialised every time the task reference is changed.
+		
+		currentTaskTimelineHistory.clear();
+		currentTaskTimelineMap.generateBetween(
 			dateRangePicker.getStartDateTime(),
 			dateRangePicker.getEndDateTime()
 		);
+
+		// If currentVerTimelineHistory == null, then there is no verification
+		// active for the current timeline panel - even if there is a
+		// verification in the verification manager. To use the now-existing
+		// verification, a call to updateTimeline() must be made.
+		if (currentVerTimelineHistory != null) {
+			currentVerTimelineHistory.clear();
+			currentVerTimelineMap.generateBetween(
+				dateRangePicker.getStartDateTime(),
+				dateRangePicker.getEndDateTime()
+			);
+		}
 	}
 
 	/* Task get/validate/update cycle

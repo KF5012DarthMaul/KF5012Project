@@ -10,13 +10,14 @@ import java.awt.Color;
  * @author William Taylor
  */
 public class BasicChartableEvent extends BasicEvent implements ChartableEvent {
-	private static final Color color = Color.GREEN;
+	private final String name;
+	private final Color color;
 	
-	private String name;
-	
-	public BasicChartableEvent(Period period, String name) {
+	public BasicChartableEvent(Period period, String name, Color color) {
 		super(period);
+		
 		this.name = name;
+		this.color = color;
 	}
 
 	@Override
