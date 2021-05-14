@@ -113,6 +113,10 @@ public class ObjectManager<T> {
 		}
 		return obj;
 	}
+
+	public boolean isObjectNull() {
+		return obj == null;
+	}
 	
 	public ObjectEditor<T> getEditor() {
 		return editorPanel;

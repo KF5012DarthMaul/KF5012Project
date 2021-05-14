@@ -169,7 +169,11 @@ public class EditTaskExec
 
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
-		if (!edtVerificationExec.validateFields()) valid = false;
+		
+		if (
+			!omgVerificationExec.getObjectManager().isObjectNull() &&
+			!edtVerificationExec.validateFields()
+		) valid = false;
 		
 		return valid;
 	}

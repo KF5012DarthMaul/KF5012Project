@@ -604,9 +604,15 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		if (!lsteAllocationConstraint.validateFields()) valid = false;
 
 		if (!setEditor.validateFields()) valid = false;
-		if (!cSetManager.getEditor().validateFields()) valid = false;
+		if (
+			!cSetManager.isObjectNull() &&
+			!cSetManager.getEditor().validateFields()
+		) valid = false;
 		
-		if (!verificationEditor.validateFields()) valid = false;
+		if (
+			!omgVerification.getObjectManager().isObjectNull() &&
+			!verificationEditor.validateFields()
+		) valid = false;
 		
 		return valid;
 	}
