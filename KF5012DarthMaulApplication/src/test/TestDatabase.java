@@ -30,7 +30,7 @@ public class TestDatabase {
 		try {
 			db = DBAbstraction.getInstance();
 			db.createTables();
-			db.createUser(username,password, PermissionManager.accountTypetoInt(accType));
+			db.createUser(username,password, accType);
 		} catch (FailedToConnectException | UserAlreadyExistsException e) {
 			fail(e);
 		}
@@ -74,7 +74,7 @@ public class TestDatabase {
 	@Test
 	public void testGetPermissions() {
 		try {
-			int actual = db.getPermissions(tempUser1.getUsername());
+			int actual = PermissionManager.accountTypetoInt(db.getUser(tempUser1.getUsername()).getAccountType());
 			System.out.println();
 			int expected = PermissionManager.accountTypetoInt(accType);
 			assertEquals(expected,actual);

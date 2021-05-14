@@ -10,8 +10,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
-import org.bouncycastle.util.Arrays.Iterator;
-
 import dbmgr.DBAbstraction;
 
 import dbmgr.DBExceptions.FailedToConnectException;
