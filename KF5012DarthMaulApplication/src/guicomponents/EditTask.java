@@ -320,7 +320,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		// Create managers for set
 		
 		ObjectManager<LocalDateTime> setRefEndManager = new ObjectManager<>(
-			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getDateTime()
+			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getObject()
 		);
 		
 		ObjectManager<Duration> setIntervalManager = new ObjectManager<>(
@@ -410,7 +410,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		// Create managers for cSet
 		
 		ObjectManager<LocalDateTime> cSetRefEndManager = new ObjectManager<>(
-			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getDateTime()
+			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getObject()
 		);
 		
 		ObjectManager<Duration> cSetIntervalManager = new ObjectManager<>(
