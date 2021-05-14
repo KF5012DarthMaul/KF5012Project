@@ -128,7 +128,7 @@ public class LoginForm extends JFrame {
 				if(db.doesUserExist(username)) {
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
-							User authorisedUser = new User(username, PermissionManager.intToAccountType(db.getPermissions(username)));
+							User authorisedUser = db.getUser(username);
 							MainWindow MainWindow = new MainWindow(authorisedUser);
 							MainWindow.setVisible(true);
 							dispose();
