@@ -36,7 +36,7 @@ public class MainWindow extends JFrame {
 	 */
 	public MainWindow(User user) {
 		setResizable(false);
-		boolean bingBangBongYourSecurityIsGone = false;
+		boolean bingBangBongYourSecurityIsGone = true;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 830, 595);
 		contentPane = new JPanel();

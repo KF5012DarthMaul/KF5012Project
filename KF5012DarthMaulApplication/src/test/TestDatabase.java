@@ -29,6 +29,7 @@ public class TestDatabase {
 	static public void getConnection() {
 		try {
 			db = DBAbstraction.getInstance();
+			db.createTables();
 			db.createUser(username,password, PermissionManager.accountTypetoInt(accType));
 		} catch (FailedToConnectException | UserAlreadyExistsException e) {
 			fail(e);

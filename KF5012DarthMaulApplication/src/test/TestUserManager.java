@@ -41,6 +41,7 @@ public class TestUserManager {
 	public static void cleanBeforeRun(){
 		try {
 			db = DBAbstraction.getInstance();
+			db.createTables();
 			db.deleteUser(user);
 		} catch (FailedToConnectException e) {
 			System.out.println("Error with TestUserManager BeforeAll Setup function");
