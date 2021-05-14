@@ -83,6 +83,8 @@ public class VerificationExecutionEditor
 	
 	@Override
 	public void setObject(VerificationExecution obj) {
+		active = obj;
+		
 		txteNotes.setObject(obj.getNotes());
 		dureStandardDeadline.setObject(obj.getDeadline());
 	}
