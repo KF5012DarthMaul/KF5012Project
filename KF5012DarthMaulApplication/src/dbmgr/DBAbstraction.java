@@ -5,36 +5,58 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.ResultSet;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
 import kf5012darthmaulapplication.SecurityManager;
 import temporal.ConstrainedIntervaledPeriodSet;
+import temporal.IntervaledPeriodSet;
 import temporal.Period;
 
 /**
- *
+ * This DBAbstraction class provides methods for other classes to use that permit interaction with a database. 
+ * These methods utilize constructed SQL and prepared statements, preventing SQL injection.<p>
+ * This is a singleton pattern class. Call DBAbstraction.getInstance() to get a reference to the class object.
  * @author Emanuel Oliveira W19029581
  */
 public final class DBAbstraction 
 {
     private final DBConnection db;
     private static DBAbstraction instance;
-    
-    
+    //private ArrayList<Task> taskCache;
+    private ArrayList<User> userCache;
     /** 
-     * The DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
-     * These methods utilize constructed SQL and prepared statements, preventing SQL injection.
+     * This DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
+     * These methods utilize constructed SQL and prepared statements, preventing SQL injection.<p>
+     * This is a singleton pattern class. Call DBAbstraction.getInstance() to get a reference to the class object.
      */
     private DBAbstraction() throws FailedToConnectException
     {
         db = DBConnection.getInstance();
+        createTables();
+        userCache = getAllUsers();
+        //taskCache = new ArrayList();
+        
+        /*try 
+        {
+            //taskCache = getTaskList();
+        } 
+        catch (EmptyResultSetException ex) 
+        {
+            // Don't need to do anything here
+        }*/
     }
     
     /**
@@ -65,13 +87,6 @@ public final class DBAbstraction
     public void fillDB()
     {
         try {
-//            for(int i = 0; i < 6; i++)
-//                createUser(randomString(), hashedPassword, AccountType.CARETAKER.value);
-//            createUser(randomString(), hashedPassword, AccountType.MANAGER.value);
-//            createUser(randomString(), hashedPassword, AccountType.ESTATE.value);
-//            for(int i = 0; i < 2; i++)
-//                createUser(randomString(), hashedPassword, AccountType.HR_PERSONNEL.value);
-        	ArrayList<User> userListToAdd = new ArrayList<>();
         	String password = "Password123#";
         	int hrCount = 5;
         	int managerCount = 7;
@@ -80,181 +95,138 @@ public final class DBAbstraction
 
         	for(int i = 0 ; i < hrCount; i++) {
         		String username = "hr_" + i;
-        		createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL.ordinal());
-        	};
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
+        	}
         	for(int i = 0 ; i < managerCount; i++) {
         		String username = "manager_" + i;
-        		createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER.ordinal());
-        	};
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER);
+        	}
         	for(int i = 0 ; i < estateCount; i++) {
         		String username = "estate_" + i;
-        		createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE.ordinal());
-        	};
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE);
+        	}
         	for(int i = 0 ; i < caretakerCount; i++) {
         		String username = "caretaker_" + i;
-        		createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER.ordinal());
-        	};
+        		createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
+        	}
         	
         	
             for(int i = 0; i < 1000; i++)
             {
-                submitTask(new Task(0, randomString(), randomString()));
+                //submitTask(new Task(0, randomString(), randomString()));
             }
-            ArrayList<Task> taskList = getTaskList();
-            ArrayList<TaskExecution> texecList = new ArrayList();
-            LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
-            LocalDateTime plusOneHour = startingPoint.plusHours(1);
-            Period p = new Period(startingPoint, plusOneHour);
+            //ArrayList<Task> taskList = getTaskList();
+            //ArrayList<TaskExecution> texecList = new ArrayList();
+            //LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
+            //LocalDateTime plusOneHour = startingPoint.plusHours(1);
+            //Period p = new Period(startingPoint, plusOneHour);
 //            taskList.forEach(t -> {
 //                System.out.println(t.toString());
 //                texecList.add(new TaskExecution(t.name, p));
 //            });
-            submitTaskExecutions(texecList);
-            ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
-            tlist.forEach(t -> {
-                t.getName();
-            });
-            ArrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
-            t2.forEach(t -> {System.out.println(t.toString());
-            });
-        } catch (Exception ex) {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    /**
-     * Attempts to create a new user in the Database with 0 permissions.
-     * If the user already exists, this function will return false.
-     * @param username The username of the new user.
-     * @param hashedPassword A password (encrypted)
-     * @return True if succesful, false if not.
-     * @throws UserAlreadyExistsException
-     */
-    public boolean createUser(String username, String hashedPassword) throws UserAlreadyExistsException
-    {
-       return createUser(username, hashedPassword, 0);
-    }
-    
-    /**
-     * Attempts to create a new user in the Database.
-     * If the user already exists, this function will return false.
-     * @param user The user object with data.
-     * @param hashedPassword A password (encrypted).
-     * @return A boolean representing success.
-     * @throws UserAlreadyExistsException
-     */
-    public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
-    {
-       return createUser(user.getUsername(), hashedPassword, user.getAccountType().ordinal());
-    }
-    
-    /**
-     * Attempts to create a new user in the Database.
-     * If the user already exists, this function will return false.
-     * @param username The username of the new user.
-     * @param hashedPassword A password (encrypted).
-     * @param perms Permission flags expressed for the new user. See User class for information on these.
-     * @return A boolean representing success.
-     * @throws UserAlreadyExistsException
-     */
-    public boolean createUser(String username, String hashedPassword, int perms) throws UserAlreadyExistsException
-    {
-        if(!doesUserExist(username))
-        {
-            try 
-            {
-                db.prepareStatement("INSERT INTO tblUsers (username, hashpass, permission_flags) VALUES (?, ?, ?)");
-                db.add(username);
-                db.add(hashedPassword);
-                db.add(perms);
-                return db.executePrepared();
-            } 
-            catch (SQLException ex) 
-            {
-                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-                return false;
-            }
-        }
-        else
-        {
-            throw new UserAlreadyExistsException();
-        }
-    }
-    
-    /**
-     * Tests whether a username exists inside the database.
-     * @param username The username to test.
-     * @return Returns true if the username exists in the database, false if it doesn't.
-     */
-    public boolean doesUserExist(String username)
-    {
-        try 
-        {
-            db.prepareStatement("SELECT username FROM tblUsers WHERE username = ?");
-            db.add(username);
-            ResultSet res =  db.executePreparedQuery();
-            return !res.isClosed();
+            //submitTaskExecutions(texecList);
+            //ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
+            //tlist.forEach(t -> {
+            //    t.getName();
+            //});
+            //rrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
+            //t2.forEach(t -> {System.out.println(t.toString());
+            //});
         } 
-        catch (SQLException ex)
-        {
+        catch (Exception ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return true;
         }
-    }
-    
-    /**
-     * Tests whether a user exists inside the database.
-     * @param user The user to test.
-     * @return Returns true if the user exists in the database, false if it doesn't.
-     */
-    public boolean doesUserExist(User user)
-    {
-        return doesUserExist(user.getUsername());
     }
     
     public void createTables()
     {
         db.execute("""
-                   CREATE TABLE IF NOT EXISTS tblUsers(
-                                                  username TEXT PRIMARY KEY,
-                                                  hashpass TEXT NOT NULL,
-                                                  permission_flags INTEGER
-                                              );""");
+                    CREATE TABLE IF NOT EXISTS tblUsers(
+                        username TEXT PRIMARY KEY,
+                        display_name TEXT NOT NULL,
+                        hashpass TEXT NOT NULL,
+                        account_type INTEGER NOT NULL
+                    );""");
         db.execute(""" 
-                           CREATE TABLE IF NOT EXISTS tblTasks(
-                                type_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                task_name TEXT NOT NULL,
-                                task_desc TEXT
-                           );""");
-        db.execute(""" 
-                           CREATE TABLE IF NOT EXISTS tblTaskExecutions(
-                               task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                               task_type INTEGER NOT NULL,
-                               caretaker TEXT,
-                               start_datetime INTEGER,
-                               end_datetime INTEGER,
-                               FOREIGN KEY(task_type) REFERENCES tblTasks (type_id) ON DELETE CASCADE,
-                               FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
-                           );""");
+                    CREATE TABLE IF NOT EXISTS tblTasks(
+                        task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_name TEXT NOT NULL,
+                        task_desc TEXT NOT NULL,
+                        task_priority INTEGER NOT NULL,
+                        task_intervaled_period_start INTEGER NOT NULL,
+                        intervaled_period_end INTEGER,
+                        period_interval INTEGER,
+                        intervaled_period_constraint_start INTEGER,
+                        invervaled_period_constraint_end INTERGER,
+                        constraint_interval INTEGER,
+                        allocation TEXT,
+                        verification_id INTEGER,
+                        FOREIGN KEY(verification_id) REFERENCES tblVerications (verf_id) ON DELETE CASCADE,
+                        FOREIGN KEY(allocation) REFERENCES tblUsers (username) ON DELETE CASCADE
+                    );""");
         db.execute("""
-                            CREATE TABLE IF NOT EXISTS tblTaskTemporalRules(
-                                rules_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                task_type INTEGER NOT NULL,
-                                day_of_week INTEGER NOT NULL,
-                                start_datetime INTEGER,
-                                end_datetime INTEGER,
-                                FOREIGN KEY(task_type) REFERENCES tblTasks (type_id) ON DELETE CASCADE
-                            );""");
-                           // Tasks could ref log_id instead of log referencing task_id
-                           // That would require updating the task row instead of just adding to taskLog.
+                    CREATE TABLE IF NOT EXISTS tblTaskMaps(
+                        map_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_id INTEGER NOT NULL,
+                        caretaker TEXT NOT NULL,
+                        preferences INTEGER NOT NULL,
+                        efficiency INTEGER NOT NULL,
+                        effectiveness INTEGER NOT NULL,
+                        FOREIGN KEY(task_id) REFERENCES tblTasks (task_id) ON DELETE CASCADE,
+                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
+                   );""");
+        db.execute("""
+                    CREATE TABLE IF NOT EXISTS tblVerifications(
+                        verf_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        verf_notes TEXT,
+                        verf_priority INTEGER NOT NULL,
+                        verf_duration INTEGER,
+                        verf_caretaker TEXT
+                   );""");
         db.execute(""" 
-                        CREATE TABLE IF NOT EXISTS tblTaskLog(
-                            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            task_id INTEGER NOT NULL,
-                            log_time INTEGER NOT NULL,
-                            completion_time INTEGER,
-                            FOREIGN KEY(task_id) REFERENCES tblTaskExecutions(task_id) ON DELETE CASCADE
-                        );"""); 
+                    CREATE TABLE IF NOT EXISTS tblTaskExecutions(
+                        exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_id INTEGER NOT NULL,
+                        exe_notes TEXT,
+                        exe_prio INTEGER NOT NULL,
+                        start_datetime INTEGER NOT NULL,
+                        end_datetime INTEGER,
+                        caretaker TEXT,
+                        compl_id INTEGER,
+                        verf_exe_id INTEGER,
+                        FOREIGN KEY(task_id) REFERENCES tblTasks (task_id) ON DELETE CASCADE,
+                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
+                        FOREIGN KEY(compl_id) REFERENCES tblCompletions (compl_id) ON DELETE CASCADE,
+                        FOREIGN KEY(verf_exe_id) REFERENCES tblVerfExecutions (exe_id) ON DELETE CASCADE
+                    );""");
+        db.execute("""
+                    CREATE TABLE IF NOT EXISTS tblVerfExecutions(
+                        exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        verf_id INTEGER NOT NULL,
+                        exe_notes TEXT,
+                        exe_duration INTEGER NOT NULL,
+                        caretaker TEXT,
+                        completion_id INTEGER,
+                        FOREIGN KEY (verf_id) REFERENCES tblVerifications(verf_id) ON DELETE CASCADE,
+                        FOREIGN KEY (caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
+                        FOREIGN KEY (completion_id) REFERENCES tblCompletion(verf_id) ON DELETE CASCADE
+                   );""");
+        db.execute(""" 
+                    CREATE TABLE IF NOT EXISTS tblCompletion(
+                        compl_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        caretaker TEXT NOT NULL,
+                        start_time INTEGER NOT NULL,
+                        compl_time INTEGER NOT NULL,
+                        quality INTEGER,
+                        notes TEXT,
+                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
+                    );""");
+        db.execute("""
+                    CREATE TABLE IF NOT EXISTS tblSystemLog(
+                        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        log_info TEXT,
+                        log_timestamp INTEGER NOT NULL
+                   );""");
         /*while(true)
             {
             JFileChooser fileChooser = new JFileChooser();
@@ -279,6 +251,137 @@ public final class DBAbstraction
             break;
             }
         }*/ 
+    }
+    
+    // Convert from 2 Epoch seconds of type Long to a Period object
+    private Period periodFromEpoch(Long start, Long end)
+    {
+        LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
+        if(end == null || end == 0)
+            return new Period(dtStart);
+        LocalDateTime dtEnd = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
+        return new Period(dtStart, dtEnd);
+    }
+
+    // Convert from 1 Epoch seconds of type Long to a Period object
+    private Period periodFromEpoch(Long start)
+    {
+        LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
+        return new Period(dtStart);
+    }
+
+    // Unwrapper class that converts Period to Epoch seconds of type Long
+    private final class PeriodUnwrapper
+    {
+        Long start;
+        Long end;
+        PeriodUnwrapper(Period p)
+        {
+            start = p.start().toEpochSecond(ZoneOffset.UTC);
+            if(p.end() == null)
+                end = null;
+            else
+                end = p.end().toEpochSecond(ZoneOffset.UTC);
+        }
+    }
+    
+    /**
+     * Attempts to create a new user in the Database.
+     * If the user already exists, this function will return false.
+     * @param user The user object with data.
+     * @param hashedPassword A password (encrypted).
+     * @return A boolean representing success.
+     * @throws UserAlreadyExistsException
+     */
+    public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
+    {
+        return createUser(user.getUsername(), hashedPassword, user.getAccountType());
+    }
+    
+    /**
+     * Attempts to create a new user in the Database.
+     * If the user already exists, this function will return false.
+     * @param username The username of the new user.
+     * @param hashedPassword A password (encrypted).
+     * @param accountType The Account type of the user
+     * @return A boolean representing success.
+     * @throws UserAlreadyExistsException
+     */
+    public boolean createUser(String username, String hashedPassword, AccountType accountType) throws UserAlreadyExistsException
+    {
+        if(!doesUserExist(username))
+        {
+            try 
+            {
+                db.prepareStatement(
+                        "INSERT INTO tblUsers (username, hashpass, display_name, account_type)"
+                        + " VALUES (?, ?, ?, ?)");
+                db.add(username);
+                db.add(hashedPassword);
+                db.add(username);
+                db.add(accountType.ordinal());
+                boolean b = db.executePrepared();
+                userCache.add(new User(username, accountType));
+                return b;
+            } 
+            catch (SQLException ex) 
+            {
+                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+                return false;
+            }
+        }
+        else
+        {
+            throw new UserAlreadyExistsException();
+        }
+    }
+    
+    /**
+     * Tests whether a user exists inside the database.
+     * @param user The user to test.
+     * @return Returns true if the user exists in the database, false if it doesn't.
+     */
+    public boolean doesUserExist(User user)
+    {
+        return userCache.contains(user) || doesUserExist(user.getUsername());
+    }
+    
+    /**
+     * Tests whether a username exists inside the database.
+     * @param username The username to test.
+     * @return Returns true if the username exists in the database, false if it doesn't.
+     */
+    public boolean doesUserExist(String username)
+    {
+        try
+        {
+            getUser(username);
+            return true;
+        }
+        catch (UserDoesNotExistException ex)
+        {
+            return false;
+        }
+    }
+    
+    /**
+     * Gets all fields of a user from the database.<p>
+     * Populates a new User object and returns it.
+     * @param username The user whose data to retrieve.
+     * @return Returns the new user object.
+     * @throws  UserDoesNotExistException
+     */
+    public User getUser(String username) throws UserDoesNotExistException
+    {
+        Stream<User> userStream = userCache.stream();
+        try
+        {
+            return userStream.filter(user -> user.getUsername().equals(username)).findFirst().get();
+        }
+        catch(NoSuchElementException ex)
+        {
+            throw new UserDoesNotExistException();
+        }
     }
     
     /**
@@ -332,14 +435,15 @@ public final class DBAbstraction
         {
             if(doesUserExist(username))
             {
-                db.prepareStatement("UPDATE tblUsers SET hashpass = ? WHERE username = ?");
+                db.prepareStatement("UPDATE tblUsers SET hashpass = ?"
+                        + " WHERE username = ?");
                 db.add(hashedPassword);
                 db.add(username);
                 return db.executePrepared();
             }
             else
                 throw new UserDoesNotExistException();
-        } 
+        }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
@@ -360,130 +464,41 @@ public final class DBAbstraction
     }
     
     /**
-     * Gets the permission flags as an integer for a key username from the database.
+     * Gets the permission flags as an integer for a key username.
      * @param username The username whose permissions to retrieve.
      * @return A positive integer representing the permission flags.
      * @throws UserDoesNotExistException
      */
-    public int getPermissions(String username) throws UserDoesNotExistException
+    public AccountType getAccountType(String username) throws UserDoesNotExistException
     {
-        try 
+        return getUser(username).getAccountType();
+    }
+ 
+    /**
+     * @return 
+     */
+    public ArrayList<User> getAllUsers()
+    {
+	ArrayList<User> allUsers = new ArrayList<>();
+    	try 
         {
-            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE username = ?");
-            db.add(username);
-            ResultSet res =  db.executePreparedQuery();
+            db.prepareStatement("SELECT username, account_type FROM tblUsers");
+            ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
-                return res.getInt(1);
-            else 
             {
-                throw new UserDoesNotExistException();
+                do
+                {
+                    allUsers.add(new User(res.getString(1), PermissionManager.intToAccountType(res.getInt(2))));
+                }
+                while(res.next());
             }
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return -1;
         }
-    }
-    
-    /**
-     * Gets the permission flags for a user from the database and copies them to the user's permission field.
-     * @param user The user whose permissions to retrieve and populate.
-     * @return The new User object with the new permission set.
-     * @throws UserDoesNotExistException
-     */
-    public User getPermissions(User user) throws UserDoesNotExistException
-    {
-        int perms = getPermissions(user.getUsername());
-        // Can't edit a user's PM yet, so just return a new object for now
-        user = new User(user.getUsername(), PermissionManager.intToAccountType(perms));
-        return user;
-    }
-    
-    public ArrayList<User> getAllUsers() {
-		ArrayList<User> allUsers = new ArrayList<User>();
-    	try {
-			db.prepareStatement("SELECT username, permission_flags FROM tblUsers");
-			ResultSet res = db.executePreparedQuery();
-	    	while(res.next()) {
-	    		allUsers.add(new User(res.getString("username"), PermissionManager.intToAccountType(res.getInt("permission_flags"))));
-	    	}
-		} catch (SQLException ex) {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-		}
     	return allUsers;
-
     }
-    
-    /**
-     * Gets all fields of a user from the database.<p>
-     * Populates a new User object and returns it.
-     * @param user The user whose data to retrieve.
-     * @return Returns the new user object.
-     * @throws UserDoesNotExistException 
-     */
-    public User getUser(User user) throws UserDoesNotExistException
-    {
-        return getUser(user.getUsername());
-    }
-    
-    /**
-     * Gets all fields of a username from the database.<p>
-     * Populates a new User object and returns it.
-     * @param username The username of whose data to retrieve.
-     * @return Returns the new user object.
-     * @throws UserDoesNotExistException 
-     */
-    public User getUser(String username) throws UserDoesNotExistException
-    {
-        try 
-        {
-            db.prepareStatement("SELECT permission_flags FROM tblUsers WHERE username = ?");
-            db.add(username);
-            ResultSet res =  db.executePreparedQuery();
-            User u;
-            if(!res.isClosed())
-            {
-                int perms = res.getInt(1);
-                AccountType at = PermissionManager.intToAccountType(perms);
-                u = new User(username, at);
-                return u;
-            }
-            else 
-            {
-                throw new UserDoesNotExistException();
-            }
-        } 
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-    /*/**
-     * Sets new permission flags for a username, disregarding whether it actually exists in the database or not.
-     * @param username The username whose permissions to set.
-     * @param perms The permission flags to set.
-     * @return Always True, unless if an SQLException ocurred. If it did, returns False.
-     */
-    /*
-    public boolean setPermissions(String username, int perms)
-    {
-        try 
-        {
-            db.prepareStatement("UPDATE tblUsers SET perms = ? WHERE username = ?");
-            db.add(username);
-            db.add(perms);
-            return db.executePrepared();
-        } 
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            error = ex.getLocalizedMessage();
-            return false;
-        }
-    }*/
-    
     
     /**
      * Update all fields for a user.
@@ -497,8 +512,11 @@ public final class DBAbstraction
         {
             if(doesUserExist(user))
             {
-                db.prepareStatement("UPDATE tblUsers SET perms = ? WHERE username = ?");
-                db.add(user.getAccountType().value);
+                db.prepareStatement(
+                        "UPDATE tblUsers SET account_type = ?, display_name = ?"
+                                + " WHERE username = ?");
+                db.add(PermissionManager.accountTypetoInt(user.getAccountType()));
+                db.add(user.getUsername());
                 db.add(user.getUsername());
                 return db.executePrepared();
             }
@@ -525,36 +543,10 @@ public final class DBAbstraction
         {
             db.prepareStatement("DELETE FROM tblUsers WHERE username = ?");
             db.add(user.getUsername());
-            return db.executePrepared();
+            boolean b = db.executePrepared();
+            userCache.remove(user);
+            return b;
         }
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
-    }
-    
-    /**
-     * Adds a new task to the database. Allows for duplicates.<p>
-     * This method automatically sets the ID of Task, so that TaskExecutions can reference it.
-     * @param task The task object containing all task-related information.
-     * @return A boolean representing success.
-     */
-    public boolean submitTask(Task task)
-    {
-        try 
-        {
-            db.prepareStatement("INSERT INTO tblTasks (task_name, task_desc) VALUES (?, ?)");
-            db.add(task.name);
-            db.add(task.desc);
-            // Need to save all the temporal rules here
-            if(db.executePrepared())
-            {
-                //task.id = getLastTaskID();
-                return true;
-            }
-            else return false;
-        } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
@@ -567,7 +559,9 @@ public final class DBAbstraction
     {
         try 
         {
-            db.prepareStatement("SELECT type_id FROM tblTasks ORDER BY type_id DESC LIMIT 1;");
+            db.prepareStatement(
+                    "SELECT task_id FROM tblTasks"
+                     + " ORDER BY task_id DESC LIMIT 1");
             ResultSet res =  db.executePreparedQuery();
             if(!res.isClosed())
                 return res.getInt(1);
@@ -580,92 +574,23 @@ public final class DBAbstraction
         }
     }
     
-    // Convert from 2 Epoch seconds of type Long to a Period object
-    private Period periodFromEpoch(Long start, Long end)
+   // Retrieve the last inserted task's ID
+    private int getLastVerificationID()
     {
-        LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
-        LocalDateTime dtEnd = LocalDateTime.ofEpochSecond(end, 0, ZoneOffset.UTC);
-        return new Period(dtStart, dtEnd);
-    }
-
-
-    
-    // Unwrapper class that converts Period to Epoch seconds of type Long
-    private final class PeriodUnwrapper
-    {
-        Long start;
-        Long end;
-        PeriodUnwrapper(Period p)
-        {
-            start = p.start().toEpochSecond(ZoneOffset.UTC);
-            end = p.end().toEpochSecond(ZoneOffset.UTC);
-        }
-    }
-    
-    // Retrieve all non-priority tasks for a time period
-    public ArrayList<TaskExecution> getUnallocatedTaskList(Period p) throws EmptyResultSetException
-    {
-        PeriodUnwrapper pw = new PeriodUnwrapper(p);
         try 
         {
-            db.prepareStatement("SELECT task_type, start_datetime, end_datetime FROM tblTaskExecutions"
-                    + " WHERE caretaker IS NULL AND start_datetime <= ? AND end_datetime >= ?");
-            db.add(pw.start);
-            db.add(pw.end);
-            ResultSet res = db.executePreparedQuery();
+            db.prepareStatement(
+                    "SELECT verf_id FROM tblVerifications"
+                    + " ORDER BY verf_id DESC LIMIT 1");
+            ResultSet res =  db.executePreparedQuery();
             if(!res.isClosed())
-            {
-                ArrayList<TaskExecution> tasks = new ArrayList();
-                do
-                {
-                    Period taskP = periodFromEpoch(res.getLong(2), res.getLong(3));
-                    //tasks.add(new TaskExecution("", taskP));
-                }
-                while(res.next());
-                return tasks;
-            }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
-        } 
+                return res.getInt(1);
+            else return -1;
+        }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-    }
-    
-    // Retrieve all tasks that were not completed before today
-    public ArrayList<TaskExecution> getUnallocatedOverflowTaskList()
-    {
-        return null;
-    }
-    
-    // Retrieve all tasks that have time restrictions for today
-    public ArrayList<TaskExecution> getUnallocatedDailyPriorityTaskList()
-    {
-        return null;
-    }
-    
-    // Internal Task class for testing Task methods
-    public class Task
-    {
-        int id;
-        String name;
-        String desc;
-        public Task(int i, String n, String d){id=i;name=n;desc=d;}
-        public Task(String n, String d){name=n;desc=d;}
-        ConstrainedIntervaledPeriodSet temporalRules;
-        @Override
-        public String toString()
-        {
-            return "Task Object"
-                    + "\n{"+
-                   " \n id: "+ Integer.toString(id)+
-                    "\n name: " + name+ 
-                    "\n desc: " + desc +
-                    "\n}";
+            return -1;
         }
     }
     
@@ -674,14 +599,102 @@ public final class DBAbstraction
     {
         try 
         {
-            db.prepareStatement("SELECT type_id, task_name, task_desc FROM tblTasks");
+            db.prepareStatement(
+                    "SELECT task_id, task_name, task_desc, task_priority, "
+                    + "task_intervaled_period_start, intervaled_period_end, period_interval, "
+                    + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
+                    + "allocation, verification_id FROM tblTasks");
             ResultSet res = db.executePreparedQuery();
+            db.prepareStatement(
+                    "SELECT map_id, task_id, caretaker, preferences, efficiency, effectiveness"
+                    + " FROM tblTaskMaps ORDER BY task_id");
+            ResultSet maps = db.executePreparedQuery();
+            db.prepareStatement(
+                    "SELECT verf_id, verf_notes, verf_priority, verf_duration, verf_caretaker"
+                    + " FROM tblVerifications");
+            ResultSet verfResSet = db.executePreparedQuery();
             if(!res.isClosed())
             {
                 ArrayList<Task> tasks = new ArrayList();
+                
+                // Get a list of validations
+                ArrayList<Verification> verfList = new ArrayList<>();
+                if(!verfResSet.isClosed())
+                {
+                    do
+                    {
+                        int verfID = verfResSet.getInt(1);
+                        String verfNotes = verfResSet.getString(2);
+                        int verfPrio = verfResSet.getInt(3);
+                        int verfDura = verfResSet.getInt(4);
+                        Duration duration = verfResSet.wasNull() ? null : Duration.ofMinutes(verfDura);
+                        String verfCaretaker = verfResSet.getString(5);
+                        User allocation = verfResSet.wasNull() ? null : getUser(verfCaretaker);
+                        TaskPriority priority = TaskPriority.values()[verfPrio];
+                        verfList.add(new Verification(verfID, verfNotes, priority, duration, allocation));
+                    }
+                    while(verfResSet.next());
+                }
+                
                 do
                 {
-                    tasks.add(new Task(res.getInt(1), res.getString(2), res.getString(3)));
+                    int taskID = res.getInt(1);
+                    String taskName = res.getString(2);
+                    String taskDesc = res.getString(3);
+                    int taskPrio = res.getInt(4);
+                    Period taskPeriodSetPeriod = periodFromEpoch(res.getLong(5), res.getLong(6));
+                    
+                    Duration taskPeriodSetInterval = Duration.ofMinutes(res.getLong(7));
+                    taskPeriodSetInterval = res.wasNull() ? null : taskPeriodSetInterval;
+                    
+                    Long taskPeriodSetConstraintPeriodStart = res.getLong(8);
+                    IntervaledPeriodSet periodSetConstraint = null;
+                    if(!res.wasNull())
+                    {
+                        Period taskPeriodSetConstraintPeriod = periodFromEpoch(taskPeriodSetConstraintPeriodStart, res.getLong(9));
+                        Duration taskPeriodSetConstraintInterval = Duration.ofMinutes(res.getLong(10));
+                        taskPeriodSetConstraintInterval = res.wasNull() ? null : taskPeriodSetConstraintInterval;
+                        periodSetConstraint = new IntervaledPeriodSet(taskPeriodSetConstraintPeriod, taskPeriodSetConstraintInterval);
+                    }
+                    
+                    String caretaker = res.getString(11);
+                    // If caretaker is null, set null, else call getUser
+                    User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
+                    int verification_id = res.getInt(12);
+                    // This should never fail unless the database has been compromised externally,
+                    // in which case data integrity has gone out the window
+                    Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
+                    IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
+                    ConstrainedIntervaledPeriodSet scheduleConstraint = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
+                    
+                    Map<User, Integer> preferences = new HashMap<>();
+                    Map<User, Duration> efficiency = new HashMap<>();
+                    Map<User, Integer> effectiveness = new HashMap<>();
+                    if(!maps.isClosed())
+                    {
+                        do
+                        {
+                            int mapTaskID = maps.getInt(2);
+                            if(taskID == mapTaskID)
+                            {
+                                String mapCaretaker = maps.getString(3);
+                                User u = getUser(mapCaretaker);
+                                Integer pref = maps.getInt(4);
+                                Integer effic = maps.getInt(5);
+                                Integer effect = maps.getInt(6);
+                                Duration efficD = Duration.ofMinutes(effic);
+                                preferences.put(u, pref);
+                                efficiency.put(u, efficD);
+                                effectiveness.put(u, effect);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        } while(maps.next());
+                    }
+                    TaskPriority priority = TaskPriority.values()[taskPrio];
+                    tasks.add(new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, scheduleConstraint, allocationConstraint, verification));
                 }
                 while(res.next());
                 return tasks;
@@ -691,68 +704,14 @@ public final class DBAbstraction
                 throw new EmptyResultSetException();
             }
         }
-        catch (SQLException ex) 
+        catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
         }
+        return null;
     }
     
-    // Insert all new taskexecutions in one go
-    public boolean submitTaskExecutions(List<TaskExecution> tasks) throws EmptyInputException
-    {
-        try 
-        {
-            if(tasks.isEmpty())
-                throw new EmptyInputException();
-            db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
-            for(TaskExecution task: tasks)
-            {
-                db.add(0); // REPLACE WITH ACTUAL TASK POINTER
-                PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
-                db.add(pw.start);
-                db.add(pw.end);
-                db.batch();
-            }
-            return db.executeBatch();
-        }
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
-    }
-    
-    // Insert a new taskexecution
-    public boolean submitTaskExecution(TaskExecution task)
-    {
-        try 
-        {
-            db.prepareStatement("INSERT INTO tblTaskExecutions (task_type, start_datetime, end_datetime) VALUES (?, ?, ?)");
-            db.add(0); // REPLACE WITH ACTUAL TASK POINTER
-            PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
-            db.add(pw.start);
-            db.add(pw.end);
-            return db.executePrepared();
-        }
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
-    }
-    
-    public boolean submitVerificationExecution(VerificationExecution ver)
-    {
-        return false;
-    }
-    
-    public boolean submitVerificationExecutions(List<VerificationExecution> vers) throws EmptyInputException
-    {
-        if(vers.isEmpty())
-            throw new EmptyInputException();
-        return false;
-    }
+    // GET TASK EXECUTIONS
     
     // Retrieve today's task list for a given user
     // Untested
@@ -760,9 +719,8 @@ public final class DBAbstraction
     {
         try 
         {
-            db.prepareStatement("SELECT task_name, start_datetime, end_datetime FROM tblTaskExecutions "
-                    + "WHERE username = ? AND start_datetime = date('now', 'start of day')"
-                    + "+ \"JOIN tblTasks ON tblTasks.type_id = tblTaskExecutions.task_type\")");
+            db.prepareStatement("SELECT exe_id, task_id, exe_notes, start_datetime, end_datetime, caretaker FROM tblTaskExecutions"
+                    + " WHERE caretaker = ? AND start_datetime > date('now', '+1 day', 'start of day')");
             db.add(username);
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
@@ -770,6 +728,7 @@ public final class DBAbstraction
                 ArrayList<TaskExecution> tasks = new ArrayList();
                 do
                 {
+                    
                     //tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
                 }
                 while(res.next());
@@ -784,6 +743,326 @@ public final class DBAbstraction
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             return null;
+        }
+    }
+    
+    // Retrieve all non-priority tasks for a time period
+    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p) throws EmptyResultSetException
+    {
+        PeriodUnwrapper pw = new PeriodUnwrapper(p);
+        try 
+        {
+            db.prepareStatement(
+                    "SELECT exe_id, task_id, exe_notes, start_datetime, end_datetime, caretaker FROM tblTaskExecutions"
+                    + " WHERE caretaker IS NULL AND start_datetime <= ? AND end_datetime >= ?");
+            db.add(pw.start);
+            db.add(pw.end == null ? 0 : pw.end);
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<TaskExecution> exes = new ArrayList();
+                ArrayList<Task> tasks = getTaskList();
+                do
+                {
+                    int id = res.getInt(1);
+                    int taskID = res.getInt(2);
+                    Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
+                    String notes = res.getString(3);
+                    Period taskP = periodFromEpoch(res.getLong(4), res.getLong(5));
+                    String caretaker = res.getString(6);
+                    User u = getUser(caretaker);
+                    int prio = res.getInt(7);
+                    TaskPriority taskPrio = TaskPriority.values()[prio];
+                    exes.add(new TaskExecution(id, task, notes, taskPrio, taskP, u, null, null));
+                }
+                while(res.next());
+                return exes;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+        } 
+        catch (SQLException | UserDoesNotExistException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+        
+    // Retrieve all tasks that were not completed before today
+    public ArrayList<TaskExecution> getUnallocatedOverflowTaskList()
+    {
+        return null;
+    }
+    
+    // Retrieve all tasks that have time restrictions for today
+    public ArrayList<TaskExecution> getUnallocatedDailyPriorityTaskList()
+    {
+        return null;
+    }
+    
+    // SUBMISSIONS
+    
+    /**
+     * Adds a new task to the database. Allows for duplicates.<p>
+     * Automatically sets the ID of Task, so that TaskExecutions can reference it.
+     * Automatically submits Verifications.
+     * @param task The task object containing all task-related information.
+     * @return A boolean representing success.
+     */
+    public boolean submitTask(Task task)
+    {
+        try     
+        {
+            if(task.getVerification() != null)
+            {
+                if(submitVerification(task.getVerification()))
+                    db.add(task.getVerification().getID());
+            }
+            db.prepareStatement(
+                    "INSERT INTO tblTasks (task_name, task_desc, task_priority, "
+                    + "task_intervaled_period_start, intervaled_period_end, period_interval, "
+                    + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
+                    + "allocation, verification_id)"
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            db.add(task.getName());
+            db.add(task.getNotes());
+            db.add(task.getStandardPriority().ordinal());
+            
+            ConstrainedIntervaledPeriodSet schCon = task.getScheduleConstraint();
+            IntervaledPeriodSet periodSet = schCon.periodSet();
+            
+            PeriodUnwrapper periodSetPeriod = new PeriodUnwrapper(periodSet.referencePeriod());
+            db.add(periodSetPeriod.start);
+            db.add(periodSetPeriod.end);
+            
+            Duration periodSetInterval = periodSet.interval();
+            if(periodSetInterval != null)
+            {
+                long pSI = periodSetInterval.toMinutes();
+                db.add(pSI);
+            }
+            else
+                db.addNull();
+            
+            IntervaledPeriodSet periodSetConstraint = schCon.periodSetConstraint();
+            if(periodSetConstraint != null)
+            {
+
+                PeriodUnwrapper constrainPeriod = new PeriodUnwrapper(periodSetConstraint.referencePeriod());
+                db.add(constrainPeriod.start);
+                db.add(constrainPeriod.end);
+                Duration constrainInterval = periodSetConstraint.interval();
+                if(constrainInterval != null)
+                {
+                    long cI = constrainInterval.toMinutes();
+                    db.add(cI);
+                }
+                else
+                    db.addNull();
+            }
+            else
+            {
+                for(int i =0;i<3;i++)
+                    db.addNull();
+            }
+            
+            if(task.getAllocationConstraint() != null)
+            {
+                db.add(task.getAllocationConstraint().getUsername());
+            }
+            else
+            {
+                db.addNull();
+            }
+            if(task.getVerification() != null)
+            {
+                db.add(task.getVerification().getID());
+            }
+            else
+                db.addNull();
+            
+            // Need to save all the temporal rules here
+            if(db.executePrepared())
+            {
+                task.setID(getLastTaskID());
+                return true;
+            }
+            else return false;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    // Insert a new taskexecution
+    public boolean submitTaskExecution(TaskExecution exe)
+    {
+        try 
+        {
+            List l = new ArrayList(){{add(exe);}};
+            return submitTaskExecutions(l);
+        } 
+        catch (EmptyInputException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    // Insert all new taskexecutions in one go
+    public boolean submitTaskExecutions(List<TaskExecution> tasks) throws EmptyInputException
+    {
+        try 
+        {
+            if(tasks.isEmpty())
+                throw new EmptyInputException();
+            db.prepareStatement(
+                    "INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            for(TaskExecution task: tasks)
+            {
+                db.add(task.getTask().getID());
+                db.add(task.getNotes());
+                PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
+                db.add(pw.start);
+                db.add(pw.end);
+                User u = task.getAllocation();
+                if(u != null)
+                    db.add(u.getUsername());
+                else
+                    db.addNull();
+                db.addNull(); // Completion of a new task execution should always be null
+                VerificationExecution verf = task.getVerification();
+                if(verf != null)
+                    db.add(verf.getID());
+                else
+                    db.addNull();
+                db.batch();
+            }
+            return db.executeBatch();
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    public boolean submitVerification(Verification verf)
+    {
+        try 
+        { 
+            db.prepareStatement("INSERT INTO tblVerifications (verf_notes, verf_priority, verf_duration, verf_caretaker)"
+                    + " VALUES (?, ?, ?, ?)");
+            db.add(verf.getNotes());
+            db.add(verf.getStandardPriority().ordinal());
+            
+            Duration d = verf.getStandardDeadline();
+            if(d != null)
+                db.add(d.toMinutes());
+            else
+                db.addNull();
+            
+            User u = verf.getAllocationConstraint();
+            if(u != null)
+                db.add(u.getUsername());
+            else
+                db.addNull();
+            
+            if(db.executePrepared())
+                verf.setID(getLastVerificationID());
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return false;
+    }
+    
+    public boolean submitVerificationExecution(VerificationExecution verf)
+    {
+        try 
+        {
+            List l = new ArrayList(){{add(verf);}};
+            return submitTaskExecutions(l);
+        } 
+        catch (EmptyInputException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    public boolean submitVerificationExecutions(List<VerificationExecution> verfs) throws EmptyInputException
+    {
+        try 
+        {
+            if(verfs.isEmpty())
+                throw new EmptyInputException();
+            db.prepareStatement(
+                    "INSERT INTO tblTaskExecutions (verf_id, exe_notes, exe_duration, caretaker, compl_id)"
+                    + " VALUES (?, ?, ?, ?, ?)");
+            for(VerificationExecution verf: verfs)
+            {
+                db.add(verf.getID());
+                db.add(verf.getNotes());
+                db.add(verf.getDeadline().toMinutes());
+                User u = verf.getAllocation();
+                if(u != null)
+                    db.add(u.getUsername());
+                else
+                    db.addNull();
+                db.addNull(); // Completion of a new verification execution should always be null
+                db.batch();
+            }
+            return db.executeBatch();
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    public boolean submitCompletion(Completion comp)
+    {
+        try 
+        {
+            db.prepareStatement(
+                    "INSERT INTO tblCompletions (caretaker, start_time, compl_time, quality, notes)"
+                    + " VALUES (?, ?, ?, ?, ?)");
+            db.add(comp.getStaff().getUsername());
+            db.add(comp.getStartTime().toEpochSecond(ZoneOffset.UTC));
+            db.add(comp.getCompletionTime().toEpochSecond(ZoneOffset.UTC));
+            db.add(comp.getWorkQuality().ordinal());
+            db.add(comp.getNotes());
+            return db.executePrepared();
+        }
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    public void logDB(String info)
+    {
+        try
+        {
+            db.prepareStatement("INSERT INTO tblSystemLog (log_info, log_timestamp)"
+                    + " VALUES (?, ?)");
+            db.add(info);
+            db.add(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
+            db.executePrepared();
+        }
+        catch(SQLException ex)
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     

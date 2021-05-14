@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Types;
 /**
  *
  * @author Emanuel Oliveira W19029581
@@ -21,6 +22,7 @@ public final class DBConnection
     private int cursor;
     private PreparedStatement prepStmt;
     private int batchCount;
+    
     /**
      * Get the singleton instance of this class.
      * @return The singleton instance.
@@ -66,6 +68,7 @@ public final class DBConnection
     
     /**
      * Adds a batch to the statement, allowing for multiple insertions in one go.<p>
+     * Automatically executes the batch at 100 pending statements.
      * @throws SQLException 
      */
     public void batch() throws SQLException
@@ -115,52 +118,73 @@ public final class DBConnection
      * Adds a string to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
      * Will fail if called more than there are ? fields available in the prepared statement.
-     * @param s The string to add to the statement.
+     * @param o The string to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
      */
-    public void add(String s) throws SQLException, NullPointerException
+    public void add(String o) throws SQLException, NullPointerException
     {
-        prepStmt.setString(cursor++, s);
+        if(o == null)
+            addNull();
+        else
+            prepStmt.setString(cursor++, o);
     }
     
     /** 
      * Adds an integer to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
      * Will fail if called more than there are ? fields available in the prepared statement.
-     * @param i The integer to add to the statement.
+     * @param o The integer to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
      */
-    public void add(Integer i)throws SQLException, NullPointerException
+    public void add(Integer o)throws SQLException, NullPointerException
     {
-        prepStmt.setInt(cursor++, i);
+        if(o == null)
+            addNull();
+        else
+            prepStmt.setInt(cursor++, o);
     }
     
     /** 
      * Adds a long integer to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
      * Will fail if called more than there are ? fields available in the prepared statement.
-     * @param l The long integer to add to the statement.
+     * @param o The long integer to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
      */
-    public void add(Long l)throws SQLException, NullPointerException
+    public void add(Long o)throws SQLException, NullPointerException
     {
-        prepStmt.setLong(cursor++, l);
+        if(o == null)
+            addNull();
+        else
+            prepStmt.setLong(cursor++, o);
     }
     
     /** 
      * Adds a boolean to the prepared statement.<p>
      * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
      * Will fail if called more than there are ? fields available in the prepared statement.
-     * @param b The boolean to add to the statement.
+     * @param o The boolean to add to the statement.
      * @throws SQLException 
      * @throws NullPointerException
      */
-    public void add(boolean b)throws SQLException, NullPointerException
+    public void add(boolean o)throws SQLException, NullPointerException
     {
-        prepStmt.setBoolean(cursor++, b);
+        prepStmt.setBoolean(cursor++, o);
+    }
+            
+    /** 
+     * Adds a boolean to the prepared statement.<p>
+     * Will fail if the prepared statement has not been initialized. Call preparedStatement() to prevent this.<p>
+     * Will fail if called more than there are ? fields available in the prepared statement.
+     * @throws SQLException 
+     * @throws NullPointerException
+     */
+    public void addNull()throws SQLException, NullPointerException
+    {
+        prepStmt.setNull(cursor++, Types.NULL);
     }
     
     /**

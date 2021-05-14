@@ -13,12 +13,12 @@ public class KF5012DarthMaulApplication {
 			DBAbstraction db;
 			db = DBAbstraction.getInstance();
 			db.createTables();
-			db.fillDB();			
+			//db.fillDB();			
 			if(!db.doesUserExist("test")) {
 				db.createUser(
 					"test",
 					SecurityManager.generatePassword("password"),
-					PermissionManager.AccountType.HR_PERSONNEL.ordinal()
+					PermissionManager.AccountType.HR_PERSONNEL
 				);
 				System.out.println("TEST: User created fresh");
 				
@@ -27,7 +27,7 @@ public class KF5012DarthMaulApplication {
 				db.createUser(
 					"test",
 					SecurityManager.generatePassword("password"),
-					PermissionManager.AccountType.HR_PERSONNEL.ordinal()
+					PermissionManager.AccountType.HR_PERSONNEL
 				);
 				System.out.println("TEST: User deleted then created again");
 			}

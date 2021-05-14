@@ -30,13 +30,9 @@ public class UserManager {
 		boolean databaseFlag = false;
 		boolean userFlag = true; 
 		if(authorisedUser.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)) localFlag = true;
-		try {
-			PermissionManager.AccountType dbAccount = PermissionManager.intToAccountType(db.getPermissions(authorisedUser.getUsername()));
-			if(PermissionManager.hasPermission(dbAccount, PermissionManager.Permission.MANAGE_USERS)) databaseFlag = true;
-			//return false;
-		} catch (UserDoesNotExistException e) {
-			userFlag = false;
-		}
+                PermissionManager.AccountType dbAccount = authorisedUser.getAccountType();
+                if(PermissionManager.hasPermission(dbAccount, PermissionManager.Permission.MANAGE_USERS)) databaseFlag = true;
+                //return false;
 		return localFlag && databaseFlag && userFlag;
 	}
 	/**
