@@ -31,10 +31,8 @@ public class VerificationEditor
 	private LongTextEditor txteNotes;
 	private ListSelectionEditor<TaskPriority> lsteStandardPriority;
 	private ListSelectionEditor<User> lsteAllocationConstraint;
-	private ObjectManager<Duration> durationManager;
+	private ObjectManager<Duration> standardDeadlineManager;
 
-	private JCheckBox chkStandardDeadline;
-	
 	/**
 	 * Create the panel.
 	 */
@@ -126,7 +124,7 @@ public class VerificationEditor
 		gbc_lblStandardDeadline.gridy = 3;
 		add(lblStandardDeadline, gbc_lblStandardDeadline);
 
-		chkStandardDeadline = new JCheckBox("");
+		JCheckBox chkStandardDeadline = new JCheckBox("");
 		GridBagConstraints gbc_chkStandardDeadline = new GridBagConstraints();
 		gbc_chkStandardDeadline.insets = new Insets(0, 0, 5, 5);
 		gbc_chkStandardDeadline.anchor = GridBagConstraints.WEST;
@@ -142,7 +140,7 @@ public class VerificationEditor
 		gbc_dureStandardDeadline.gridy = 3;
 		add(dureStandardDeadline, gbc_dureStandardDeadline);
 		
-		durationManager = new ObjectManager<>(
+		standardDeadlineManager = new ObjectManager<>(
 			chkStandardDeadline, dureStandardDeadline,
 			() -> dureStandardDeadline.getObject()
 		);
@@ -167,7 +165,7 @@ public class VerificationEditor
 		txteNotes.setObject(obj.getNotes());
 		lsteStandardPriority.setObject(obj.getStandardPriority());
 		lsteAllocationConstraint.setObject(obj.getAllocationConstraint());
-		durationManager.setObject(obj.getStandardDeadline());
+		standardDeadlineManager.setObject(obj.getStandardDeadline());
 	}
 
 	@Override
@@ -177,7 +175,7 @@ public class VerificationEditor
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lsteStandardPriority.validateFields()) valid = false;
 		if (!lsteAllocationConstraint.validateFields()) valid = false;
-		if (!durationManager.getEditor().validateFields()) valid = false;
+		if (!standardDeadlineManager.validateFields()) valid = false;
 		
 		return valid;
 	}
@@ -187,7 +185,7 @@ public class VerificationEditor
 		active.setNotes(txteNotes.getObject());
 		active.setStandardPriority(lsteStandardPriority.getObject());
 		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
-		active.setStandardDeadline(durationManager.getObject());
+		active.setStandardDeadline(standardDeadlineManager.getObject());
 		
 		return active;
 	}

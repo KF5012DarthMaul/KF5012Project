@@ -328,9 +328,8 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 		
 		setEditor = new IntervaledPeriodSetEditor(
-			ldteSetRefStart, ldteSetRefEnd, dureSetInterval,
-			chkSetRefEnd, chkSetInterval,
-			setRefEndManager, setIntervalManager
+			ldteSetRefStart, setRefEndManager, setIntervalManager,
+			ldteSetRefEnd // Needed to set validator
 		);
 		
 		// CSet ref start
@@ -419,9 +418,8 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 		
 		IntervaledPeriodSetEditor cSetEditor = new IntervaledPeriodSetEditor(
-			ldteCSetRefStart, ldteCSetRefEnd, dureCSetInterval,
-			chkCSetRefEnd, chkCSetInterval,
-			cSetRefEndManager, cSetIntervalManager
+			ldteCSetRefStart, cSetRefEndManager, cSetIntervalManager,
+			ldteCSetRefEnd // Needed to set 
 		);
 		
 		cSetManager = new ObjectManager<IntervaledPeriodSet>(
@@ -565,28 +563,21 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	@Override
 	public void setObject(Task task) {
 		active = task;
+
+		// For easier reading
+		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
 		
-		// Basic fields
-		
+		// Set fields
 		txteName.setObject(task.getName());
 		txteNotes.setObject(task.getNotes());
 		lstePriority.setObject(task.getStandardPriority());
 		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
-
-		// Schedule
-
-		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
-		
-		// Visualising the schedule
-		this.updateTimeline(task.getName(), cips);
-		
-		// Editing the schedule
 		setEditor.setObject(cips.periodSet());
 		cSetManager.setObject(cips.periodSetConstraint());
-
-		// Verification
-		
 		omgVerification.getObjectManager().setObject(task.getVerification());
+		
+		// Update the timeline to use the new name/cips
+		this.updateTimeline(task.getName(), cips);
 	}
 
 	/**
@@ -602,17 +593,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
 		if (!lsteAllocationConstraint.validateFields()) valid = false;
-
 		if (!setEditor.validateFields()) valid = false;
-		if (
-			!cSetManager.isObjectNull() &&
-			!cSetManager.getEditor().validateFields()
-		) valid = false;
-		
-		if (
-			!omgVerification.getObjectManager().isObjectNull() &&
-			!verificationEditor.validateFields()
-		) valid = false;
+		if (!cSetManager.validateFields()) valid = false;
+		if (!omgVerification.getObjectManager().validateFields()) valid = false;
 		
 		return valid;
 	}
@@ -624,19 +607,11 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 */
 	@Override
 	public Task getObject() {
-		// Basic fields
 		active.setName(txteName.getObject());
 		active.setNotes(txteNotes.getObject());
 		active.setStandardPriority(lstePriority.getObject());
 		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
-		
-		// Schedule constraint fields
-		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
-		// problematic memory-wise, and is less complicated than checking to see
-		// if it's changed.
 		active.setScheduleConstraint(this.getScheduleConstraint());
-		
-		// Verification
 		active.setVerification(omgVerification.getObjectManager().getObject());
 		
 		return active;

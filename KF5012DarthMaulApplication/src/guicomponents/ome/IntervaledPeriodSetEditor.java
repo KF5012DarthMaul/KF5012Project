@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 
 import guicomponents.utils.ObjectEditor;
@@ -27,43 +26,24 @@ public class IntervaledPeriodSetEditor
 		implements ObjectEditor<IntervaledPeriodSet>
 {
 	private LocalDateTimeEditor ldteRefStart;
-	private LocalDateTimeEditor ldteRefEnd;
-	private DurationEditor dureInterval;
-
-	private JCheckBox chkRefEnd;
-	private JCheckBox chkInterval;
-	
 	private ObjectManager<LocalDateTime> refEndManager;
 	private ObjectManager<Duration> intervalManager;
 	
 	public IntervaledPeriodSetEditor(
 		LocalDateTimeEditor ldteRefStart,
-		LocalDateTimeEditor ldteRefEnd,
-		DurationEditor dureInterval,
-
-		JCheckBox chkRefEnd,
-		JCheckBox chkInterval,
-		
 		ObjectManager<LocalDateTime> refEndManager,
-		ObjectManager<Duration> intervalManager
+		ObjectManager<Duration> intervalManager,
+		
+		LocalDateTimeEditor ldteRefEnd
 	) {
 		this.ldteRefStart = ldteRefStart;
-		this.ldteRefEnd = ldteRefEnd;
-		this.dureInterval = dureInterval;
-		
-		this.chkRefEnd = chkRefEnd;
-		this.chkInterval = chkInterval;
-		
 		this.refEndManager = refEndManager;
 		this.intervalManager = intervalManager;
-		
-		this.ldteRefEnd.setValidator((ldt) -> {
-			// Verify is either null, or is not before the start
-			LocalDateTime setRefEnd = this.refEndManager.getObject();
-			return (
-				setRefEnd == null ||
-				!setRefEnd.isBefore(this.ldteRefStart.getObject())
-			);
+
+		// Requires ldteRefEnd to set the validator, but don't need to store it
+		// Verify is not before the start (use refEndManager.validateFields())
+		ldteRefEnd.setValidator((ldt) -> {
+			return !refEndManager.getObject().isBefore(ldteRefStart.getObject());
 		});
 	}
 	
@@ -71,14 +51,9 @@ public class IntervaledPeriodSetEditor
 	public List<JComponent> getEditorComponents() {
 		List<JComponent> arr = new ArrayList<>();
 		
-		// Hide all the editors
 		arr.add(ldteRefStart);
-		arr.add(ldteRefEnd);
-		arr.add(dureInterval);
-		
-		// Also hide the checkboxes
-		arr.add(chkRefEnd);
-		arr.add(chkInterval);
+		arr.addAll(refEndManager.getEditorComponents());
+		arr.addAll(intervalManager.getEditorComponents());
 		
 		return arr;
 	}
@@ -94,8 +69,8 @@ public class IntervaledPeriodSetEditor
 	public boolean validateFields() {
 		return (
 			ldteRefStart.validateFields() &&
-			refEndManager.getEditor().validateFields() &&
-			intervalManager.getEditor().validateFields()
+			refEndManager.validateFields() &&
+			intervalManager.validateFields()
 		);
 	}
 
