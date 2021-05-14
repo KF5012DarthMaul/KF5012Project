@@ -417,12 +417,10 @@ public class ManageUsers extends JPanel {
 		panel_topViewUsers.add(txt_searchField);
 		txt_searchField.setColumns(10);
 
-
-	
 		tbl_viewUsersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tbl_viewUsersTable.setModel(userTableModel);
 		scrollPane_tableParent.setViewportView(tbl_viewUsersTable);
-		updateTable(filterListAccountType(allUsersList, comboBoxParser(comboBox_roleTypes)), tbl_viewUsersTable);
+		updateTable(allUsersList, tbl_viewUsersTable);
 		
 		JPanel panel_bottomViewUsers = new JPanel();
 		panel_editUsers.add(panel_bottomViewUsers, BorderLayout.SOUTH);

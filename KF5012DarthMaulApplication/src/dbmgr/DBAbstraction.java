@@ -486,11 +486,10 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                do
+                while(res.next())
                 {
                     allUsers.add(new User(res.getString(1), PermissionManager.intToAccountType(res.getInt(2))));
                 }
-                while(res.next());
             }
         } 
         catch (SQLException ex) 
