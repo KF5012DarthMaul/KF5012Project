@@ -10,6 +10,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
+import org.bouncycastle.util.Arrays.Iterator;
+
 import dbmgr.DBAbstraction;
 
 import dbmgr.DBExceptions.FailedToConnectException;
@@ -96,14 +98,14 @@ public class ManageUsers extends JPanel {
 	ArrayList<User> usersToRemove = new ArrayList<User>();
 	
 	private JPasswordField passfield_newUser;
-	public ManageUsers() {
+	public ManageUsers(User selfUser) {
 		try {
 			db = DBAbstraction.getInstance();		
 		} catch (FailedToConnectException e) {
 			e.printStackTrace();
 		}
 		allUsersList = db.getAllUsers();
-		removeTableUsers = db.getAllUsers();
+		removeTableUsers = listWithoutSelf( db.getAllUsers(), selfUser);
 		
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		
@@ -187,7 +189,7 @@ public class ManageUsers extends JPanel {
 				allUsersList = db.getAllUsers();
 				updateTable(allUsersList, tbl_viewUsersTable);
 				undoQueue.clear();
-				removeTableUsers = db.getAllUsers();
+				removeTableUsers = listWithoutSelf(db.getAllUsers(), selfUser);
 				updateTable(removeTableUsers, tbl_removeUsersAll);
 				tabbedPane.setSelectedIndex(0);
 			}
@@ -317,7 +319,7 @@ public class ManageUsers extends JPanel {
 				if(res == JOptionPane.YES_OPTION) {
 					usersToRemove.clear();
 					tabbedPane.setSelectedIndex(0);
-					updateTable(db.getAllUsers(), tbl_removeUsersAll);
+					updateTable(listWithoutSelf(db.getAllUsers(), selfUser), tbl_removeUsersAll);
 					updateTable(usersToRemove, tbl_removeUsersSelected);
 					updateTable(db.getAllUsers(), tbl_viewUsersTable);
 				}else {
@@ -501,6 +503,14 @@ public class ManageUsers extends JPanel {
 		}
 		return false;
 	}
+	private ArrayList<User> listWithoutSelf(ArrayList<User> userList, User self){
+		ArrayList<User> newUserList = new ArrayList<User>();
+		for(User u : userList) {
+			if(u.getUsername().equals(self.getUsername())) continue;
+			newUserList.add(u);
+		}
+		return newUserList;
+	};
 }
 
 interface Action {

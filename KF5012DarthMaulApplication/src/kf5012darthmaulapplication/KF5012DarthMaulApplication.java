@@ -13,7 +13,7 @@ public class KF5012DarthMaulApplication {
 			DBAbstraction db;
 			db = DBAbstraction.getInstance();
 			db.createTables();
-			//db.fillDB();			
+			db.fillDB();			
 			if(!db.doesUserExist("test")) {
 				db.createUser(
 					"test",

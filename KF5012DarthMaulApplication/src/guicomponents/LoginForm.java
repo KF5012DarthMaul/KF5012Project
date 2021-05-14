@@ -124,7 +124,6 @@ public class LoginForm extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String username = txt_username.getText();
 				String password = new String(txt_password.getPassword());
-				
 				if(db.doesUserExist(username)) {
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {

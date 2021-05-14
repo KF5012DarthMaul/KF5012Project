@@ -60,7 +60,7 @@ public class MainWindow extends JFrame {
 		}
 		
 		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)){
-			tabbedPane.addTab("Users", null, new ManageUsers(), null);
+			tabbedPane.addTab("Users", null, new ManageUsers(user), null);
 		}
 		
 		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.VIEW_REPORTS)){
