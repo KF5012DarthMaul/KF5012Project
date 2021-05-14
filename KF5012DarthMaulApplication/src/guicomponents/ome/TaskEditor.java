@@ -1,4 +1,4 @@
-package guicomponents;
+package guicomponents.ome;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -12,14 +12,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
-import guicomponents.ome.TextEditor;
-import guicomponents.ome.LocalDateTimeEditor;
-import guicomponents.ome.LongTextEditor;
-import guicomponents.ome.VerificationEditor;
-import guicomponents.ome.DomainObjectManager;
-import guicomponents.ome.DurationEditor;
-import guicomponents.ome.IntervaledPeriodSetEditor;
-import guicomponents.ome.ListSelectionEditor;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.ObjectEditor;
@@ -52,7 +44,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @SuppressWarnings("serial")
-public class EditTask extends JScrollPane implements ObjectEditor<Task> {
+public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	private Task active;
 	
 	// Basic fields
@@ -73,7 +65,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	private ObjectManager<IntervaledPeriodSet> cSetManager;
 
 	// Verification editor
-	private VerificationEditor verificationEditor;
+	private VerificationEditor edtVerification;
 	private DomainObjectManager<Verification> omgVerification;
 	
 	// Loading of users for various components
@@ -82,7 +74,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	/**
 	 * Set up the Edit Task panel.
 	 */
-	public EditTask() {
+	public TaskEditor() {
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
@@ -448,17 +440,17 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_sep3.gridy = 14;
 		formPanel.add(sep3, gbc_sep3);
 
-		verificationEditor = new VerificationEditor();
+		edtVerification = new VerificationEditor();
 		omgVerification = new DomainObjectManager<>(
-			"Requires Verification", verificationEditor, () -> new Verification()
+			"Requires Verification", edtVerification, () -> new Verification()
 		);
-		GridBagConstraints gbc_edtVerificationEditor = new GridBagConstraints();
-		gbc_edtVerificationEditor.insets = new Insets(0, 5, 0, 0);
-		gbc_edtVerificationEditor.anchor = GridBagConstraints.WEST;
-		gbc_edtVerificationEditor.gridwidth = 3;
-		gbc_edtVerificationEditor.gridx = 0;
-		gbc_edtVerificationEditor.gridy = 15;
-		formPanel.add(omgVerification, gbc_edtVerificationEditor);
+		GridBagConstraints gbc_edtVerification = new GridBagConstraints();
+		gbc_edtVerification.insets = new Insets(0, 5, 0, 0);
+		gbc_edtVerification.anchor = GridBagConstraints.WEST;
+		gbc_edtVerification.gridwidth = 3;
+		gbc_edtVerification.gridx = 0;
+		gbc_edtVerification.gridy = 15;
+		formPanel.add(omgVerification, gbc_edtVerification);
 	}
 
 	@Override
@@ -499,7 +491,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 			
 			// (Re)fill the lists
 			lsteAllocationConstraint.populate(caretakersAndNull);
-			verificationEditor.setUsers(caretakersAndNull);
+			edtVerification.setUsers(caretakersAndNull);
 			
 			usersLoaded = true;
 		}
