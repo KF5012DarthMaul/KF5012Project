@@ -189,6 +189,10 @@ public class TimelinePanel extends JPanel {
 			
 		} else {
 			// No tiny intervals - this is a long-term timeline
+			numTicks = 0;
+			hangingStartTick = false;
+			hangingEndTick = false;
+			
 			return new String[0];
 		}
 

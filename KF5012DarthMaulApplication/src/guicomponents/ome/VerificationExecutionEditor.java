@@ -6,12 +6,10 @@ import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import domain.Verification;
 import domain.VerificationExecution;
 import guicomponents.utils.ObjectEditor;
 

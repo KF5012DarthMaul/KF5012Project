@@ -7,6 +7,8 @@ import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
 
 import exceptions.TaskManagerExceptions;
+import guicomponents.ome.TaskEditor;
+import guicomponents.ome.TaskExecutionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
 
 import java.awt.CardLayout;
@@ -27,8 +29,8 @@ public class ManageTasks extends JPanel {
 	
 	// Main Panel
 	private ViewTasks viewTasksComponent;
-	private EditTask edtTask;
-	private EditTaskExec edtTaskExecution;
+	private TaskEditor edtTask;
+	private TaskExecutionEditor edtTaskExecution;
 	
 	private Object active; // Nullable
 	
@@ -136,10 +138,10 @@ public class ManageTasks extends JPanel {
 		viewTasksComponent = new ViewTasks();
 		mainPanel.add(viewTasksComponent, "viewTasks");
 		
-		edtTask = new EditTask();
+		edtTask = new TaskEditor();
 		mainPanel.add(edtTask, "editTask");
 
-		edtTaskExecution = new EditTaskExec();
+		edtTaskExecution = new TaskExecutionEditor();
 		mainPanel.add(edtTaskExecution, "editTaskExec");
 
 		/* Initialise the data model

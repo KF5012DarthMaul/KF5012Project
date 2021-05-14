@@ -1,7 +1,11 @@
 package guicomponents.utils;
 
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+
 import java.awt.event.ItemEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -63,7 +67,7 @@ import java.util.function.Supplier;
  *
  * @param <T> The type of object under reference management.
  */
-public class ObjectManager<T> {
+public class ObjectManager<T> implements ObjectEditor<T> {
 	private JCheckBox chkExists;
 	private ObjectEditor<T> editorPanel;
 	
@@ -86,6 +90,14 @@ public class ObjectManager<T> {
 		this.editorPanel = editorPanel;
 	}
 
+	@Override
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(chkExists);
+		arr.addAll(editorPanel.getEditorComponents());
+		return arr;
+	}
+
 	private void setObject(T obj, boolean force) {
 		// Keep a reference for getObject()
 		this.obj = obj;
@@ -103,15 +115,26 @@ public class ObjectManager<T> {
 		}
 	}
 
+	@Override
 	public void setObject(T obj) {
 		setObject(obj, true);
 	}
+
+	@Override
+	public boolean validateFields() {
+		return (obj == null || editorPanel.validateFields());
+	}
 	
+	@Override
 	public T getObject() {
 		if (obj != null) {
 			return editorPanel.getObject();
 		}
 		return obj;
+	}
+
+	public boolean isObjectNull() {
+		return obj == null;
 	}
 	
 	public ObjectEditor<T> getEditor() {

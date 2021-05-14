@@ -1,4 +1,4 @@
-package guicomponents;
+package guicomponents.ome;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -8,18 +8,11 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import java.awt.GridBagLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
-import guicomponents.ome.TextEditor;
-import guicomponents.ome.LocalDateTimeEditor;
-import guicomponents.ome.LongTextEditor;
-import guicomponents.ome.VerificationEditor;
-import guicomponents.ome.DomainObjectManager;
-import guicomponents.ome.DurationEditor;
-import guicomponents.ome.IntervaledPeriodSetEditor;
-import guicomponents.ome.ListSelectionEditor;
 import guicomponents.utils.BoundedTimelinePanel;
 import guicomponents.utils.DateRangePicker;
 import guicomponents.utils.ObjectEditor;
@@ -52,7 +45,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @SuppressWarnings("serial")
-public class EditTask extends JScrollPane implements ObjectEditor<Task> {
+public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	private Task active;
 	
 	// Basic fields
@@ -62,8 +55,10 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	private ListSelectionEditor<User> lsteAllocationConstraint;
 	
 	// Timeline
-	private List<ChartableEvent> currentTimelineHistory;
-	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
+	private List<ChartableEvent> currentTaskTimelineHistory;
+	private List<ChartableEvent> currentVerTimelineHistory;
+	private GenerativeTemporalMap<ChartableEvent> currentTaskTimelineMap;
+	private GenerativeTemporalMap<ChartableEvent> currentVerTimelineMap;
 	private TimelinePanel timelinePanel;
 	private DateRangePicker dateRangePicker;
 	
@@ -73,7 +68,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	private ObjectManager<IntervaledPeriodSet> cSetManager;
 
 	// Verification editor
-	private VerificationEditor verificationEditor;
+	private VerificationEditor edtVerification;
 	private DomainObjectManager<Verification> omgVerification;
 	
 	// Loading of users for various components
@@ -82,7 +77,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	/**
 	 * Set up the Edit Task panel.
 	 */
-	public EditTask() {
+	public TaskEditor() {
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
@@ -194,7 +189,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		// selected to be edited.
 		timelinePanel = new TimelinePanel();
 		timelinePanel.setPreferredSize(
-			new Dimension(this.getPreferredSize().width, 100)
+			new Dimension(this.getPreferredSize().width, 150)
 		);
 		
 		dateRangePicker = new DateRangePicker("From", "To");
@@ -320,7 +315,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		// Create managers for set
 		
 		ObjectManager<LocalDateTime> setRefEndManager = new ObjectManager<>(
-			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getDateTime()
+			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getObject()
 		);
 		
 		ObjectManager<Duration> setIntervalManager = new ObjectManager<>(
@@ -328,9 +323,8 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 		
 		setEditor = new IntervaledPeriodSetEditor(
-			ldteSetRefStart, ldteSetRefEnd, dureSetInterval,
-			chkSetRefEnd, chkSetInterval,
-			setRefEndManager, setIntervalManager
+			ldteSetRefStart, setRefEndManager, setIntervalManager,
+			ldteSetRefEnd // Needed to set validator
 		);
 		
 		// CSet ref start
@@ -411,7 +405,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		// Create managers for cSet
 		
 		ObjectManager<LocalDateTime> cSetRefEndManager = new ObjectManager<>(
-			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getDateTime()
+			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getObject()
 		);
 		
 		ObjectManager<Duration> cSetIntervalManager = new ObjectManager<>(
@@ -419,9 +413,8 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		);
 		
 		IntervaledPeriodSetEditor cSetEditor = new IntervaledPeriodSetEditor(
-			ldteCSetRefStart, ldteCSetRefEnd, dureCSetInterval,
-			chkCSetRefEnd, chkCSetInterval,
-			cSetRefEndManager, cSetIntervalManager
+			ldteCSetRefStart, cSetRefEndManager, cSetIntervalManager,
+			ldteCSetRefEnd // Needed to set 
 		);
 		
 		cSetManager = new ObjectManager<IntervaledPeriodSet>(
@@ -450,17 +443,17 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		gbc_sep3.gridy = 14;
 		formPanel.add(sep3, gbc_sep3);
 
-		verificationEditor = new VerificationEditor();
+		edtVerification = new VerificationEditor();
 		omgVerification = new DomainObjectManager<>(
-			"Requires Verification", verificationEditor, () -> new Verification()
+			"Requires Verification", edtVerification, () -> new Verification()
 		);
-		GridBagConstraints gbc_edtVerificationEditor = new GridBagConstraints();
-		gbc_edtVerificationEditor.insets = new Insets(0, 5, 0, 0);
-		gbc_edtVerificationEditor.anchor = GridBagConstraints.WEST;
-		gbc_edtVerificationEditor.gridwidth = 3;
-		gbc_edtVerificationEditor.gridx = 0;
-		gbc_edtVerificationEditor.gridy = 15;
-		formPanel.add(omgVerification, gbc_edtVerificationEditor);
+		GridBagConstraints gbc_edtVerification = new GridBagConstraints();
+		gbc_edtVerification.insets = new Insets(0, 5, 0, 0);
+		gbc_edtVerification.anchor = GridBagConstraints.WEST;
+		gbc_edtVerification.gridwidth = 3;
+		gbc_edtVerification.gridx = 0;
+		gbc_edtVerification.gridy = 15;
+		formPanel.add(omgVerification, gbc_edtVerification);
 	}
 
 	@Override
@@ -501,7 +494,7 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 			
 			// (Re)fill the lists
 			lsteAllocationConstraint.populate(caretakersAndNull);
-			verificationEditor.setUsers(caretakersAndNull);
+			edtVerification.setUsers(caretakersAndNull);
 			
 			usersLoaded = true;
 		}
@@ -526,13 +519,86 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 * @param cips The task schedule constraint to use for the timeline.
 	 */
 	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
-		currentTimelineHistory = new ArrayList<>();
-		currentTimelineMap = new GenerativeTemporalMap<>(
-			currentTimelineHistory, cips,
-			(p) -> new BasicChartableEvent(p, name)
-		);
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
-		maps.add(currentTimelineMap);
+		
+		currentTaskTimelineHistory = new ArrayList<>();
+		currentTaskTimelineMap = new GenerativeTemporalMap<>(
+			currentTaskTimelineHistory, cips,
+			(p) -> new BasicChartableEvent(p, name, Color.CYAN)
+		);
+		maps.add(currentTaskTimelineMap);
+		
+		if (!omgVerification.getObjectManager().isObjectNull()) {
+			Verification ver = omgVerification.getObjectManager().getObject();
+			
+			Duration setRefDur = cips.periodSet().referencePeriod().duration();
+			
+			// Push back the start to the end of the task, or leave it at the
+			// start if there is no end.
+			
+			LocalDateTime verSetRefStart = cips.periodSet().referencePeriod().start();
+			if (setRefDur != null) {
+				verSetRefStart = verSetRefStart.plus(setRefDur);
+			};
+			
+			// Deal with verCSet
+
+			IntervaledPeriodSet cSet = cips.periodSetConstraint();
+			IntervaledPeriodSet verCSet;
+			if (cSet == null) {
+				// If the task set has no constraint, then the verification set
+				// has no constraint.
+				verCSet = null;
+				
+			} else {
+				LocalDateTime cSetRefStart = cips.periodSetConstraint().referencePeriod().start();
+				Duration cSetRefDur = cips.periodSetConstraint().referencePeriod().duration();
+				Duration cSetInterval = cips.periodSetConstraint().interval();
+
+				Duration verStdDeadline = ver.getStandardDeadline();
+				
+				if (setRefDur != null) {
+					// Push forward the constraint set start by the length of
+					// the task.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart.plus(setRefDur), cSetRefDur),
+						cSetInterval
+					);
+				
+				} else if (verStdDeadline != null) {
+					// If the task has no deadline, then push forward by the
+					// duration of the verification.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart.plus(verStdDeadline), cSetRefDur),
+						cSetInterval
+					);
+					
+				} else {
+					// If the verification has no deadline, then use the current
+					// cSet start, but add a second to the end to make the last
+					// event in each constraint period be generated.
+					verCSet = new IntervaledPeriodSet(
+						new Period(cSetRefStart, cSetRefDur.plusSeconds(1)),
+						cSetInterval
+					);
+				}
+			}
+			
+			ConstrainedIntervaledPeriodSet verificationCips = new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(verSetRefStart, ver.getStandardDeadline()),
+					cips.periodSet().interval()
+				),
+				verCSet
+			);
+			
+			currentVerTimelineHistory = new ArrayList<>();
+			currentVerTimelineMap = new GenerativeTemporalMap<>(
+				currentVerTimelineHistory, verificationCips,
+				(p) -> new BasicChartableEvent(p, name+" Verification", Color.MAGENTA)
+			);
+			maps.add(currentVerTimelineMap);
+		}
 
 		// setTimeline() fires a change event, which the BoundedTimelinePanel
 		// picks up and re-displays the current date range with the new timeline.
@@ -545,22 +611,29 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 * the map being used.
 	 */
 	private void resetTimeline() {
-		// Note: currentTimelineHistory and currentTimelineMap are
-		//       (re)initialised every time the task being edited is changed.
-		currentTimelineHistory.clear();
-		currentTimelineMap.generateBetween(
+		// Note: currentTaskTimelineHistory, currentVerTimelineHistory,
+		//       currentTaskTimelineMap and currentVerTimelineMap are
+		//       (re)initialised every time the task reference is changed.
+		
+		currentTaskTimelineHistory.clear();
+		currentTaskTimelineMap.generateBetween(
 			dateRangePicker.getStartDateTime(),
 			dateRangePicker.getEndDateTime()
 		);
+
+		// If currentVerTimelineHistory == null, then there is no verification
+		// active for the current timeline panel - even if there is a
+		// verification in the verification manager. To use the now-existing
+		// verification, a call to updateTimeline() must be made.
+		if (currentVerTimelineHistory != null) {
+			currentVerTimelineHistory.clear();
+			currentVerTimelineMap.generateBetween(
+				dateRangePicker.getStartDateTime(),
+				dateRangePicker.getEndDateTime()
+			);
+		}
 	}
 
-	/* Verification value/display management
-	 * -------------------------------------------------- */
-	
-	private void setVerification(Verification verification) {
-		omgVerification.getObjectManager().setObject(verification);
-	}
-	
 	/* Task get/validate/update cycle
 	 * -------------------------------------------------- */
 	
@@ -572,31 +645,21 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	@Override
 	public void setObject(Task task) {
 		active = task;
+
+		// For easier reading
+		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
 		
-		/* Basic fields
-		 * -------------------- */
-		
+		// Set fields
 		txteName.setObject(task.getName());
 		txteNotes.setObject(task.getNotes());
 		lstePriority.setObject(task.getStandardPriority());
 		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
-
-		/* Schedule
-		 * -------------------- */
-
-		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
+		setEditor.setObject(cips.periodSet());
+		cSetManager.setObject(cips.periodSetConstraint());
+		omgVerification.getObjectManager().setObject(task.getVerification());
 		
-		// Visualising the schedule
+		// Update the timeline to use the new name/cips
 		this.updateTimeline(task.getName(), cips);
-		
-		// Editing the schedule
-		this.setEditor.setObject(cips.periodSet());
-		this.cSetManager.setObject(cips.periodSetConstraint());
-
-		/* Verification
-		 * -------------------- */
-		
-		this.setVerification(task.getVerification());
 	}
 
 	/**
@@ -612,11 +675,9 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
 		if (!lsteAllocationConstraint.validateFields()) valid = false;
-
 		if (!setEditor.validateFields()) valid = false;
-		if (!cSetManager.getEditor().validateFields()) valid = false;
-		
-		if (!verificationEditor.validateFields()) valid = false;
+		if (!cSetManager.validateFields()) valid = false;
+		if (!omgVerification.getObjectManager().validateFields()) valid = false;
 		
 		return valid;
 	}
@@ -628,19 +689,11 @@ public class EditTask extends JScrollPane implements ObjectEditor<Task> {
 	 */
 	@Override
 	public Task getObject() {
-		// Basic fields
 		active.setName(txteName.getObject());
 		active.setNotes(txteNotes.getObject());
 		active.setStandardPriority(lstePriority.getObject());
 		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
-		
-		// Schedule constraint fields
-		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
-		// problematic memory-wise, and is less complicated than checking to see
-		// if it's changed.
 		active.setScheduleConstraint(this.getScheduleConstraint());
-		
-		// Verification
 		active.setVerification(omgVerification.getObjectManager().getObject());
 		
 		return active;

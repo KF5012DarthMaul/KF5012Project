@@ -1,12 +1,8 @@
-package guicomponents;
+package guicomponents.ome;
 
 import domain.TaskPriority;
 import domain.TaskExecution;
 import domain.VerificationExecution;
-import guicomponents.ome.DomainObjectManager;
-import guicomponents.ome.ListSelectionEditor;
-import guicomponents.ome.LongTextEditor;
-import guicomponents.ome.VerificationExecutionEditor;
 import guicomponents.utils.ObjectEditor;
 
 import java.awt.GridBagLayout;
@@ -25,7 +21,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
-public class EditTaskExec
+public class TaskExecutionEditor
 		extends JScrollPane
 		implements ObjectEditor<TaskExecution>
 {
@@ -42,7 +38,7 @@ public class EditTaskExec
 	/**
 	 * Create the panel.
 	 */
-	public EditTaskExec() {
+	public TaskExecutionEditor() {
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
@@ -169,7 +165,7 @@ public class EditTaskExec
 
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
-		if (!edtVerificationExec.validateFields()) valid = false;
+		if (!omgVerificationExec.getObjectManager().validateFields()) valid = false;
 		
 		return valid;
 	}
