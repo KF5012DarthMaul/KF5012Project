@@ -1,30 +1,32 @@
 package guicomponents;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.swing.JScrollPane;
-
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions.FailedToConnectException;
 import domain.TaskExecution;
 import domain.TaskPriority;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
-import kf5012darthmaulapplication.User;
-import javax.swing.JPanel;
-import java.awt.GridBagLayout;
-import javax.swing.JLabel;
-import java.awt.GridBagConstraints;
-import javax.swing.JTextField;
-import java.awt.Insets;
-import javax.swing.SwingConstants;
-import javax.swing.JComboBox;
-import javax.swing.JTextPane;
 
-public class EditTaskExec extends JScrollPane {
-	private boolean usersLoaded;
+import guicomponents.utils.ObjectEditor;
+
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+
+@SuppressWarnings("serial")
+public class EditTaskExec
+		extends JScrollPane
+		implements ObjectEditor<TaskExecution>
+{
+	private TaskExecution active;
 	
+	// Basic Fields
 	private JTextField txtNotes;
 	private JComboBox<Object> cmbPriority;
 
@@ -32,7 +34,6 @@ public class EditTaskExec extends JScrollPane {
 	 * Create the panel.
 	 */
 	public EditTaskExec() {
-		
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
@@ -75,11 +76,54 @@ public class EditTaskExec extends JScrollPane {
 		gbc_cmbPriority.gridx = 1;
 		gbc_cmbPriority.gridy = 1;
 		formPanel.add(cmbPriority, gbc_cmbPriority);
-
 	}
 
-	public void showTaskExec(TaskExecution task) {
-		txtNotes.setText(task.getName());
-		cmbPriority.setSelectedItem(task.getPriority());
+	@Override
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(this);
+		return arr;
+	}
+
+	/**
+	 * Mark the given task execution to be the current task execution to edit.
+	 * 
+	 * @param taskExec The task execution to edit.
+	 */
+	@Override
+	public void setObject(TaskExecution taskExec) {
+		active = taskExec;
+		
+		txtNotes.setText(taskExec.getNotes());
+		cmbPriority.setSelectedItem(taskExec.getPriority());
+	}
+
+	/**
+	 * Validate fields and visually mark invalid fields.
+	 * 
+	 * @return True if all fields are valid, false otherwise.
+	 */
+	@Override
+	public boolean validateFields() {
+		boolean valid = true;
+
+		// Notes - no validation
+		// Priority - combo box does validation
+		
+		return valid;
+	}
+
+	/**
+	 * Update the given task execution with the values currently in the editor's
+	 * inputs.
+	 * 
+	 * @param taskExec The task execution to update.
+	 */
+	@Override
+	public TaskExecution getObject() {
+		active.setNotes(txtNotes.getText());
+		active.setPriority((TaskPriority) cmbPriority.getSelectedObjects()[0]);
+		
+		return active;
 	}
 }

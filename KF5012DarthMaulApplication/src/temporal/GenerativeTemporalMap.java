@@ -91,9 +91,9 @@ public class GenerativeTemporalMap<T extends Event>
 	}
 	
 	/**
-	 * Generate all events between start or the end of the last event, whichever
-	 * is earlier, and end based on the constrained intervaled period set of
-	 * this map.
+	 * Generate all events between start or the start of the last event,
+	 * whichever is earlier, and end based on the constrained intervaled period
+	 * set of this map.
 	 * 
 	 * Equivalent to generateBetween(start, end, false).
 	 * 
@@ -109,8 +109,8 @@ public class GenerativeTemporalMap<T extends Event>
 	 * Generate all events between start and end based on the constrained
 	 * intervaled period set of this map.
 	 * 
-	 * If allowNonContiguous is false, then also generate events between the end
-	 * of the last event and start (if last event end < start).
+	 * If allowNonContiguous is false, then also generate events between the
+	 * start of the last event and start (if last event start < start).
 	 * 
 	 * @param start The start of the range to generate within, or null to
 	 * generate as far back as is needed (like a 'generateBefore()' would be).
@@ -151,12 +151,6 @@ public class GenerativeTemporalMap<T extends Event>
 		Duration setRefDuration = setRef.duration();
 		Duration setInterval = set.interval();
 
-		Period cSetRef = cSet.referencePeriod();
-		LocalDateTime cSetRefStart = cSetRef.start();
-		LocalDateTime cSetRefEnd = cSetRef.end();
-		Duration cSetRefDuration = cSetRef.duration();
-		Duration cSetInterval = cSet.interval();
-		
 		// Initialise vars
 		LocalDateTime genStart = start;
 		
@@ -166,17 +160,17 @@ public class GenerativeTemporalMap<T extends Event>
 		int size = this.map.size();
 		if (size != 0) {
 			T lastEvent = this.map.get(size - 1);
-			LocalDateTime endOfLastEvent = lastEvent.getPeriod().end();
+			LocalDateTime startOfLastEvent = lastEvent.getPeriod().start();
 			
-			// If genStart < endOfLastEvent, then push forward to endOfLastEvent
-			if (genStart == null || genStart.isBefore(endOfLastEvent)) {
-				genStart = endOfLastEvent;
+			// If genStart < startOfLastEvent, then push forward to startOfLastEvent
+			if (genStart == null || genStart.isBefore(startOfLastEvent)) {
+				genStart = startOfLastEvent;
 			}
 			
-			// If genStart > endOfLastEvent, then push back to endOfLastEvent,
+			// If genStart > startOfLastEvent, then push back to startOfLastEvent,
 			// unless non-contiguity is allowed.
-			if (genStart.isAfter(endOfLastEvent) && !allowNonContiguous) {
-				genStart = endOfLastEvent;
+			if (genStart.isAfter(startOfLastEvent) && !allowNonContiguous) {
+				genStart = startOfLastEvent;
 			}
 		}
 		
@@ -200,7 +194,7 @@ public class GenerativeTemporalMap<T extends Event>
 
 		/* Generating based on the period set
 		 * -------------------- */
-		
+
 		// Note that genStart is now guaranteed to be after the last event (if
 		// any) and the period set start.
 
@@ -249,6 +243,13 @@ public class GenerativeTemporalMap<T extends Event>
 		/* Generating for each period in the constraint period set
 		 * -------------------- */
 
+		// cSet != null
+		Period cSetRef = cSet.referencePeriod();
+		LocalDateTime cSetRefStart = cSetRef.start();
+		LocalDateTime cSetRefEnd = cSetRef.end();
+		Duration cSetRefDuration = cSetRef.duration();
+		Duration cSetInterval = cSet.interval();
+		
 		/* For one constraining period
 		 * ---------- */
 		
@@ -299,12 +300,12 @@ public class GenerativeTemporalMap<T extends Event>
 	
 		// Get the earliest time that the periods could start
 		LocalDateTime startCPeriodStart = first(
-			Direction.AT_OR_BEFORE, genStart, setRefStart, cSetInterval
+			Direction.AT_OR_BEFORE, genStart, cSetRefStart, cSetInterval
 		);
 		if (startCPeriodStart == null) {
 			// Cannot return null
 			startCPeriodStart = first(
-				Direction.AT_OR_AFTER, genStart, setRefStart, cSetInterval
+				Direction.AT_OR_AFTER, genStart, cSetRefStart, cSetInterval
 			);
 		}
 
@@ -316,7 +317,7 @@ public class GenerativeTemporalMap<T extends Event>
 				s.isBefore(end); // s < end
 				s = s.plus(cSetInterval) // s += cSetInterval
 		) {
-			LocalDateTime e = cSetRefStart.plus(cSetInterval);
+			LocalDateTime e = s.plus(cSetRefDuration);
 			this.generateBetween(
 				genStart.isAfter(s) ? genStart : s, // max(genStart, s)
 				end.isBefore(e) ? end : e, // min(end, e)

@@ -3,48 +3,93 @@ package guicomponents;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
-
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import java.awt.GridBagLayout;
-import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import javax.swing.JTextField;
 
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions.FailedToConnectException;
+import guicomponents.ome.TextEditor;
+import guicomponents.ome.LocalDateTimeEditor;
+import guicomponents.ome.LongTextEditor;
+import guicomponents.ome.VerificationEditor;
+import guicomponents.ome.DomainObjectManager;
+import guicomponents.ome.DurationEditor;
+import guicomponents.ome.IntervaledPeriodSetEditor;
+import guicomponents.ome.ListSelectionEditor;
+import guicomponents.utils.BoundedTimelinePanel;
+import guicomponents.utils.DateRangePicker;
+import guicomponents.utils.ObjectEditor;
+import guicomponents.utils.ObjectManager;
+import guicomponents.utils.TimelinePanel;
+import kf5012darthmaulapplication.ExceptionDialog;
+
 import domain.Task;
 import domain.TaskPriority;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
+import domain.Verification;
 import kf5012darthmaulapplication.User;
+import kf5012darthmaulapplication.PermissionManager;
+import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions.FailedToConnectException;
 
+import temporal.BasicChartableEvent;
+import temporal.ChartableEvent;
+import temporal.ConstrainedIntervaledPeriodSet;
+import temporal.GenerativeTemporalMap;
+import temporal.IntervaledPeriodSet;
+import temporal.Period;
+import temporal.TemporalMap;
+import temporal.Timeline;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @SuppressWarnings("serial")
-public class EditTask extends JScrollPane {
-	private JTextField txtName;
-	private JTextField txtNotes;
-	private JComboBox<Object> cmbPriority;
-	private JComboBox<Object> cmbAllocationConstraint;
+public class EditTask extends JScrollPane implements ObjectEditor<Task> {
+	private Task active;
+	
+	// Basic fields
+	private TextEditor txteName;
+	private LongTextEditor txteNotes;
+	private ListSelectionEditor<TaskPriority> lstePriority;
+	private ListSelectionEditor<User> lsteAllocationConstraint;
+	
+	// Timeline
+	private List<ChartableEvent> currentTimelineHistory;
+	private GenerativeTemporalMap<ChartableEvent> currentTimelineMap;
+	private TimelinePanel timelinePanel;
+	private DateRangePicker dateRangePicker;
+	
+	// Schedule fields (nested)
+	// not ipseSet because IntervaledPeriodSetEditor is not a JComponent
+	private IntervaledPeriodSetEditor setEditor;
+	private ObjectManager<IntervaledPeriodSet> cSetManager;
+
+	// Verification editor
+	private VerificationEditor verificationEditor;
+	private DomainObjectManager<Verification> omgVerification;
+	
+	// Loading of users for various components
 	private boolean usersLoaded = false;
 
 	/**
-	 * Create the panel.
+	 * Set up the Edit Task panel.
 	 */
-	@SuppressWarnings("serial")
 	public EditTask() {
 		JPanel formPanel = new JPanel();
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
-		gbl_formPanel.columnWidths = new int[]{0, 0, 0};
-		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_formPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_formPanel.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_formPanel.columnWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 		formPanel.setLayout(gbl_formPanel);
 		
 		/* Basics
@@ -58,15 +103,15 @@ public class EditTask extends JScrollPane {
 		gbc_lblName.gridy = 0;
 		formPanel.add(lblName, gbc_lblName);
 		
-		txtName = new JTextField();
-		lblName.setLabelFor(txtName);
-		GridBagConstraints gbc_txtName = new GridBagConstraints();
-		gbc_txtName.fill = GridBagConstraints.HORIZONTAL;
-		gbc_txtName.insets = new Insets(5, 5, 5, 5);
-		gbc_txtName.gridx = 1;
-		gbc_txtName.gridy = 0;
-		formPanel.add(txtName, gbc_txtName);
-		txtName.setColumns(10);
+		txteName = new TextEditor((s) -> !s.isEmpty()); // Must be non-empty
+		GridBagConstraints gbc_txteName = new GridBagConstraints();
+		gbc_txteName.anchor = GridBagConstraints.WEST;
+		gbc_txteName.insets = new Insets(5, 5, 5, 0);
+		gbc_txteName.gridwidth = 2;
+		gbc_txteName.gridx = 1;
+		gbc_txteName.gridy = 0;
+		formPanel.add(txteName, gbc_txteName);
+		txteName.setColumns(40);
 		
 		JLabel lblNotes = new JLabel("Notes");
 		GridBagConstraints gbc_lblNotes = new GridBagConstraints();
@@ -76,14 +121,18 @@ public class EditTask extends JScrollPane {
 		gbc_lblNotes.gridy = 1;
 		formPanel.add(lblNotes, gbc_lblNotes);
 		
-		txtNotes = new JTextField();
-		GridBagConstraints gbc_txtNotes = new GridBagConstraints();
-		gbc_txtNotes.fill = GridBagConstraints.HORIZONTAL;
-		gbc_txtNotes.insets = new Insets(0, 5, 5, 5);
-		gbc_txtNotes.gridx = 1;
-		gbc_txtNotes.gridy = 1;
-		formPanel.add(txtNotes, gbc_txtNotes);
-		txtNotes.setColumns(10);
+		txteNotes = new LongTextEditor();
+		txteNotes.setLineWrap(true);
+		txteNotes.setWrapStyleWord(true);
+		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
+		gbc_txteNotes.gridwidth = 2;
+		gbc_txteNotes.anchor = GridBagConstraints.WEST;
+		gbc_txteNotes.insets = new Insets(0, 5, 5, 0);
+		gbc_txteNotes.gridx = 1;
+		gbc_txteNotes.gridy = 1;
+		formPanel.add(txteNotes, gbc_txteNotes);
+		txteNotes.setColumns(40);
+		txteNotes.setRows(6);
 		
 		JLabel lblPriority = new JLabel("Priority");
 		GridBagConstraints gbc_lblPriority = new GridBagConstraints();
@@ -93,13 +142,17 @@ public class EditTask extends JScrollPane {
 		gbc_lblPriority.gridy = 2;
 		formPanel.add(lblPriority, gbc_lblPriority);
 		
-		cmbPriority = new JComboBox<>(TaskPriority.values());
-		GridBagConstraints gbc_cmbPriority = new GridBagConstraints();
-		gbc_cmbPriority.fill = GridBagConstraints.HORIZONTAL;
-		gbc_cmbPriority.insets = new Insets(0, 5, 5, 5);
-		gbc_cmbPriority.gridx = 1;
-		gbc_cmbPriority.gridy = 2;
-		formPanel.add(cmbPriority, gbc_cmbPriority);
+		lstePriority = new ListSelectionEditor<TaskPriority>(
+			(taskPriority) -> taskPriority.toString()
+		);
+		lstePriority.populate(Arrays.asList(TaskPriority.values()));
+		GridBagConstraints gbc_lstePriority = new GridBagConstraints();
+		gbc_lstePriority.anchor = GridBagConstraints.WEST;
+		gbc_lstePriority.insets = new Insets(0, 5, 5, 0);
+		gbc_lstePriority.gridwidth = 2;
+		gbc_lstePriority.gridx = 1;
+		gbc_lstePriority.gridy = 2;
+		formPanel.add(lstePriority, gbc_lstePriority);
 		
 		JLabel lblAllocationConstraint = new JLabel("Allocation Constraint");
 		GridBagConstraints gbc_lblAllocationConstraint = new GridBagConstraints();
@@ -108,97 +161,321 @@ public class EditTask extends JScrollPane {
 		gbc_lblAllocationConstraint.gridy = 3;
 		formPanel.add(lblAllocationConstraint, gbc_lblAllocationConstraint);
 
-		cmbAllocationConstraint = new JComboBox<>();
-		cmbAllocationConstraint.setRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(
-					JList<?> list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus
-			) {
-				super.getListCellRendererComponent(
-					list, value, index, isSelected, cellHasFocus);
-				
-				// If it is the string "", then ...
-				if (value == "") {
-					setText("No Allocation Constraint");
+		lsteAllocationConstraint = new ListSelectionEditor<>(
+			(user) -> {
+				if (user == null) {
+					return "No Allocation Constraint";
 				} else {
-					User user = (User) value;
-					setText(user.getUsername());
+					return user.getUsername();
 				}
-				
-				return this;
 			}
-		});
-		GridBagConstraints gbc_cmbAllocationConstraint = new GridBagConstraints();
-		gbc_cmbAllocationConstraint.fill = GridBagConstraints.HORIZONTAL;
-		gbc_cmbAllocationConstraint.insets = new Insets(0, 5, 5, 5);
-		gbc_cmbAllocationConstraint.gridx = 1;
-		gbc_cmbAllocationConstraint.gridy = 3;
-		formPanel.add(cmbAllocationConstraint, gbc_cmbAllocationConstraint);
-
+		);
+		GridBagConstraints gbc_lsteAllocationConstraint = new GridBagConstraints();
+		gbc_lsteAllocationConstraint.anchor = GridBagConstraints.WEST;
+		gbc_lsteAllocationConstraint.insets = new Insets(0, 5, 5, 0);
+		gbc_lsteAllocationConstraint.gridwidth = 2;
+		gbc_lsteAllocationConstraint.gridx = 1;
+		gbc_lsteAllocationConstraint.gridy = 3;
+		formPanel.add(lsteAllocationConstraint, gbc_lsteAllocationConstraint);
+		
+		/* Schedule - Graphical Overview
+		 * -------------------- */
+		
 		JSeparator sep1 = new JSeparator();
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
-		gbc_sep1.gridwidth = 2;
 		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
-		gbc_sep1.insets = new Insets(0, 5, 5, 5);
+		gbc_sep1.insets = new Insets(0, 5, 5, 0);
+		gbc_sep1.gridwidth = 3;
 		gbc_sep1.gridx = 0;
 		gbc_sep1.gridy = 4;
 		formPanel.add(sep1, gbc_sep1);
 
-		/* Schedule
+		// Don't give it a Timeline yet - that's can only be done when a task is
+		// selected to be edited.
+		timelinePanel = new TimelinePanel();
+		timelinePanel.setPreferredSize(
+			new Dimension(this.getPreferredSize().width, 100)
+		);
+		
+		dateRangePicker = new DateRangePicker("From", "To");
+
+		// If the date/time range of the bounded timeline panel changes, then
+		// regenerate the data to be displayed in the timeline panel completely.
+		// If you don't do this, the generator won't generate events before the
+		// end of the latest event generated.
+		// Note 2: This change listener must be added before the dateRangePicker
+		//         is passed to the BoundedTimelinePanel, or the data won't be
+		//         wiped before the bounded timeline panel tries to re-fetch the
+		//         data to re-draw the timeline panel, which may lead to missing
+		//         events.
+		dateRangePicker.addChangeListener((e) -> this.resetTimeline());
+		
+		// Link together the timeline panel and the date range picker so that
+		// the panel responds to changes in the date range (or if its own
+		// timeline changes).
+		BoundedTimelinePanel boundedTimelinePanel = new BoundedTimelinePanel(
+			timelinePanel, dateRangePicker, true
+		);
+		
+		// Then add as usual
+		GridBagConstraints gbc_timelinePanel = new GridBagConstraints();
+		gbc_timelinePanel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_timelinePanel.insets = new Insets(0, 5, 5, 0);
+		gbc_timelinePanel.gridwidth = 3;
+		gbc_timelinePanel.gridx = 0;
+		gbc_timelinePanel.gridy = 5;
+		formPanel.add(boundedTimelinePanel, gbc_timelinePanel);
+
+		JButton btnUpdateTimeline = new JButton("Update Timeline");
+		btnUpdateTimeline.addActionListener((e) -> {
+			this.updateTimeline(txteName.getObject(), getScheduleConstraint());
+		});
+		GridBagConstraints gbc_btnUpdateTimeline = new GridBagConstraints();
+		gbc_btnUpdateTimeline.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnUpdateTimeline.insets = new Insets(0, 5, 5, 0);
+		gbc_btnUpdateTimeline.gridx = 0;
+		gbc_btnUpdateTimeline.gridy = 6;
+		formPanel.add(btnUpdateTimeline, gbc_btnUpdateTimeline);
+
+		/* Schedule - Fields
 		 * -------------------- */
+
+		JSeparator sep2 = new JSeparator();
+		GridBagConstraints gbc_sep2 = new GridBagConstraints();
+		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep2.insets = new Insets(0, 5, 5, 0);
+		gbc_sep2.gridwidth = 3;
+		gbc_sep2.gridx = 0;
+		gbc_sep2.gridy = 7;
+		formPanel.add(sep2, gbc_sep2);
+
+		// Set ref start
 		
-		JLabel lblNewLabel_5 = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel_5 = new GridBagConstraints();
-		gbc_lblNewLabel_5.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel_5.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel_5.gridx = 0;
-		gbc_lblNewLabel_5.gridy = 5;
-		formPanel.add(lblNewLabel_5, gbc_lblNewLabel_5);
+		JLabel lblSetRefStart = new JLabel("Earliest Start Time");
+		GridBagConstraints gbc_lblSetRefStart = new GridBagConstraints();
+		gbc_lblSetRefStart.anchor = GridBagConstraints.EAST;
+		gbc_lblSetRefStart.insets = new Insets(0, 5, 5, 5);
+		gbc_lblSetRefStart.gridx = 0;
+		gbc_lblSetRefStart.gridy = 8;
+		formPanel.add(lblSetRefStart, gbc_lblSetRefStart);
 		
-		JLabel lblNewLabel_4 = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel_4 = new GridBagConstraints();
-		gbc_lblNewLabel_4.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel_4.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel_4.gridx = 0;
-		gbc_lblNewLabel_4.gridy = 6;
-		formPanel.add(lblNewLabel_4, gbc_lblNewLabel_4);
+		LocalDateTimeEditor ldteSetRefStart = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteSetRefStart = new GridBagConstraints();
+		gbc_ldteSetRefStart.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteSetRefStart.anchor = GridBagConstraints.WEST;
+		gbc_ldteSetRefStart.gridx = 2;
+		gbc_ldteSetRefStart.gridy = 8;
+		formPanel.add(ldteSetRefStart, gbc_ldteSetRefStart);
 		
-		JLabel lblNewLabel_3 = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel_3 = new GridBagConstraints();
-		gbc_lblNewLabel_3.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel_3.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel_3.gridx = 0;
-		gbc_lblNewLabel_3.gridy = 7;
-		formPanel.add(lblNewLabel_3, gbc_lblNewLabel_3);
+		// Set ref end
 		
-		JLabel lblNewLabel_2 = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel_2 = new GridBagConstraints();
-		gbc_lblNewLabel_2.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel_2.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel_2.gridx = 0;
-		gbc_lblNewLabel_2.gridy = 8;
-		formPanel.add(lblNewLabel_2, gbc_lblNewLabel_2);
+		JLabel lblSetRefEnd = new JLabel("Latest End Time");
+		GridBagConstraints gbc_lblSetRefEnd = new GridBagConstraints();
+		gbc_lblSetRefEnd.anchor = GridBagConstraints.EAST;
+		gbc_lblSetRefEnd.insets = new Insets(0, 5, 5, 5);
+		gbc_lblSetRefEnd.gridx = 0;
+		gbc_lblSetRefEnd.gridy = 9;
+		formPanel.add(lblSetRefEnd, gbc_lblSetRefEnd);
 		
-		JLabel lblNewLabel_1 = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel_1 = new GridBagConstraints();
-		gbc_lblNewLabel_1.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel_1.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel_1.gridx = 0;
-		gbc_lblNewLabel_1.gridy = 9;
-		formPanel.add(lblNewLabel_1, gbc_lblNewLabel_1);
+		JCheckBox chkSetRefEnd = new JCheckBox("");
+		GridBagConstraints gbc_chkSetRefEnd = new GridBagConstraints();
+		gbc_chkSetRefEnd.insets = new Insets(0, 0, 5, 5);
+		gbc_chkSetRefEnd.gridx = 1;
+		gbc_chkSetRefEnd.gridy = 9;
+		formPanel.add(chkSetRefEnd, gbc_chkSetRefEnd);
+
+		LocalDateTimeEditor ldteSetRefEnd = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteSetRefEnd = new GridBagConstraints();
+		gbc_ldteSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_ldteSetRefEnd.gridx = 2;
+		gbc_ldteSetRefEnd.gridy = 9;
+		formPanel.add(ldteSetRefEnd, gbc_ldteSetRefEnd);
 		
-		JLabel lblNewLabel = new JLabel("New label");
-		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
-		gbc_lblNewLabel.anchor = GridBagConstraints.EAST;
-		gbc_lblNewLabel.insets = new Insets(0, 5, 5, 5);
-		gbc_lblNewLabel.gridx = 0;
-		gbc_lblNewLabel.gridy = 10;
-		formPanel.add(lblNewLabel, gbc_lblNewLabel);
+		// Set interval
+		
+		JLabel lblSetInterval = new JLabel("Regularity");
+		GridBagConstraints gbc_lblSetInterval = new GridBagConstraints();
+		gbc_lblSetInterval.anchor = GridBagConstraints.EAST;
+		gbc_lblSetInterval.insets = new Insets(0, 5, 5, 5);
+		gbc_lblSetInterval.gridx = 0;
+		gbc_lblSetInterval.gridy = 10;
+		formPanel.add(lblSetInterval, gbc_lblSetInterval);
+
+		JCheckBox chkSetInterval = new JCheckBox("");
+		GridBagConstraints gbc_chkSetInterval = new GridBagConstraints();
+		gbc_chkSetInterval.insets = new Insets(0, 0, 5, 5);
+		gbc_chkSetInterval.gridx = 1;
+		gbc_chkSetInterval.gridy = 10;
+		formPanel.add(chkSetInterval, gbc_chkSetInterval);
+
+		DurationEditor dureSetInterval = new DurationEditor();
+		GridBagConstraints gbc_spnSetInterval = new GridBagConstraints();
+		gbc_spnSetInterval.anchor = GridBagConstraints.WEST;
+		gbc_spnSetInterval.insets = new Insets(0, 5, 5, 0);
+		gbc_spnSetInterval.gridx = 2;
+		gbc_spnSetInterval.gridy = 10;
+		formPanel.add(dureSetInterval, gbc_spnSetInterval);
+
+		// Create managers for set
+		
+		ObjectManager<LocalDateTime> setRefEndManager = new ObjectManager<>(
+			chkSetRefEnd, ldteSetRefEnd, () -> ldteSetRefEnd.getDateTime()
+		);
+		
+		ObjectManager<Duration> setIntervalManager = new ObjectManager<>(
+			chkSetInterval, dureSetInterval, () -> dureSetInterval.getObject()
+		);
+		
+		setEditor = new IntervaledPeriodSetEditor(
+			ldteSetRefStart, ldteSetRefEnd, dureSetInterval,
+			chkSetRefEnd, chkSetInterval,
+			setRefEndManager, setIntervalManager
+		);
+		
+		// CSet ref start
+		
+		JLabel lblCSetRefStart = new JLabel("Constraint Start");
+		GridBagConstraints gbc_lblCSetRefStart = new GridBagConstraints();
+		gbc_lblCSetRefStart.anchor = GridBagConstraints.EAST;
+		gbc_lblCSetRefStart.insets = new Insets(0, 5, 5, 5);
+		gbc_lblCSetRefStart.gridx = 0;
+		gbc_lblCSetRefStart.gridy = 11;
+		formPanel.add(lblCSetRefStart, gbc_lblCSetRefStart);
+		
+		JCheckBox chkCSet = new JCheckBox("");
+		GridBagConstraints gbc_chkCSet = new GridBagConstraints();
+		gbc_chkCSet.insets = new Insets(0, 0, 5, 5);
+		gbc_chkCSet.gridx = 1;
+		gbc_chkCSet.gridy = 11;
+		formPanel.add(chkCSet, gbc_chkCSet);
+		
+		LocalDateTimeEditor ldteCSetRefStart = new LocalDateTimeEditor((ldt) -> true);
+		GridBagConstraints gbc_ldteCSetRefStart = new GridBagConstraints();
+		gbc_ldteCSetRefStart.anchor = GridBagConstraints.WEST;
+		gbc_ldteCSetRefStart.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteCSetRefStart.gridx = 2;
+		gbc_ldteCSetRefStart.gridy = 11;
+		formPanel.add(ldteCSetRefStart, gbc_ldteCSetRefStart);
+		
+		// CSet ref end
+		
+		JLabel lblCSetRefEnd = new JLabel("Constraint End");
+		GridBagConstraints gbc_lblCSetRefEnd = new GridBagConstraints();
+		gbc_lblCSetRefEnd.anchor = GridBagConstraints.EAST;
+		gbc_lblCSetRefEnd.insets = new Insets(0, 5, 5, 5);
+		gbc_lblCSetRefEnd.gridx = 0;
+		gbc_lblCSetRefEnd.gridy = 12;
+		formPanel.add(lblCSetRefEnd, gbc_lblCSetRefEnd);
+		
+		JCheckBox chkCSetRefEnd = new JCheckBox("");
+		GridBagConstraints gbc_chkCSetRefEnd = new GridBagConstraints();
+		gbc_chkCSetRefEnd.insets = new Insets(0, 0, 5, 5);
+		gbc_chkCSetRefEnd.gridx = 1;
+		gbc_chkCSetRefEnd.gridy = 12;
+		formPanel.add(chkCSetRefEnd, gbc_chkCSetRefEnd);
+
+		LocalDateTimeEditor ldteCSetRefEnd = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteCSetRefEnd = new GridBagConstraints();
+		gbc_ldteCSetRefEnd.insets = new Insets(0, 5, 5, 0);
+		gbc_ldteCSetRefEnd.anchor = GridBagConstraints.WEST;
+		gbc_ldteCSetRefEnd.gridx = 2;
+		gbc_ldteCSetRefEnd.gridy = 12;
+		formPanel.add(ldteCSetRefEnd, gbc_ldteCSetRefEnd);
+		
+		// CSet interval
+		
+		JLabel lblCSetInterval = new JLabel("Constraint Interval");
+		GridBagConstraints gbc_lblCSetInterval = new GridBagConstraints();
+		gbc_lblCSetInterval.anchor = GridBagConstraints.EAST;
+		gbc_lblCSetInterval.insets = new Insets(0, 5, 0, 5);
+		gbc_lblCSetInterval.gridx = 0;
+		gbc_lblCSetInterval.gridy = 13;
+		formPanel.add(lblCSetInterval, gbc_lblCSetInterval);
+		
+		JCheckBox chkCSetInterval = new JCheckBox("");
+		GridBagConstraints gbc_chkCSetInterval = new GridBagConstraints();
+		gbc_chkCSetInterval.insets = new Insets(0, 0, 0, 5);
+		gbc_chkCSetInterval.gridx = 1;
+		gbc_chkCSetInterval.gridy = 13;
+		formPanel.add(chkCSetInterval, gbc_chkCSetInterval);
+		
+		DurationEditor dureCSetInterval = new DurationEditor();
+		GridBagConstraints gbc_dureCSetInterval = new GridBagConstraints();
+		gbc_dureCSetInterval.insets = new Insets(0, 5, 0, 0);
+		gbc_dureCSetInterval.anchor = GridBagConstraints.WEST;
+		gbc_dureCSetInterval.gridx = 2;
+		gbc_dureCSetInterval.gridy = 13;
+		formPanel.add(dureCSetInterval, gbc_dureCSetInterval);
+
+		// Create managers for cSet
+		
+		ObjectManager<LocalDateTime> cSetRefEndManager = new ObjectManager<>(
+			chkCSetRefEnd, ldteCSetRefEnd, () -> ldteCSetRefEnd.getDateTime()
+		);
+		
+		ObjectManager<Duration> cSetIntervalManager = new ObjectManager<>(
+			chkCSetInterval, dureCSetInterval, () -> dureCSetInterval.getObject()
+		);
+		
+		IntervaledPeriodSetEditor cSetEditor = new IntervaledPeriodSetEditor(
+			ldteCSetRefStart, ldteCSetRefEnd, dureCSetInterval,
+			chkCSetRefEnd, chkCSetInterval,
+			cSetRefEndManager, cSetIntervalManager
+		);
+		
+		cSetManager = new ObjectManager<IntervaledPeriodSet>(
+			chkCSet, cSetEditor,
+			
+			// On re-activation, get the object from what the editors were
+			// before deactivation (ie. don't reset their values to default).
+			() -> new IntervaledPeriodSet(
+				new Period(
+					ldteCSetRefStart.getObject(),
+					cSetRefEndManager.getObject()
+				),
+				cSetIntervalManager.getObject()
+			)
+		);
+		
+		/* Verification
+		 * -------------------- */
+
+		JSeparator sep3 = new JSeparator();
+		GridBagConstraints gbc_sep3 = new GridBagConstraints();
+		gbc_sep3.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep3.insets = new Insets(0, 5, 5, 0);
+		gbc_sep3.gridwidth = 3;
+		gbc_sep3.gridx = 0;
+		gbc_sep3.gridy = 14;
+		formPanel.add(sep3, gbc_sep3);
+
+		verificationEditor = new VerificationEditor();
+		omgVerification = new DomainObjectManager<>(
+			"Requires Verification", verificationEditor, () -> new Verification()
+		);
+		GridBagConstraints gbc_edtVerificationEditor = new GridBagConstraints();
+		gbc_edtVerificationEditor.insets = new Insets(0, 5, 0, 0);
+		gbc_edtVerificationEditor.anchor = GridBagConstraints.WEST;
+		gbc_edtVerificationEditor.gridwidth = 3;
+		gbc_edtVerificationEditor.gridx = 0;
+		gbc_edtVerificationEditor.gridy = 15;
+		formPanel.add(omgVerification, gbc_edtVerificationEditor);
 	}
+
+	@Override
+	public List<JComponent> getEditorComponents() {
+		List<JComponent> arr = new ArrayList<>();
+		arr.add(this);
+		return arr;
+	}
+
+	/* Allocation combo box management
+	 * -------------------------------------------------- */
 	
 	/**
-	 * Load users into the allocation constraint combo box.
+	 * Load users into the allocation constraint combo box and all other
+	 * components that require them.
 	 * 
 	 * @param reload If users are cached, whether to re-fetch users regardless.
 	 */
@@ -213,20 +490,20 @@ public class EditTask extends JScrollPane {
 				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
 				return;
 			}
-	
+
 			// Get the users
 			List<User> allUsers = db.getAllUsers();
-			List<User> caretakers = (List<User>) allUsers.stream()
+			List<User> caretakersAndNull = nullable(
+				allUsers.stream()
 				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
-				.collect(Collectors.toList());
-	
-			// (Re)fill the list
-			cmbAllocationConstraint.removeAllItems();
-			for (User user : caretakers) {
-				cmbAllocationConstraint.addItem(user);
-			}
-			cmbAllocationConstraint.addItem(""); // "" == null (null is special-cased)
-			usersLoaded  = true;
+				.collect(Collectors.toList())
+			);
+			
+			// (Re)fill the lists
+			lsteAllocationConstraint.populate(caretakersAndNull);
+			verificationEditor.setUsers(caretakersAndNull);
+			
+			usersLoaded = true;
 		}
 	}
 	
@@ -238,22 +515,88 @@ public class EditTask extends JScrollPane {
 		loadUsers(false);
 	}
 	
+	/* Timeline Management
+	 * -------------------------------------------------- */
+	
+	/**
+	 * (Re)Initialise the generative temporal map of the timeline panel and set
+	 * the timeline panel to track the new map.
+	 * 
+	 * @param name The name to give events in the timeline.
+	 * @param cips The task schedule constraint to use for the timeline.
+	 */
+	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
+		currentTimelineHistory = new ArrayList<>();
+		currentTimelineMap = new GenerativeTemporalMap<>(
+			currentTimelineHistory, cips,
+			(p) -> new BasicChartableEvent(p, name)
+		);
+		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
+		maps.add(currentTimelineMap);
+
+		// setTimeline() fires a change event, which the BoundedTimelinePanel
+		// picks up and re-displays the current date range with the new timeline.
+		timelinePanel.setTimeline(new Timeline<>(maps));
+	}
+	
+	/**
+	 * Clear the events in the generative temporal map of the timeline panel,
+	 * and regenerate the events within its current date range, without changing
+	 * the map being used.
+	 */
+	private void resetTimeline() {
+		// Note: currentTimelineHistory and currentTimelineMap are
+		//       (re)initialised every time the task being edited is changed.
+		currentTimelineHistory.clear();
+		currentTimelineMap.generateBetween(
+			dateRangePicker.getStartDateTime(),
+			dateRangePicker.getEndDateTime()
+		);
+	}
+
+	/* Verification value/display management
+	 * -------------------------------------------------- */
+	
+	private void setVerification(Verification verification) {
+		omgVerification.getObjectManager().setObject(verification);
+	}
+	
+	/* Task get/validate/update cycle
+	 * -------------------------------------------------- */
+	
 	/**
 	 * Mark the given task to be the current task to edit.
 	 * 
 	 * @param task The task to edit.
 	 */
-	public void showTask(Task task) {
-		txtName.setText(task.getName());
-		txtNotes.setText(task.getNotes());
-		cmbPriority.setSelectedItem(task.getStandardPriority());
+	@Override
+	public void setObject(Task task) {
+		active = task;
 		
-		User allocConst = task.getAllocationConstraint();
-		if (allocConst == null) {
-			cmbAllocationConstraint.setSelectedItem(""); // null -> ""
-		} else {
-			cmbAllocationConstraint.setSelectedItem(allocConst);
-		}
+		/* Basic fields
+		 * -------------------- */
+		
+		txteName.setObject(task.getName());
+		txteNotes.setObject(task.getNotes());
+		lstePriority.setObject(task.getStandardPriority());
+		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
+
+		/* Schedule
+		 * -------------------- */
+
+		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
+		
+		// Visualising the schedule
+		this.updateTimeline(task.getName(), cips);
+		
+		// Editing the schedule
+		this.setEditor.setObject(cips.periodSet());
+		this.cSetManager.setObject(cips.periodSetConstraint());
+
+		/* Verification
+		 * -------------------- */
+		
+		this.setVerification(task.getVerification());
 	}
 
 	/**
@@ -261,16 +604,19 @@ public class EditTask extends JScrollPane {
 	 * 
 	 * @return True if all fields are valid, false otherwise.
 	 */
+	@Override
 	public boolean validateFields() {
 		boolean valid = true;
 		
-		// Name
-		String name = txtName.getText();
-		if (name.isEmpty()) valid = false;
+		if (!txteName.validateFields()) valid = false;
+		if (!txteNotes.validateFields()) valid = false;
+		if (!lstePriority.validateFields()) valid = false;
+		if (!lsteAllocationConstraint.validateFields()) valid = false;
+
+		if (!setEditor.validateFields()) valid = false;
+		if (!cSetManager.getEditor().validateFields()) valid = false;
 		
-		// Notes - no validation
-		// Standard Priority - combo box does validation
-		// Allocation Constraint - combo box does validation
+		if (!verificationEditor.validateFields()) valid = false;
 		
 		return valid;
 	}
@@ -280,17 +626,38 @@ public class EditTask extends JScrollPane {
 	 * 
 	 * @param task The task to update.
 	 */
-	public void updateTask(Task task) {
-		task.setName(txtName.getText());
-		task.setNotes(txtNotes.getText());
-		task.setStandardPriority(
-			(TaskPriority) cmbPriority.getSelectedObjects()[0]);
+	@Override
+	public Task getObject() {
+		// Basic fields
+		active.setName(txteName.getObject());
+		active.setNotes(txteNotes.getObject());
+		active.setStandardPriority(lstePriority.getObject());
+		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
 		
-		Object obj = cmbAllocationConstraint.getSelectedObjects()[0];
-		if (obj instanceof String && obj.equals("")) {
-			task.setAllocationConstraint(null);
-		} else {
-			task.setAllocationConstraint((User) obj);
-		}
+		// Schedule constraint fields
+		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
+		// problematic memory-wise, and is less complicated than checking to see
+		// if it's changed.
+		active.setScheduleConstraint(this.getScheduleConstraint());
+		
+		// Verification
+		active.setVerification(omgVerification.getObjectManager().getObject());
+		
+		return active;
+	}
+
+	/* Utilities used in multiple places
+	 * -------------------------------------------------- */
+	
+	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
+		return new ConstrainedIntervaledPeriodSet(
+			setEditor.getObject(), cSetManager.getObject()
+		);
+	}
+
+	private static <T> List<T> nullable(List<T> list) {
+		List<T> fullList = list;
+		fullList.add(null);
+		return fullList;
 	}
 }

@@ -1,14 +1,12 @@
 package guicomponents;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +26,16 @@ import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
+import domain.Verification;
 import domain.VerificationExecution;
 import exceptions.TaskManagerExceptions;
-import guicomponents.utils.DateTimePicker;
+import guicomponents.utils.DateRangePicker;
 import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
+import kf5012darthmaulapplication.User;
+import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Event;
+import temporal.IntervaledPeriodSet;
 import temporal.Period;
 import temporal.TemporalList;
 
@@ -41,8 +44,7 @@ public class ViewTasks extends JPanel {
 	private static final DateTimeFormatter dateTimeFormatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 
-	private DateTimePicker startDateTimePicker;
-	private DateTimePicker endDateTimePicker;
+	private DateRangePicker dateRangePicker;
 
 	private List<TaskExecution> allTaskExecs;
 	private Map<Task, List<TaskExecution>> taskTree;
@@ -58,33 +60,18 @@ public class ViewTasks extends JPanel {
 		gbl_viewTasksPanel.columnWidths = new int[]{0, 0};
 		gbl_viewTasksPanel.rowHeights = new int[]{0, 0, 0, 0};
 		gbl_viewTasksPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-		// The 0.15 weight is a hack - there's a bug/miscommunication somewhere
-		// between GridBagLayout and FlowLayout/WrapLayout, but I don't have
-		// time to properly diagnose it.
-		gbl_viewTasksPanel.rowWeights = new double[]{0.15, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_viewTasksPanel.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
 		this.setLayout(gbl_viewTasksPanel);
 
 		// Date Range
-		JPanel rangePanel = new JPanel();
-		GridBagConstraints gbc_rangePanel = new GridBagConstraints();
-		gbc_rangePanel.fill = GridBagConstraints.BOTH;
-		gbc_rangePanel.insets = new Insets(0, 0, 5, 0);
-		gbc_rangePanel.gridx = 0;
-		gbc_rangePanel.gridy = 0;
-		this.add(rangePanel, gbc_rangePanel);
-		rangePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-
-		this.startDateTimePicker = new DateTimePicker(
-			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS), // Start of today
-			"Start Date/Time"
-		);
-		rangePanel.add(startDateTimePicker);
-		
-		this.endDateTimePicker = new DateTimePicker(
-			LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).plusDays(1), // End of today
-			"End Date/Time"
-		);
-		rangePanel.add(endDateTimePicker);
+		dateRangePicker = new DateRangePicker();
+		dateRangePicker.addChangeListener((e) -> this.refresh());
+		GridBagConstraints gbc_dateRangePicker = new GridBagConstraints();
+		gbc_dateRangePicker.fill = GridBagConstraints.HORIZONTAL;
+		gbc_dateRangePicker.insets = new Insets(0, 0, 5, 0);
+		gbc_dateRangePicker.gridx = 0;
+		gbc_dateRangePicker.gridy = 0;
+		this.add(dateRangePicker, gbc_dateRangePicker);
 		
 		JPanel instructionsPanel = new JPanel();
 		GridBagConstraints gbc_instructionsPanel = new GridBagConstraints();
@@ -222,8 +209,8 @@ public class ViewTasks extends JPanel {
 		this.taskJTree.setRootVisible(false);
 		taskTreeScrollPane.setViewportView(this.taskJTree);
 	}
-
-	public void refresh() {
+	
+	public void reload() {
 		// Try to connect to the DB each time you refresh - if one fails, you
 		// can try again.
 		DBAbstraction db;
@@ -252,40 +239,128 @@ public class ViewTasks extends JPanel {
 		// Get tasks and task executions
 		//this.allTasks = db.getTaskList();
 		//this.allTaskExecs = db.getTaskExecutionList();
-		
-		Task t1 = new Task();
-		Task t2 = new Task();
-		Task t3 = new Task();
+
+		//////////////////////////////////////////////////
 		this.allTaskExecs = new ArrayList<>();
-		this.allTaskExecs.add(new TaskExecution(
+		
+		Task t1 = new Task(
+			null,
+			"Check toilets", "",
+			null, null, null,
+			TaskPriority.NORMAL,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+					Duration.ofHours(2)
+				),
+				new IntervaledPeriodSet(
+					new Period(dt("9:00am 9/5/2021"), dt("5:00pm 9/5/2021")),
+					Duration.ofDays(1)
+				)
+			),
+			null, null
+		);
+		
+		// Some on the 9th
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("8:30am 9/5/2021"), dt("11:00am 9/5/2021")),
+			new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("11:30am 9/5/2021"), dt("12:00pm 9/5/2021")),
+			new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+		allTaskExecs.add(new TaskExecution(
 			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("12:30pm 9/5/2021"), dt("1:00pm 9/5/2021")),
+			new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
+
+		// Some on the 10th
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
+			null, null, null
+		));
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
+			null, null, null
+		));
+		allTaskExecs.add(new TaskExecution(
+			null, t1, "", TaskPriority.NORMAL,
+			new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+			null, null, null
+		));
+
+		// A low-priority one-off task without a deadline
+		Task t2 = new Task(
+			null,
+			"Fix Window on bike shed", "",
+			null, null, null,
+			TaskPriority.LOW,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("9:45am 9/5/2021"), (Duration) null), null
+				),
+				null
+			),
+			null, null
+		);
+		
+		allTaskExecs.add(new TaskExecution(
 			null, t2, "", TaskPriority.LOW,
 			new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
 			null, null, null
 		));
-		this.allTaskExecs.add(new TaskExecution(
-			null, t3, "Important for some reason", TaskPriority.HIGH,
-			new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
-			null, null, null
-		));
+
+		// A high-priority one-off task with deadline and verification.
+		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
 		
+		Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+		Task t3 = new Task(
+			null,
+			"Fix Broken Pipe",
+			"The waste pipe outside of the toilets on the 3rd floor of Big Building is broken and leaking. Health hazard - fix ASAP.",
+			null, null, null,
+			TaskPriority.HIGH,
+			new ConstrainedIntervaledPeriodSet(
+				new IntervaledPeriodSet(
+					new Period(dt("1:32pm 10/5/2021"), dt("5:00pm 10/5/2021")), null
+				),
+				null
+			),
+			null,
+			verification
+		);
+		
+		// The task execution has been allocated to myUser
+		TaskExecution t3Exec = new TaskExecution(
+			null, t3, "", TaskPriority.HIGH,
+			new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+			myUser,
+			null, null
+		);
+		
+		// The verification execution
+		VerificationExecution t3VerExec = new VerificationExecution(
+			null, verification, t3Exec, "", Duration.ofHours(3), null, null
+		);
+		t3Exec.setVerification(t3VerExec);
+
+		// Add both
+		allTaskExecs.add(t3Exec);
+		//////////////////////////////////////////////////
+		
+		this.refresh();
+	}
+
+	public void refresh() {
 		// Filter list to relevant task executions
-		LocalDateTime start = this.startDateTimePicker.getDateTime();
-		LocalDateTime end = this.endDateTimePicker.getDateTime();
+		LocalDateTime start = this.dateRangePicker.getStartDateTime();
+		LocalDateTime end = this.dateRangePicker.getEndDateTime();
 		
 		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(this.allTaskExecs);
 		List<TaskExecution> execsInRange = taskExecTemporal.getBetween(

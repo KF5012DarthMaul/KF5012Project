@@ -1,6 +1,5 @@
 package guicomponents.utils;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,6 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeListener;
 
 import org.jdatepicker.impl.DateComponentFormatter;
 import org.jdatepicker.impl.JDatePanelImpl;
@@ -24,6 +25,7 @@ import org.jdatepicker.impl.UtilDateModel;
  * 
  * @author William Taylor
  */
+@SuppressWarnings("serial")
 public class DateTimePicker extends JPanel {
 	public static final Properties datePanelProperties = new Properties();
 	static {
@@ -31,43 +33,51 @@ public class DateTimePicker extends JPanel {
 		datePanelProperties.put("text.month", "Month");
 		datePanelProperties.put("text.year", "Year");
 	}
-	
+
 	private UtilDateModel dateModel;
-	private JDatePanelImpl datePanel;
 	private JDatePickerImpl datePicker;
 	private JSpinner timeSpinner;
-	private JSpinner.DateEditor timeEditor;
 	
 	public DateTimePicker(LocalDateTime initialTime, String label) {
-		JLabel lblLabel = new JLabel(label);
-		add(lblLabel);
+		// Idea from https://stackoverflow.com/a/28224244
+		setBorder(new EmptyBorder(-5, -5, -5, -5));
+		
+		if (label != null) {
+			JLabel lblLabel = new JLabel(label);
+			add(lblLabel);
+		}
 
 		// See:
 		// - https://stackoverflow.com/questions/26794698/how-do-i-implement-jdatepicker
 		// - https://www.codejava.net/java-se/swing/how-to-use-jdatepicker-to-display-calendar-component
 		dateModel = new UtilDateModel();
-		datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
+		JDatePanelImpl datePanel = new JDatePanelImpl(dateModel, datePanelProperties);
 		datePicker = new JDatePickerImpl(datePanel, new DateComponentFormatter());
 		add(datePicker);
 		
 		timeSpinner = new JSpinner(new SpinnerDateModel());
-		timeEditor = new JSpinner.DateEditor(timeSpinner, "h:mma");
+		JSpinner.DateEditor timeEditor = new JSpinner.DateEditor(timeSpinner, "h:mma");
 		timeSpinner.setEditor(timeEditor);
 		add(timeSpinner);
 		
 		setDateTime(initialTime);
 	}
-
+	
 	public DateTimePicker(String label) {
 		this(LocalDateTime.now(), label);
 	}
 	public DateTimePicker(LocalDateTime initialTime) {
-		this(initialTime, "");
+		this(initialTime, null);
 	}
 	public DateTimePicker() {
-		this(LocalDateTime.now(), "");
+		this(LocalDateTime.now(), null);
 	}
-	
+
+	public void addChangeListener(ChangeListener listener) {
+		this.dateModel.addChangeListener(listener);
+		this.timeSpinner.addChangeListener(listener);
+	}
+
 	public LocalDateTime getDateTime() {
 		Date date = (Date) dateModel.getValue();
 		LocalDate localDate = LocalDate.ofInstant(
@@ -95,5 +105,10 @@ public class DateTimePicker extends JPanel {
 		
 		long milliTime = time.toEpochSecond(date, offset) * 1000;
 		timeSpinner.setValue(new Date(milliTime));
+	}
+	
+	public void setVisible(boolean visible) {
+		datePicker.setVisible(visible);
+		timeSpinner.setVisible(visible);
 	}
 }
