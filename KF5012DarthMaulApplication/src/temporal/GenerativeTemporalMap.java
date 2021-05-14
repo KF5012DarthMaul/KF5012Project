@@ -262,7 +262,7 @@ public class GenerativeTemporalMap<T extends Event>
 		if (cSetInterval == null) {
 			this.generateBetween(
 				genStart.isAfter(cSetRefStart) ? genStart : cSetRefStart,
-				end.isBefore(cSetRefEnd) ? end : cSetRefEnd,
+				cSetRefEnd == null || end.isBefore(cSetRefEnd) ? end : cSetRefEnd,
 				true, // It is deliberately non-contiguous
 				true // Recursive base-case
 			);
