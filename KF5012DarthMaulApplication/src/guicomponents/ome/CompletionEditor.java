@@ -99,7 +99,7 @@ public class CompletionEditor
                 
                 // Quality of work
                 
-                JLabel lblQuality = new JLabel("Priority");
+                JLabel lblQuality = new JLabel("Quality of work");
 		GridBagConstraints gbc_lblQuality = new GridBagConstraints();
 		gbc_lblQuality.anchor = GridBagConstraints.EAST;
 		gbc_lblQuality.insets = new Insets(0, 5, 5, 5);
@@ -155,6 +155,8 @@ public class CompletionEditor
         
 	@Override
 	public void setObject(Completion obj) {
+            active = obj;
+            
             lsteUser.setObject(obj.getStaff());
             ldteStartTime.setObject(obj.getStartTime());
             ldteCompletionTime.setObject(obj.getCompletionTime());

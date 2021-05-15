@@ -1,5 +1,9 @@
 package guicomponents.ome;
 
+import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions;
+import domain.Completion;
+import domain.TaskCompletionQuality;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -12,6 +16,12 @@ import javax.swing.JPanel;
 
 import domain.VerificationExecution;
 import guicomponents.utils.ObjectEditor;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import javax.swing.JSeparator;
+import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
+import kf5012darthmaulapplication.User;
 
 @SuppressWarnings("serial")
 public class VerificationExecutionEditor
@@ -24,15 +34,19 @@ public class VerificationExecutionEditor
 	private LongTextEditor txteNotes;
 	private DurationEditor dureStandardDeadline;
 	
+        //Completion editor
+        private CompletionEditor edtCompletion;
+        private DomainObjectManager<Completion> omgCompletion;
+        
 	/**
 	 * Create the panel.
 	 */
 	public VerificationExecutionEditor() {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0, 0};
-		gridBagLayout.rowHeights = new int[]{0, 0, 0};
+		gridBagLayout.rowHeights = new int[]{0, 0, 0, 0, 0};
 		gridBagLayout.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+		gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		setLayout(gridBagLayout);
 		
 		// Notes
@@ -72,6 +86,41 @@ public class VerificationExecutionEditor
 		gbc_dureStandardDeadline.gridx = 1;
 		gbc_dureStandardDeadline.gridy = 1;
 		add(dureStandardDeadline, gbc_dureStandardDeadline);
+                
+                /* Completion Editor
+		 * -------------------- */
+                JSeparator sep2 = new JSeparator();
+                GridBagConstraints gbc_sep2 = new GridBagConstraints();
+                gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
+                gbc_sep2.insets = new Insets(0, 5, 5, 5);
+                gbc_sep2.gridwidth = 2;
+                gbc_sep2.gridx = 0;
+                gbc_sep2.gridy = 2;
+                add(sep2, gbc_sep2);
+
+                edtCompletion = new CompletionEditor();
+
+                omgCompletion = new DomainObjectManager<>(
+                        "Has been verified", edtCompletion,
+
+                        // Create a new one each time the checkbox is re-ticked
+                        () -> new Completion(
+                                null, // No ID
+                                active.getAllocation(),
+                                active.getPeriod().start(),
+                                LocalDateTime.now(),
+                                TaskCompletionQuality.GOOD,
+                                "" // No notes
+                        )
+                );
+
+                GridBagConstraints gbc_compPanel = new GridBagConstraints();
+                gbc_compPanel.insets = new Insets(5, 5, 5, 5);
+                gbc_compPanel.anchor = GridBagConstraints.WEST;
+                gbc_compPanel.gridwidth = 2;
+                gbc_compPanel.gridx = 0;
+                gbc_compPanel.gridy = 3;
+                add(omgCompletion, gbc_compPanel);
 	}
 	
 	@Override
@@ -87,6 +136,7 @@ public class VerificationExecutionEditor
 		
 		txteNotes.setObject(obj.getNotes());
 		dureStandardDeadline.setObject(obj.getDeadline());
+                omgCompletion.getObjectManager().setObject(obj.getCompletion());
 	}
 
 	@Override
@@ -95,7 +145,8 @@ public class VerificationExecutionEditor
 		
 		if (!txteNotes.validateFields()) valid = false;
 		if (!dureStandardDeadline.validateFields()) valid = false;
-		
+		if (!omgCompletion.getObjectManager().validateFields()) valid = false;
+                
 		return valid;
 	}
 
@@ -103,7 +154,23 @@ public class VerificationExecutionEditor
 	public VerificationExecution getObject() {
 		active.setNotes(txteNotes.getObject());
 		active.setDeadline(dureStandardDeadline.getObject());
-		
+		active.setCompletion(omgCompletion.getObjectManager().getObject());
+                
 		return active;
 	}
+        
+                /* Allocation combo box management
+	 * -------------------------------------------------- */
+	// Loading of users for various components
+	private boolean usersLoaded = false;
+	/**
+	 * Load users into the allocation constraint combo box and all other
+	 * components that require them.
+	 * 
+	 * @param reload If users are cached, whether to re-fetch users regardless.
+	 */
+	public void loadUsers(List<User> users) {
+            edtCompletion.setUsers(users);
+	}
+        
 }

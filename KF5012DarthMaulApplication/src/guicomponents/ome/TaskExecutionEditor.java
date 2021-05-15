@@ -55,9 +55,9 @@ public class TaskExecutionEditor
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
 		gbl_formPanel.columnWidths = new int[]{0, 0, 0};
-		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0};
+		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_formPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ,Double.MIN_VALUE};
 		formPanel.setLayout(gbl_formPanel);
 
 		/* Basics
@@ -267,7 +267,7 @@ public class TaskExecutionEditor
 			
 			// (Re)fill the list
 			edtCompletion.setUsers(caretakersAndNull);
-			
+			edtVerificationExec.loadUsers(caretakersAndNull);
 			usersLoaded = true;
 		}
 	}
