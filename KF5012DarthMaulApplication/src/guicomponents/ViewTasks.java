@@ -22,13 +22,14 @@ import javax.swing.tree.TreePath;
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
-import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
 import domain.Verification;
 import domain.VerificationExecution;
 import exceptions.TaskManagerExceptions;
+import guicomponents.formatters.TaskExecutionFormatter;
+import guicomponents.formatters.TaskFormatter;
 import guicomponents.utils.DateRangePicker;
 import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
@@ -42,7 +43,10 @@ import temporal.TemporalList;
 @SuppressWarnings("serial")
 public class ViewTasks extends JPanel {
 	private static final DateTimeFormatter dateTimeFormatter =
-			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
+		DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
+
+	private static final TaskFormatter TASK_FORMATTER = new TaskFormatter();
+	private static final TaskExecutionFormatter TASK_EXEC_FORMATTER = new TaskExecutionFormatter();
 
 	private DateRangePicker dateRangePicker;
 
@@ -96,9 +100,6 @@ public class ViewTasks extends JPanel {
 		this.taskJTreeRoot = new DefaultMutableTreeNode();
 		this.taskJTreeModel = new DefaultTreeModel(this.taskJTreeRoot);
 		this.taskJTree = new JTree(this.taskJTreeModel) {
-			// Based on https://www.logicbig.com/tutorials/java-swing/jtree-renderer.html
-			private static final String SPAN_FORMAT = "<span style='color:%s;'>%s</span>";
-			
 			@Override
 			public String convertValueToText(
 					Object value, boolean sel, boolean expanded, boolean leaf,
@@ -107,102 +108,15 @@ public class ViewTasks extends JPanel {
 				Object item = ((DefaultMutableTreeNode) value).getUserObject();
 				if (item == null) {
 					return "";
-				}
-				
-				String text;
-				if (item instanceof Task) {
-					Task task = (Task) item;
 					
-					String name = task.getName();
-					String priority = task.getStandardPriority().toString();
-					
-					text = name+" (standard priority: "+priority+")";
+				} else if (item instanceof Task) {
+					return TASK_FORMATTER.apply((Task) item);
 					
 				} else if (item instanceof TaskExecution) {
-					// Get Objects
-					TaskExecution taskExec = (TaskExecution) item;
-					Period period = taskExec.getPeriod();
-					Duration duration = period.duration();
-					Completion completion = taskExec.getCompletion();
-					VerificationExecution verification = taskExec.getVerification();
-
-					// Times
-					String start = period.start().format(dateTimeFormatter);
-					String durationStr = "continuous";
-					if (duration != null) {
-						durationStr = formatDuration(duration);
-					}
-					
-					// Priority
-					String priority = taskExec.getPriority().toString();
-					
-					// Completion / Overdue
-					String completionStatus = formatCompletionStatus(
-						period, completion);
-
-					// Verification
-					String verificationStr = "";
-					if (verification != null) {
-						Period verPeriod = taskExec.getPeriod();
-						Duration verDuration = verPeriod.duration();
-						Completion verCompletion = taskExec.getCompletion();
-
-						// Times
-						String verDurationStr = formatDuration(verDuration);
-						
-						// Completion / Overdue
-						String verCompletionStatus = formatCompletionStatus(
-							verPeriod, verCompletion);
-						
-						// Glue together
-						verificationStr = String.format(
-							" [verification (%s) - %s]",
-							verDurationStr, verCompletionStatus
-						);
-					}
-					
-					// Glue together
-					text = String.format(
-						"<html>%s (%s | priority: %s) - %s%s</html>",
-						start, durationStr, priority, completionStatus,
-						verificationStr
-					);
+					return TASK_EXEC_FORMATTER.apply((TaskExecution) item);
 					
 				} else {
 					throw new TaskManagerExceptions.InvalidTaskTypeException();
-				}
-				
-				return text;
-			}
-
-			private String formatCompletionStatus(
-					Period period, Completion completion
-			) {
-				LocalDateTime now = LocalDateTime.now();
-				
-				if (completion == null) {
-					if (now.isAfter(period.end())) {
-						return String.format(SPAN_FORMAT, "red", "overdue!");
-					} else if (now.isAfter(period.start())) {
-						return String.format(SPAN_FORMAT, "blue", "in progress");
-					} else {
-						return "upcoming";
-					}
-				} else {
-					return String.format(SPAN_FORMAT, "green", "done ✔️");
-				}
-			}
-			
-			// Based on https://stackoverflow.com/a/266970
-			private String formatDuration(Duration duration) {
-				long totalM = duration.toMinutes();
-				long h = (totalM / 60);
-				long m = (totalM % 60);
-				
-				if (h == 0) {
-					return String.format("%02dm", m);
-				} else {
-					return String.format("%dh, %02dm", h, m);
 				}
 			}
 		};
