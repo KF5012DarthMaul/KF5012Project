@@ -323,7 +323,7 @@ public final class DBAbstraction
                 boolean b = db.executePrepared();
                 userCache.add(new User(username, accountType));
                 return b;
-            } 
+            }
             catch (SQLException ex) 
             {
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
@@ -620,7 +620,7 @@ public final class DBAbstraction
                 ArrayList<Verification> verfList = new ArrayList<>();
                 if(!verfResSet.isClosed())
                 {
-                    do
+                     while(verfResSet.next())
                     {
                         int verfID = verfResSet.getInt(1);
                         String verfNotes = verfResSet.getString(2);
@@ -632,10 +632,9 @@ public final class DBAbstraction
                         TaskPriority priority = TaskPriority.values()[verfPrio];
                         verfList.add(new Verification(verfID, verfNotes, priority, duration, allocation));
                     }
-                    while(verfResSet.next());
                 }
                 
-                do
+                while(res.next())
                 {
                     int taskID = res.getInt(1);
                     String taskName = res.getString(2);
@@ -671,7 +670,7 @@ public final class DBAbstraction
                     Map<User, Integer> effectiveness = new HashMap<>();
                     if(!maps.isClosed())
                     {
-                        do
+                        while(maps.next())
                         {
                             int mapTaskID = maps.getInt(2);
                             if(taskID == mapTaskID)
@@ -690,12 +689,11 @@ public final class DBAbstraction
                             {
                                 break;
                             }
-                        } while(maps.next());
+                        }
                     }
                     TaskPriority priority = TaskPriority.values()[taskPrio];
                     tasks.add(new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, scheduleConstraint, allocationConstraint, verification));
                 }
-                while(res.next());
                 return tasks;
             }
             else
@@ -704,6 +702,83 @@ public final class DBAbstraction
             }
         }
         catch (SQLException | UserDoesNotExistException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public ArrayList<Completion> getCompletionList() throws EmptyResultSetException
+    {
+        try 
+        {
+            db.prepareStatement("SELECT compl_id, caretaker, start_time, compl_time, quality, notes"
+                    + " FROM tblCompletion");
+            ArrayList<Completion> completions = new ArrayList<>();
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                while(res.next())
+                {
+                    int compID = res.getInt(1);
+                    String caretaker = res.getString(2);
+                    User user = getUser(caretaker);
+                    Long st = res.getLong(3);
+                    Long et = res.getLong(4);
+                    TaskCompletionQuality tcq = TaskCompletionQuality.values()[res.getInt(5)];
+                    String notes = res.getString(6);
+                    LocalDateTime startTime = LocalDateTime.ofEpochSecond(st, 0, ZoneOffset.UTC);
+                    LocalDateTime endTime = LocalDateTime.ofEpochSecond(et, 0, ZoneOffset.UTC);
+                    completions.add(new Completion(compID, user, startTime, endTime, tcq, notes));
+                }
+                return completions;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+        }
+        catch(SQLException | UserDoesNotExistException ex)
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public ArrayList<VerificationExecution> getVerificationExecutionList() throws EmptyResultSetException
+    {
+        try 
+        {
+            ArrayList<Completion> completions = getCompletionList();
+            ArrayList<Task> taskList = getTaskList();
+            ArrayList<VerificationExecution> execList = new ArrayList();
+            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, completion_id"
+                    + " FROM tblVerfExecutions");
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                while(res.next())
+                {
+                   int id = res.getInt(1);
+                   int verfID = res.getInt(2);
+                   Verification verf = taskList.stream().filter(task -> task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
+                   String notes = res.getString(3);
+                   Duration d = Duration.ofMinutes(res.getInt(4));
+                   String caretaker = res.getString(5);
+                   User u = res.wasNull() ? null : getUser(caretaker);
+                   int compid = res.getInt(6);
+                   // Could be not complete!
+                   Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().get();
+                   execList.add(new VerificationExecution(id, verf, null, notes, d, u, c));
+                }
+                return execList;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+        }
+        catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -725,12 +800,11 @@ public final class DBAbstraction
             if(!res.isClosed())
             {
                 ArrayList<TaskExecution> tasks = new ArrayList();
-                do
+                while(res.next())
                 {
                     
                     //tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
                 }
-                while(res.next());
                 return tasks;
             }
             else 
@@ -761,7 +835,7 @@ public final class DBAbstraction
             {
                 ArrayList<TaskExecution> exes = new ArrayList();
                 ArrayList<Task> tasks = getTaskList();
-                do
+                while(res.next())
                 {
                     int id = res.getInt(1);
                     int taskID = res.getInt(2);
@@ -774,7 +848,6 @@ public final class DBAbstraction
                     TaskPriority taskPrio = TaskPriority.values()[prio];
                     exes.add(new TaskExecution(id, task, notes, taskPrio, taskP, u, null, null));
                 }
-                while(res.next());
                 return exes;
             }
             else
@@ -798,6 +871,112 @@ public final class DBAbstraction
     // Retrieve all tasks that have time restrictions for today
     public ArrayList<TaskExecution> getUnallocatedDailyPriorityTaskList()
     {
+        return null;
+    }
+    
+    public ArrayList<TaskExecution> getCompletedTasksForUser(User user) throws EmptyResultSetException
+    {
+        return getCompletedTasksForUser(user.getUsername());
+    }
+    
+    public ArrayList<TaskExecution> getCompletedTasksForUser(String username) throws EmptyResultSetException
+    {
+        ArrayList<Task> tasks = getTaskList();
+        ArrayList<Completion> completions = getCompletionList();
+        ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
+        try 
+        {
+            db.prepareStatement( "SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id FROM tblTaskExecutions"
+                    + " WHERE caretaker = ? AND compl_id IS NOT NULL");
+            db.add(username);
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<TaskExecution> exes = new ArrayList();
+                while(res.next())
+                {
+                    int id = res.getInt(1);
+                    int taskID = res.getInt(2);
+                    Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
+                    String notes = res.getString(3);
+                    TaskPriority prio = TaskPriority.values()[res.getInt(4)];
+                    Period taskP = periodFromEpoch(res.getLong(5), res.getLong(6));
+                    String caretaker = res.getString(7);
+                    User u = res.wasNull() ? null : getUser(caretaker);
+                    int compID = res.getInt(8);
+                    Completion c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().get();
+                    int verfExeID = res.getInt(9);
+                    TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
+                    if(!res.wasNull())
+                    {
+                        VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().get();
+                        verfExe.setTaskExec(exe);
+                        exe.setVerification(verfExe);
+                    }
+                    exes.add(exe);
+                }
+                return exes;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+            
+        } 
+        catch (SQLException | UserDoesNotExistException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public ArrayList<TaskExecution> getCompletedTasksList() throws EmptyResultSetException
+    {
+        ArrayList<Task> tasks = getTaskList();
+        ArrayList<Completion> completions = getCompletionList();
+        ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
+        try 
+        {
+            db.prepareStatement( "SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id FROM tblTaskExecutions"
+                    + " WHERE compl_id IS NOT NULL");
+            ResultSet res = db.executePreparedQuery();
+            if(!res.isClosed())
+            {
+                ArrayList<TaskExecution> exes = new ArrayList();
+                while(res.next())
+                {
+                    int id = res.getInt(1);
+                    int taskID = res.getInt(2);
+                    Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
+                    String notes = res.getString(3);
+                    TaskPriority prio = TaskPriority.values()[res.getInt(4)];
+                    Period taskP = periodFromEpoch(res.getLong(5), res.getLong(6));
+                    String caretaker = res.getString(7);
+                    User u = res.wasNull() ? null : getUser(caretaker);
+                    int compID = res.getInt(8);
+                    Completion c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().get();
+                    int verfExeID = res.getInt(9);
+                    TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
+                    if(!res.wasNull())
+                    {
+                        VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().get();
+                        verfExe.setTaskExec(exe);
+                        exe.setVerification(verfExe);
+                    }
+                    exes.add(exe);
+                }
+                return exes;
+            }
+            else
+            {
+                throw new EmptyResultSetException();
+            }
+            
+        } 
+        catch (SQLException | UserDoesNotExistException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return null;
     }
     
