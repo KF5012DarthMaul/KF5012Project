@@ -79,7 +79,8 @@ public class ManageTasks extends JPanel {
 				
 				layout = (CardLayout) buttonPanel.getLayout();
 				layout.show(buttonPanel, "editTaskOrExecButtons");
-
+                                
+                                edtTaskExecution.loadUsers();
 				layout = (CardLayout) mainPanel.getLayout();
 				layout.show(mainPanel, "editTaskExec");
 			}

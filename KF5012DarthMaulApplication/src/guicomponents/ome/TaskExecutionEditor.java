@@ -1,5 +1,9 @@
 package guicomponents.ome;
 
+import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions;
+import domain.Completion;
+import domain.TaskCompletionQuality;
 import domain.TaskPriority;
 import domain.TaskExecution;
 import domain.VerificationExecution;
@@ -9,9 +13,11 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -19,6 +25,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
+import kf5012darthmaulapplication.User;
 
 @SuppressWarnings("serial")
 public class TaskExecutionEditor
@@ -34,7 +43,10 @@ public class TaskExecutionEditor
 	// Verification Execution
 	private VerificationExecutionEditor edtVerificationExec;
 	private DomainObjectManager<VerificationExecution> omgVerificationExec;
-
+        
+        //Completion editor
+        private CompletionEditor edtCompletion;
+        private DomainObjectManager<Completion> omgCompletion;
 	/**
 	 * Create the panel.
 	 */
@@ -43,9 +55,9 @@ public class TaskExecutionEditor
 		setViewportView(formPanel);
 		GridBagLayout gbl_formPanel = new GridBagLayout();
 		gbl_formPanel.columnWidths = new int[]{0, 0, 0};
-		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0};
+		gbl_formPanel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_formPanel.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_formPanel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ,Double.MIN_VALUE};
 		formPanel.setLayout(gbl_formPanel);
 
 		/* Basics
@@ -131,6 +143,41 @@ public class TaskExecutionEditor
 		gbc_panel.gridx = 0;
 		gbc_panel.gridy = 4;
 		formPanel.add(omgVerificationExec, gbc_panel);
+                
+                /* Completion Editor
+		 * -------------------- */
+                JSeparator sep2 = new JSeparator();
+                GridBagConstraints gbc_sep2 = new GridBagConstraints();
+                gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
+                gbc_sep2.insets = new Insets(0, 5, 5, 5);
+                gbc_sep2.gridwidth = 2;
+                gbc_sep2.gridx = 0;
+                gbc_sep2.gridy = 5;
+                formPanel.add(sep2, gbc_sep2);
+
+                edtCompletion = new CompletionEditor();
+
+                omgCompletion = new DomainObjectManager<>(
+                        "Is complete", edtCompletion,
+
+                        // Create a new one each time the checkbox is re-ticked
+                        () -> new Completion(
+                                null, // No ID
+                                active.getAllocation(),
+                                active.getPeriod().start(),
+                                LocalDateTime.now(),
+                                TaskCompletionQuality.GOOD,
+                                "" // No notes
+                        )
+                );
+
+                GridBagConstraints gbc_compPanel = new GridBagConstraints();
+                gbc_compPanel.insets = new Insets(5, 5, 5, 5);
+                gbc_compPanel.anchor = GridBagConstraints.WEST;
+                gbc_compPanel.gridwidth = 2;
+                gbc_compPanel.gridx = 0;
+                gbc_compPanel.gridy = 6;
+                formPanel.add(omgCompletion, gbc_compPanel);
 	}
 
 	@Override
@@ -152,6 +199,7 @@ public class TaskExecutionEditor
 		txteNotes.setObject(taskExec.getNotes());
 		lstePriority.setObject(taskExec.getPriority());
 		omgVerificationExec.getObjectManager().setObject(taskExec.getVerification());
+                omgCompletion.getObjectManager().setObject(taskExec.getCompletion());
 	}
 
 	/**
@@ -166,7 +214,8 @@ public class TaskExecutionEditor
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
 		if (!omgVerificationExec.getObjectManager().validateFields()) valid = false;
-		
+		if (!omgCompletion.getObjectManager().validateFields()) valid = false;
+                
 		return valid;
 	}
 
@@ -181,7 +230,59 @@ public class TaskExecutionEditor
 		active.setNotes(txteNotes.getObject());
 		active.setPriority(lstePriority.getObject());
 		active.setVerification(omgVerificationExec.getObjectManager().getObject());
+                active.setCompletion(omgCompletion.getObjectManager().getObject());
 		
 		return active;
+	}
+        
+        
+        /* Allocation combo box management
+	 * -------------------------------------------------- */
+	// Loading of users for various components
+	private boolean usersLoaded = false;
+	/**
+	 * Load users into the allocation constraint combo box and all other
+	 * components that require them.
+	 * 
+	 * @param reload If users are cached, whether to re-fetch users regardless.
+	 */
+	public void loadUsers(boolean reload) {
+		if (!usersLoaded || reload) {
+			// Try to connect to the DB to get users - if that fails, you won't be
+			// able to edit the user, but can try again.
+			DBAbstraction db;
+			try {
+				db = DBAbstraction.getInstance();
+			} catch (DBExceptions.FailedToConnectException e) {
+				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
+				return;
+			}
+
+			// Get the users
+			List<User> allUsers = db.getAllUsers();
+			List<User> caretakersAndNull = 
+				allUsers.stream()
+				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
+				.collect(Collectors.toList());
+			
+			// (Re)fill the list
+			edtCompletion.setUsers(caretakersAndNull);
+			edtVerificationExec.loadUsers(caretakersAndNull);
+			usersLoaded = true;
+		}
+	}
+	
+	/**
+	 * Load users into the allocation constraint combo box. If already loaded,
+	 * do not reload.
+	 */
+	public void loadUsers() {
+		loadUsers(false);
+	}
+        
+	private static <T> List<T> nullable(List<T> list) {
+		List<T> fullList = list;
+		fullList.add(null);
+		return fullList;
 	}
 }
