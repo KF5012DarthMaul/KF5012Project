@@ -15,6 +15,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.awt.FlowLayout;
 import javax.swing.JTextField;
@@ -77,13 +78,16 @@ public class ViewReports extends JPanel {
 		ChangeListener changeTabs = new ChangeListener() {
 			private final DateTimeFormatter formatter =
 					DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
+			/**
+			 * 
+			 */
 	        public void stateChanged(ChangeEvent e) {
 	        	int tabIndex = tabbedPane.getSelectedIndex();
 	        	switch (tabIndex) {
 	        	case 0:
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
-	        		List<TaskExecution> tasks = db.getTaskStatus();
+	        		List<TaskExecution> tasks = db.getIncompleteTasks();
 	        		Object[][] data = new Object[tasks.size()][columns.length];
 	        		
 	        		for (int i = 0; i<tasks.size(); i++) {
