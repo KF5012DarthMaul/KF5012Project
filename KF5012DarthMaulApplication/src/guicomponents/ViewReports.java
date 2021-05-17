@@ -14,6 +14,7 @@ import javax.swing.JTabbedPane;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +25,15 @@ import javax.swing.JTable;
 import javax.swing.JScrollPane;  
 
 import domain.TaskExecution;
+import guicomponents.ome.ListSelectionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.User;
 
 public class ViewReports extends JPanel {
+	private static final DateTimeFormatter formatter =
+			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 	private JTable table;
+	private ListSelectionEditor<User> lsteCaretaker;
 
 	/**
 	 * Create the panel.
@@ -63,8 +69,14 @@ public class ViewReports extends JPanel {
 		JPanel report2 = new JPanel();
 		tabbedPane.addTab("Caretaker Performance", report2);
 		
+		lsteCaretaker = new ListSelectionEditor<>(
+			(user) -> user.getUsername() 
+		);
+		report2.add(lsteCaretaker);
+			
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
+		
 		
 		JPanel report3 = new JPanel();
 		tabbedPane.addTab("Task Performance", report3);
@@ -81,9 +93,22 @@ public class ViewReports extends JPanel {
 			return;
 		}
 		
+		lsteCaretaker.addItemListener((e) -> {
+			Object[] columns2 = {"Task Name", "Allocated Caretaker", "Due Date"};
+			List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
+			Object[][] data2 = new Object[tasks2.size()][columns2.length];
+			
+			for (int i = 0; i<tasks2.size(); i++) {
+				data2[i][0] = tasks2.get(i).getName();
+				data2[i][1] = tasks2.get(i).getAllocation().getUsername();
+				data2[i][2] = tasks2.get(i).getPeriod().end().format(formatter);
+			}
+			
+			table = new JTable(data2, columns2);
+			scrollPane_Caretaker_Performance.setViewportView(table);
+		});
+		
 		ChangeListener changeTabs = new ChangeListener() {
-			private final DateTimeFormatter formatter =
-					DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 
 	        public void stateChanged(ChangeEvent e) {
 	        	int tabIndex = tabbedPane.getSelectedIndex();
@@ -105,14 +130,23 @@ public class ViewReports extends JPanel {
 	        		break;
 	        		
 	        	case 1:
-	        		Object[] columns2 = {"Task Name", "Allocated Caretaker", "Due Date"};
-	        		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList();
+	        		Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+	        		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
 	        		Object[][] data2 = new Object[tasks2.size()][columns2.length];
 	        		
 	        		for (int i = 0; i<tasks2.size(); i++) {
+	        			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
+	        			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();
+	        			
 	        			data2[i][0] = tasks2.get(i).getName();
-	        			data2[i][1] = tasks2.get(i).getAllocation().getUsername();
-	        			data2[i][2] = tasks2.get(i).getPeriod().end().format(formatter);
+	        			data2[i][1] = dueDate.format(formatter);
+	        			data2[i][2] = completionTime.format(formatter);
+	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
+	        				data2[i][3] = "Completed on-time";
+	        			}
+	        			else {
+	        				data2[i][3] = "Over deadline";	
+	        			}
 	        		}
 	        		
 	        		table = new JTable(data2, columns2);
@@ -120,14 +154,24 @@ public class ViewReports extends JPanel {
 	        		break;
 	        		
 	        	case 2:
-	        		Object[] columns3 = {"Task Name", "Allocated Caretaker", "Due Date"};
+	        		Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
 	        		List<TaskExecution> tasks3 = db.getUnallocatedTaskExecutionList();
 	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
 	        		
 	        		for (int i = 0; i<tasks3.size(); i++) {
-	        			data3[i][0] = tasks3.get(i).getName();
-	        			data3[i][1] = tasks3.get(i).getAllocation().getUsername();
-	        			data3[i][2] = tasks3.get(i).getPeriod().end().format(formatter);
+	        			LocalDateTime dueDate = tasks3.get(i).getPeriod().end();
+	        			LocalDateTime completionTime = tasks3.get(i).getCompletion().getCompletionTime();
+	        			
+	        			data[i][0] = tasks3.get(i).getCompletion().getStaff();
+	        			data3[i][1] = tasks3.get(i).getName();
+	        			data3[i][2] = dueDate.format(formatter);
+	        			data3[i][3] = completionTime.format(formatter);
+	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
+	        				data3[i][4] = "Completed on-time";
+	        			}
+	        			else {
+	        				data3[i][4] = "Over deadline";	
+	        			}
 	        		}
 	        		table = new JTable(data3, columns3);
 	        		scrollPane_Task_Performance.setViewportView(table);
@@ -140,5 +184,4 @@ public class ViewReports extends JPanel {
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
 	}
-
 }
