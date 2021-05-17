@@ -79,6 +79,8 @@ public class DBMgr {
             
             // Create a completion for it, with the same user completing it as the allocated one.
             Completion c = new Completion(null, tex.getAllocation(), LocalDateTime.now(), LocalDateTime.now(), TaskCompletionQuality.ADEQUATE, "test completion");
+            // Reference it in the task execution object
+            tex.setCompletion(c);
             
             // Since tex now references a completion, it will get parsed by submitTaskExecution and inserted into the database.
             db.submitTaskExecution(tex);
