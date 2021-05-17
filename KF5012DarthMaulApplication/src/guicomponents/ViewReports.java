@@ -94,18 +94,27 @@ public class ViewReports extends JPanel {
 		}
 		
 		lsteCaretaker.addItemListener((e) -> {
-			Object[] columns2 = {"Task Name", "Allocated Caretaker", "Due Date"};
-			List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
-			Object[][] data2 = new Object[tasks2.size()][columns2.length];
-			
-			for (int i = 0; i<tasks2.size(); i++) {
-				data2[i][0] = tasks2.get(i).getName();
-				data2[i][1] = tasks2.get(i).getAllocation().getUsername();
-				data2[i][2] = tasks2.get(i).getPeriod().end().format(formatter);
-			}
-			
-			table = new JTable(data2, columns2);
-			scrollPane_Caretaker_Performance.setViewportView(table);
+			Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+    		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
+    		Object[][] data2 = new Object[tasks2.size()][columns2.length];
+    		
+    		for (int i = 0; i<tasks2.size(); i++) {
+    			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
+    			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();
+    			
+    			data2[i][0] = tasks2.get(i).getName();
+    			data2[i][1] = dueDate.format(formatter);
+    			data2[i][2] = completionTime.format(formatter);
+    			if (dueDate == null || !completionTime.isAfter(dueDate)) {
+    				data2[i][3] = "Completed on-time";
+    			}
+    			else {
+    				data2[i][3] = "Over deadline";	
+    			}
+    		}
+    		
+    		table = new JTable(data2, columns2);
+    		scrollPane_Caretaker_Performance.setViewportView(table);
 		});
 		
 		ChangeListener changeTabs = new ChangeListener() {
