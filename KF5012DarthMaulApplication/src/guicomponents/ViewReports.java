@@ -57,14 +57,20 @@ public class ViewReports extends JPanel {
 		JPanel report1 = new JPanel();
 		tabbedPane.addTab("Task Status", report1);
 		
-		JScrollPane scrollPane_1 = new JScrollPane();
-		report1.add(scrollPane_1);
+		JScrollPane scrollPane_Task_Status = new JScrollPane();
+		report1.add(scrollPane_Task_Status);
 					
 		JPanel report2 = new JPanel();
 		tabbedPane.addTab("Caretaker Performance", report2);
 		
+		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
+		report2.add(scrollPane_Caretaker_Performance);
+		
 		JPanel report3 = new JPanel();
 		tabbedPane.addTab("Task Performance", report3);
+		
+		JScrollPane scrollPane_Task_Performance = new JScrollPane();
+		report3.add(scrollPane_Task_Performance);
 		
 		DBAbstraction db;
 		try {
@@ -78,16 +84,14 @@ public class ViewReports extends JPanel {
 		ChangeListener changeTabs = new ChangeListener() {
 			private final DateTimeFormatter formatter =
 					DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
-			/**
-			 * 
-			 */
+
 	        public void stateChanged(ChangeEvent e) {
 	        	int tabIndex = tabbedPane.getSelectedIndex();
 	        	switch (tabIndex) {
 	        	case 0:
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
-	        		List<TaskExecution> tasks = db.getIncompleteTasks();
+	        		List<TaskExecution> tasks = db.getUnallocatedTaskExecutionList();
 	        		Object[][] data = new Object[tasks.size()][columns.length];
 	        		
 	        		for (int i = 0; i<tasks.size(); i++) {
@@ -97,19 +101,41 @@ public class ViewReports extends JPanel {
 	        		}
 	        		
 	        		table = new JTable(data, columns);
-	        		scrollPane_1.setViewportView(table);	        		
+	        		scrollPane_Task_Status.setViewportView(table);	        		
 	        		break;
 	        		
 	        	case 1:
-	        		//Placeholder
+	        		Object[] columns2 = {"Task Name", "Allocated Caretaker", "Due Date"};
+	        		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList();
+	        		Object[][] data2 = new Object[tasks2.size()][columns2.length];
+	        		
+	        		for (int i = 0; i<tasks2.size(); i++) {
+	        			data2[i][0] = tasks2.get(i).getName();
+	        			data2[i][1] = tasks2.get(i).getAllocation().getUsername();
+	        			data2[i][2] = tasks2.get(i).getPeriod().end().format(formatter);
+	        		}
+	        		
+	        		table = new JTable(data2, columns2);
+	        		scrollPane_Caretaker_Performance.setViewportView(table);
 	        		break;
 	        		
 	        	case 2:
-	        		//Placeholder
+	        		Object[] columns3 = {"Task Name", "Allocated Caretaker", "Due Date"};
+	        		List<TaskExecution> tasks3 = db.getUnallocatedTaskExecutionList();
+	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
+	        		
+	        		for (int i = 0; i<tasks3.size(); i++) {
+	        			data3[i][0] = tasks3.get(i).getName();
+	        			data3[i][1] = tasks3.get(i).getAllocation().getUsername();
+	        			data3[i][2] = tasks3.get(i).getPeriod().end().format(formatter);
+	        		}
+	        		table = new JTable(data3, columns3);
+	        		scrollPane_Task_Performance.setViewportView(table);
 	        		break;
 	        	}  
 	        }
 		};
+		
 		
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
