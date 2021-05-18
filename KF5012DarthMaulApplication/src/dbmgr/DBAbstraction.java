@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,9 @@ import temporal.Period;
  */
 public final class DBAbstraction 
 {
+    private static final DateTimeFormatter dateTimeFormatter =
+            DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
+
     private final DBConnection db;
     private static DBAbstraction instance;
     private ArrayList<User> userCache;
@@ -76,57 +80,225 @@ public final class DBAbstraction
     public void fillDB()
     {
         try {
-                String password = "Password123#";
-                int hrCount = 5;
-                int managerCount = 7;
-                int estateCount = 3;
-                int caretakerCount = 15;
+            /* Populate Users
+             * -------------------------------------------------- */
+            
+            String password = "Password123#";
+            int hrCount = 5;
+            int managerCount = 7;
+            int estateCount = 3;
+            int caretakerCount = 15;
 
-                for(int i = 0 ; i < hrCount; i++) {
-                        String username = "hr_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
-                }
-                for(int i = 0 ; i < managerCount; i++) {
-                        String username = "manager_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER);
-                }
-                for(int i = 0 ; i < estateCount; i++) {
-                        String username = "estate_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE);
-                }
-                for(int i = 0 ; i < caretakerCount; i++) {
-                        String username = "caretaker_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
-                }
-
-
-            for(int i = 0; i < 1000; i++)
-            {
-                //submitTask(new Task(0, randomString(), randomString()));
+            for(int i = 0 ; i < hrCount; i++) {
+                    String username = "hr_" + i;
+                    createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
             }
-            //ArrayList<Task> taskList = getTaskList();
-            //ArrayList<TaskExecution> texecList = new ArrayList();
-            //LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
-            //LocalDateTime plusOneHour = startingPoint.plusHours(1);
-            //Period p = new Period(startingPoint, plusOneHour);
+            for(int i = 0 ; i < managerCount; i++) {
+                    String username = "manager_" + i;
+                    createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER);
+            }
+            for(int i = 0 ; i < estateCount; i++) {
+                    String username = "estate_" + i;
+                    createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE);
+            }
+            for(int i = 0 ; i < caretakerCount; i++) {
+                    String username = "caretaker_" + i;
+                    createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
+            }
+
+            /* Populate Tasks
+             * -------------------------------------------------- */
+            
+            List<Task> allTasks = new ArrayList<>();
+            List<TaskExecution> allTaskExecs = new ArrayList<>();
+            
+            Task t_repeating = new Task(
+                null,
+                "Check toilets", "",
+                null, null, null,
+                TaskPriority.NORMAL,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+                        Duration.ofHours(2)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:00am 9/5/2021"), dt("5:00pm 9/5/2021")),
+                        Duration.ofDays(1)
+                    )
+                ),
+                null, null
+            );
+            
+            allTasks.add(t_repeating);
+            
+            // Some on the 9th
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
+                null, null, null
+            ));
+
+            // Some on the 10th
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+                null, null, null
+            ));
+
+            // A low-priority one-off task without a deadline
+            Task t_noDeadline = new Task(
+                null,
+                "Fix Window on bike shed", "",
+                null, null, null,
+                TaskPriority.LOW,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:45am 9/5/2021"), (Duration) null),
+                        null
+                    ),
+                    null
+                ),
+                null, null
+            );
+
+            allTasks.add(t_noDeadline);
+            
+            allTaskExecs.add(new TaskExecution(
+                null, t_noDeadline, "", TaskPriority.LOW,
+                new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
+                null, null, null
+            ));
+
+            // A one-off task with no executions that is relative to the time
+            // the program is run (eg. to test viewing tasks with no executions,
+            // task generation, and allocation)
+            Task t_noExecs = new Task(
+                null,
+                "Water the garden", "",
+                null, null, null,
+                TaskPriority.LOW,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        // Start no earlier than 3 hours after the program is
+                        // run, and finish no later than 2 hours after that.
+                        new Period(
+                            LocalDateTime.now().plus(Duration.ofHours(3)),
+                            Duration.ofDays(2) // It can wait for a bit
+                        ),
+                        null
+                    ),
+                    null
+                ),
+                null, null
+            );
+            
+            allTasks.add(t_noExecs);
+            
+            // A high-priority one-off task with deadline and verification.
+            User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
+            
+            Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+            Task t_requiresVerif = new Task(
+                null,
+                "Fix Broken Pipe",
+                "The waste pipe outside of the toilets on the 3rd floor of Big Building is broken and leaking. Health hazard - fix ASAP.",
+                null, null, null,
+                TaskPriority.HIGH,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("1:32pm 10/5/2021"), dt("5:00pm 10/5/2021")), null
+                    ),
+                    null
+                ),
+                null,
+                verification
+            );
+
+            allTasks.add(t_requiresVerif);
+            
+            // The task execution has been allocated to myUser
+            TaskExecution t3Exec = new TaskExecution(
+                null, t_requiresVerif, "", TaskPriority.HIGH,
+                new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                myUser,
+                null, null
+            );
+            
+            // The verification execution
+            VerificationExecution t3VerExec = new VerificationExecution(
+                null, verification, t3Exec, "", Duration.ofHours(3), null, null
+            );
+            t3Exec.setVerification(t3VerExec);
+
+            // Add both
+            allTaskExecs.add(t3Exec);
+            
+            /* Add Tasks and Task Executions
+             * -------------------- */
+            
+            try {
+                for (Task t : allTasks) {
+                    submitTask(t);
+                }
+                submitTaskExecutions(allTaskExecs);
+            } catch (Exception e) {
+                // Keep going after this failure - other parts of the DB may be
+                // possible to be populated.
+            }
+
+//            for(int i = 0; i < 1000; i++)
+//            {
+//                submitTask(new Task(0, randomString(), randomString()));
+//            }
+//            ArrayList<Task> taskList = getTaskList();
+//            ArrayList<TaskExecution> texecList = new ArrayList();
+//            LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
+//            LocalDateTime plusOneHour = startingPoint.plusHours(1);
+//            Period p = new Period(startingPoint, plusOneHour);
 //            taskList.forEach(t -> {
 //                System.out.println(t.toString());
 //                texecList.add(new TaskExecution(t.name, p));
 //            });
-            //submitTaskExecutions(texecList);
-            //ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
-            //tlist.forEach(t -> {
-            //    t.getName();
-            //});
-            //rrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
-            //t2.forEach(t -> {System.out.println(t.toString());
-            //});
+//            submitTaskExecutions(texecList);
+//            ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
+//            tlist.forEach(t -> {
+//                t.getName();
+//            });
+//            ArrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
+//            t2.forEach(t -> {System.out.println(t.toString());
+//            });
         } 
         catch (Exception ex) {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    // Utility method
+    private LocalDateTime dt(String dateTimeString) {
+        return LocalDateTime.parse(dateTimeString, dateTimeFormatter);
+    }
+    
     public void createTables()
     {
         db.execute("""
