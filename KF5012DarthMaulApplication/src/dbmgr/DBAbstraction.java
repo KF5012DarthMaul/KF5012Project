@@ -7,20 +7,16 @@ import java.util.logging.Logger;
 import java.sql.ResultSet;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Random;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
 import kf5012darthmaulapplication.User;
-import kf5012darthmaulapplication.SecurityManager;
 import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.IntervaledPeriodSet;
 import temporal.Period;
@@ -44,7 +40,6 @@ public final class DBAbstraction
     private DBAbstraction() throws FailedToConnectException
     {
         db = DBConnection.getInstance();
-        createTables();
         userCache = getAllUsersInternal();
     }
 
@@ -60,188 +55,9 @@ public final class DBAbstraction
         return instance;
     }
 
-    private String randomString() 
-    {
-        Random random = new Random();
-        int targetStringLength = 10+random.nextInt(32);
-        StringBuilder buffer = new StringBuilder(targetStringLength);
-        for (int i = 0; i < targetStringLength; i++) 
-        {
-            int c = 97 + random.nextInt(26);
-            buffer.append((char) c);
-        }
-        return buffer.toString();
-    }
-
-    public void fillDB()
-    {
-        try {
-                String password = "Password123#";
-                int hrCount = 5;
-                int managerCount = 7;
-                int estateCount = 3;
-                int caretakerCount = 15;
-
-                for(int i = 0 ; i < hrCount; i++) {
-                        String username = "hr_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
-                }
-                for(int i = 0 ; i < managerCount; i++) {
-                        String username = "manager_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER);
-                }
-                for(int i = 0 ; i < estateCount; i++) {
-                        String username = "estate_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE);
-                }
-                for(int i = 0 ; i < caretakerCount; i++) {
-                        String username = "caretaker_" + i;
-                        createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
-                }
-
-
-            for(int i = 0; i < 1000; i++)
-            {
-                //submitTask(new Task(0, randomString(), randomString()));
-            }
-            //ArrayList<Task> taskList = getTaskList();
-            //ArrayList<TaskExecution> texecList = new ArrayList();
-            //LocalDateTime startingPoint = LocalDateTime.of(2021, Month.APRIL, 29, 10, 30);
-            //LocalDateTime plusOneHour = startingPoint.plusHours(1);
-            //Period p = new Period(startingPoint, plusOneHour);
-//            taskList.forEach(t -> {
-//                System.out.println(t.toString());
-//                texecList.add(new TaskExecution(t.name, p));
-//            });
-            //submitTaskExecutions(texecList);
-            //ArrayList<TaskExecution> tlist = getUnallocatedTaskList(p);
-            //tlist.forEach(t -> {
-            //    t.getName();
-            //});
-            //rrayList<TaskExecution> t2 = getUnallocatedTaskList(p);
-            //t2.forEach(t -> {System.out.println(t.toString());
-            //});
-        } 
-        catch (Exception ex) {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void createTables()
-    {
-        db.execute("""
-                    CREATE TABLE IF NOT EXISTS tblUsers(
-                        username TEXT PRIMARY KEY,
-                        display_name TEXT NOT NULL,
-                        hashpass TEXT NOT NULL,
-                        account_type INTEGER NOT NULL
-                    );""");
-        db.execute(""" 
-                    CREATE TABLE IF NOT EXISTS tblTasks(
-                        task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        task_name TEXT NOT NULL,
-                        task_desc TEXT NOT NULL,
-                        task_priority INTEGER NOT NULL,
-                        task_intervaled_period_start INTEGER NOT NULL,
-                        intervaled_period_end INTEGER,
-                        period_interval INTEGER,
-                        intervaled_period_constraint_start INTEGER,
-                        invervaled_period_constraint_end INTERGER,
-                        constraint_interval INTEGER,
-                        allocation TEXT,
-                        verification_id INTEGER,
-                        FOREIGN KEY(verification_id) REFERENCES tblVerications (verf_id) ON DELETE CASCADE,
-                        FOREIGN KEY(allocation) REFERENCES tblUsers (username) ON DELETE CASCADE
-                    );""");
-        db.execute("""
-                    CREATE TABLE IF NOT EXISTS tblTaskMaps(
-                        map_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        task_id INTEGER NOT NULL,
-                        caretaker TEXT NOT NULL,
-                        preferences INTEGER NOT NULL,
-                        efficiency INTEGER NOT NULL,
-                        effectiveness INTEGER NOT NULL,
-                        FOREIGN KEY(task_id) REFERENCES tblTasks (task_id) ON DELETE CASCADE,
-                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
-                   );""");
-        db.execute("""
-                    CREATE TABLE IF NOT EXISTS tblVerifications(
-                        verf_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        verf_notes TEXT,
-                        verf_priority INTEGER NOT NULL,
-                        verf_duration INTEGER,
-                        verf_caretaker TEXT
-                   );""");
-        db.execute(""" 
-                    CREATE TABLE IF NOT EXISTS tblTaskExecutions(
-                        exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        task_id INTEGER NOT NULL,
-                        exe_notes TEXT,
-                        exe_prio INTEGER NOT NULL,
-                        start_datetime INTEGER NOT NULL,
-                        end_datetime INTEGER,
-                        caretaker TEXT,
-                        compl_id INTEGER,
-                        verf_exe_id INTEGER,
-                        FOREIGN KEY(task_id) REFERENCES tblTasks (task_id) ON DELETE CASCADE,
-                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
-                        FOREIGN KEY(compl_id) REFERENCES tblCompletions (compl_id) ON DELETE CASCADE,
-                        FOREIGN KEY(verf_exe_id) REFERENCES tblVerfExecutions (exe_id) ON DELETE CASCADE
-                    );""");
-        db.execute("""
-                    CREATE TABLE IF NOT EXISTS tblVerfExecutions(
-                        exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        verf_id INTEGER NOT NULL,
-                        exe_notes TEXT,
-                        exe_duration INTEGER NOT NULL,
-                        caretaker TEXT,
-                        completion_id INTEGER,
-                        FOREIGN KEY (verf_id) REFERENCES tblVerifications(verf_id) ON DELETE CASCADE,
-                        FOREIGN KEY (caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
-                        FOREIGN KEY (completion_id) REFERENCES tblCompletion(verf_id) ON DELETE CASCADE
-                   );""");
-        db.execute(""" 
-                    CREATE TABLE IF NOT EXISTS tblCompletion(
-                        compl_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        caretaker TEXT NOT NULL,
-                        start_time INTEGER NOT NULL,
-                        compl_time INTEGER NOT NULL,
-                        quality INTEGER,
-                        notes TEXT,
-                        FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
-                    );""");
-        db.execute("""
-                    CREATE TABLE IF NOT EXISTS tblSystemLog(
-                        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        log_info TEXT,
-                        log_timestamp INTEGER NOT NULL
-                   );""");
-        /*while(true)
-            {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + "/Desktop"));
-            int result = fileChooser.showOpenDialog(null);
-            if (result == JFileChooser.APPROVE_OPTION) 
-            {
-            try
-            {
-            File selectedFile = fileChooser.getSelectedFile();
-            System.out.println("Reading Selected file: " + selectedFile.getAbsolutePath());
-            db.execute(Files.readString(selectedFile.toPath()));
-            }
-            catch (FileNotFoundException ex)
-            {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            catch (IOException ex)
-            {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            break;
-            }
-        }*/ 
-    }
-
+    /* Utilities
+     * -------------------- */
+    
     // Convert from 2 Epoch seconds of type Long to a Period object
     private Period periodFromEpoch(Long start, Long end)
     {
@@ -274,6 +90,9 @@ public final class DBAbstraction
         }
     }
 
+    /* Main API
+     * -------------------- */
+    
     /**
      * Attempts to create a new user in the Database.
      * If the user already exists, this function will return false.

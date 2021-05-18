@@ -28,7 +28,6 @@ public class DBMgr {
         DBAbstraction db;
         try {
             db = DBAbstraction.getInstance();
-            db.fillDB();
 
             User hr0 = null;
             User hr1 = null;
