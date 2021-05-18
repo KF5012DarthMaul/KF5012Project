@@ -41,27 +41,20 @@ public class InitialiseDB {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> new InitialiseDB());
+		SwingUtilities.invokeLater(() -> {
+                    InitialiseDB initDB = new InitialiseDB();
+                    initDB.initialise();});
 	}
 	
 	/**
 	 * Create an object that can initialise the database.
 	 */
 	public InitialiseDB() {
-		try {
-			db = DBAbstraction.getInstance();
-		} catch (FailedToConnectException e) {
-			new ExceptionDialog(
-				"Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
-			return;
-		}
-
-		try {
+                try {
 			dbConn = DBConnection.getInstance();
 		} catch (FailedToConnectException e) {
 			new ExceptionDialog(
 				"Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
-			return;
 		}
 	}
 	
@@ -69,9 +62,9 @@ public class InitialiseDB {
 	 * Initialise or reinitialise the database with test data.
 	 */
 	public void initialise() {
-		dropTables();
-        createTables();
-        fillDB();
+            dropTables();
+            createTables();
+            fillDB();
 	}
 
     /* Utility methods
@@ -183,10 +176,10 @@ public class InitialiseDB {
                         exe_notes TEXT,
                         exe_duration INTEGER NOT NULL,
                         caretaker TEXT,
-                        completion_id INTEGER,
+                        compl_id INTEGER,
                         FOREIGN KEY (verf_id) REFERENCES tblVerifications(verf_id) ON DELETE CASCADE,
                         FOREIGN KEY (caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE,
-                        FOREIGN KEY (completion_id) REFERENCES tblCompletion(verf_id) ON DELETE CASCADE
+                        FOREIGN KEY (compl_id) REFERENCES tblCompletion(compl_id) ON DELETE CASCADE
                    );""");
     		dbConn.execute(""" 
                     CREATE TABLE IF NOT EXISTS tblCompletion(
@@ -242,7 +235,14 @@ public class InitialiseDB {
         try {
             /* Populate Users
              * -------------------------------------------------- */
-            
+            try {
+                db = DBAbstraction.getInstance();
+            } 
+            catch (FailedToConnectException e) {
+                new ExceptionDialog(
+                    "Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
+                return;
+            }
             String password = "Password123#";
             int hrCount = 5;
             int managerCount = 7;
@@ -421,9 +421,9 @@ public class InitialiseDB {
              * -------------------- */
             
             try {
-                for (Task t : allTasks) {
-                	db.submitTask(t);
-                }
+                allTasks.forEach(t -> {
+                    db.submitTask(t);
+                });
                 db.submitTaskExecutions(allTaskExecs);
             } catch (Exception e) {
                 // Keep going after this failure - other parts of the DB may be
