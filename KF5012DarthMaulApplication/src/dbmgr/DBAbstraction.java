@@ -64,6 +64,13 @@ public final class DBAbstraction
         return instance;
     }
 
+    /* Utility methods
+     * -------------------- */
+    
+    private LocalDateTime dt(String dateTimeString) {
+        return LocalDateTime.parse(dateTimeString, dateTimeFormatter);
+    }
+    
     private String randomString() 
     {
         Random random = new Random();
@@ -77,6 +84,9 @@ public final class DBAbstraction
         return buffer.toString();
     }
 
+    /* Creating DB
+     * -------------------- */
+    
     public void fillDB()
     {
         try {
@@ -294,11 +304,6 @@ public final class DBAbstraction
         }
     }
 
-    // Utility method
-    private LocalDateTime dt(String dateTimeString) {
-        return LocalDateTime.parse(dateTimeString, dateTimeFormatter);
-    }
-    
     public void createTables()
     {
         db.execute("""
@@ -414,6 +419,9 @@ public final class DBAbstraction
         }*/ 
     }
 
+    /* Utilities
+     * -------------------- */
+    
     // Convert from 2 Epoch seconds of type Long to a Period object
     private Period periodFromEpoch(Long start, Long end)
     {
@@ -446,6 +454,9 @@ public final class DBAbstraction
         }
     }
 
+    /* Main API
+     * -------------------- */
+    
     /**
      * Attempts to create a new user in the Database.
      * If the user already exists, this function will return false.
