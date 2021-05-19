@@ -29,6 +29,7 @@ import javax.swing.JScrollPane;
 import domain.TaskExecution;
 import guicomponents.ome.ListSelectionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
+import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 
 public class ViewReports extends JPanel {
@@ -36,7 +37,8 @@ public class ViewReports extends JPanel {
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 	private JTable table;
 	private ListSelectionEditor<User> lsteCaretaker;
-
+	private boolean usersLoaded;
+	
 	/**
 	 * Create the panel.
 	 */
@@ -76,6 +78,8 @@ public class ViewReports extends JPanel {
 		);
 		report2.add(lsteCaretaker);
 			
+		loadUsers (true);
+		
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
 		
@@ -98,21 +102,25 @@ public class ViewReports extends JPanel {
 		lsteCaretaker.addItemListener((e) -> {
 			Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
     		List<TaskExecution> tasks2;
-			try {
-				tasks2 = db.getCompletedTasksList().stream()
-						.filter(task -> task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
-						.collect(Collectors.toList());
-			} catch (EmptyResultSetException e1) {
-				tasks2 = new ArrayList<>();
-			}
+
+			db.getTaskExecutionList().forEach(t->System.out.println(t.getID()));
+			tasks2 = db.getTaskExecutionList().stream()
+				.filter(task -> task.getCompletion() != null && 
+					task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+				.collect(Collectors.toList());
+
     		Object[][] data2 = new Object[tasks2.size()][columns2.length];
     		
     		for (int i = 0; i<tasks2.size(); i++) {
     			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
-    			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();
-    			
+    			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();	        			
     			data2[i][0] = tasks2.get(i).getName();
-    			data2[i][1] = dueDate.format(formatter);
+    			if (dueDate == null) {
+    				data2[i][1] = "No Task Deadline Set";
+    			}
+    			else {
+    				data2[i][1] = dueDate.format(formatter);
+    			}
     			data2[i][2] = completionTime.format(formatter);
     			if (dueDate == null || !completionTime.isAfter(dueDate)) {
     				data2[i][3] = "Completed on-time";
@@ -121,7 +129,6 @@ public class ViewReports extends JPanel {
     				data2[i][3] = "Over deadline";	
     			}
     		}
-    		
     		table = new JTable(data2, columns2);
     		scrollPane_Caretaker_Performance.setViewportView(table);
 		});
@@ -134,9 +141,12 @@ public class ViewReports extends JPanel {
 	        	case 0:
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
-	        		List<TaskExecution> tasks = db.getTaskExecutionList().stream()
-	        				.filter(task -> task.getCompletion() == null)
-	        				.collect(Collectors.toList());
+	        		List<TaskExecution> tasks;
+
+					tasks = db.getTaskExecutionList().stream()
+							.filter(task -> task.getCompletion() == null)
+							.collect(Collectors.toList());
+
 	        		Object[][] data = new Object[tasks.size()][columns.length];
 	        		for (int i = 0; i<tasks.size(); i++) {
 	        			data[i][0] = tasks.get(i).getName();
@@ -157,14 +167,13 @@ public class ViewReports extends JPanel {
 	        	case 1:
 	        		Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
 	        		List<TaskExecution> tasks2;
-	    			try {
-	    				tasks2 = db.getTaskExecutionList().stream()
-	    						.filter(task -> task.getCompletion() != null && 
-	    							task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
-	    						.collect(Collectors.toList());
-	    			} catch (EmptyResultSetException e1) {
-	    				tasks2 = new ArrayList<>();
-	    			}
+	        		
+	    			db.getTaskExecutionList().forEach(t->System.out.println(t.getID()));
+	    			tasks2 = db.getTaskExecutionList().stream()
+	    				.filter(task -> task.getCompletion() != null && 
+	    					task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+	    				.collect(Collectors.toList());
+
 	        		Object[][] data2 = new Object[tasks2.size()][columns2.length];
 	        		
 	        		for (int i = 0; i<tasks2.size(); i++) {
@@ -192,16 +201,19 @@ public class ViewReports extends JPanel {
 	        		
 	        	case 2:
 	        		Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks3 = db.getTaskExecutionList().stream()
-	        				.filter(task -> task.getCompletion() != null)
-	        				.collect(Collectors.toList());;
+	        		List<TaskExecution> tasks3;
+
+						tasks3 = db.getTaskExecutionList().stream()
+							.filter(task -> task.getCompletion() != null)
+							.collect(Collectors.toList());
+
 	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
 	        		
 	        		for (int i = 0; i<tasks3.size(); i++) {
 	        			LocalDateTime dueDate = tasks3.get(i).getPeriod().end();
 	        			LocalDateTime completionTime = tasks3.get(i).getCompletion().getCompletionTime();
 	        			
-	        			data[i][0] = tasks3.get(i).getCompletion().getStaff();
+	        			data3[i][0] = tasks3.get(i).getCompletion().getStaff();
 	        			data3[i][1] = tasks3.get(i).getName();
 	        			if (dueDate == null) {
 	        				data3[i][2] = "No Task Deadline Set";
@@ -226,4 +238,36 @@ public class ViewReports extends JPanel {
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
 	}
+
+	/**
+	 * Load users into the allocation constraint combo box and all other
+	 * components that require them.
+	 * 
+	 * @param reload If users are cached, whether to re-fetch users regardless.
+	 */
+	
+	public void loadUsers(boolean reload) {
+		if (!usersLoaded || reload) {
+			// Try to connect to the DB to get users - if that fails, you won't be
+			// able to edit the user, but can try again.
+			DBAbstraction db;
+			try {
+				db = DBAbstraction.getInstance();
+			} catch (FailedToConnectException e) {
+				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
+				return;
+			}
+
+			// Get the users
+			List<User> allUsers = db.getAllUsers();
+			List<User> caretakersAndNull = 
+				allUsers.stream()
+				.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
+				.collect(Collectors.toList());
+			// (Re)fill the lists
+			lsteCaretaker.populate(caretakersAndNull);
+			usersLoaded = true;
+		}
+	}
+	
 }
