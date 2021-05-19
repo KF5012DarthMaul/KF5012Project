@@ -1133,7 +1133,10 @@ public final class DBAbstraction
                     if(i == 0 && verf.getID() != null ||
                        i == 1 && verf.getID() == null)
                         continue;
-                    db.add(verf.getVerification().getID());
+                    if(verf.getVerification() != null)
+                        db.add(verf.getVerification().getID());
+                    else
+                        db.addNull();
                     db.add(verf.getNotes());
                     db.add(verf.getDeadline().toMinutes());
                     User u = verf.getAllocation();
