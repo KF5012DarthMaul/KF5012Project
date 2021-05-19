@@ -173,7 +173,7 @@ public class InitialiseDB {
     		dbConn.execute("""
                     CREATE TABLE IF NOT EXISTS tblVerfExecutions(
                         exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        verf_id INTEGER NOT NULL,
+                        verf_id INTEGER,
                         exe_notes TEXT,
                         exe_duration INTEGER NOT NULL,
                         caretaker TEXT,
