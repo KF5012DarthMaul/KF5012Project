@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("serial")
@@ -28,6 +29,9 @@ public class ManageTasks extends JPanel {
 	private JPanel mainPanel;
 	
 	// Main Panel
+	private List<Task> allTasks;
+	private List<TaskExecution> allTaskExecs;
+	
 	private ViewTasks viewTasksComponent;
 	private TaskEditor edtTask;
 	private TaskExecutionEditor edtTaskExecution;
@@ -150,9 +154,22 @@ public class ManageTasks extends JPanel {
 
 		reload();
 	}
-	
-	private void reload() {
-		viewTasksComponent.reload();
+
+	public void reload() {
+		// Try to connect to the DB each time you refresh - if one fails, you
+		// can try again.
+		DBAbstraction db;
+		try {
+			db = DBAbstraction.getInstance();
+		} catch (FailedToConnectException e) {
+			new ExceptionDialog(
+				"Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
+			return;
+		}
+
+		allTasks = db.getTaskList();
+		allTaskExecs = db.getTaskExecutionList();
+		viewTasksComponent.refresh(allTasks, allTaskExecs);
 	}
 	
 	private void removeTask() {
@@ -221,7 +238,7 @@ public class ManageTasks extends JPanel {
 			}
 			
 			Task task = edtTask.getObject();
-			//db.submitTask(task); // TODO
+			db.submitTask(task);
 			
 		} else if (active instanceof TaskExecution) {
 			boolean valid = edtTaskExecution.validateFields();
@@ -231,7 +248,7 @@ public class ManageTasks extends JPanel {
 			}
 			
 			TaskExecution taskExec = edtTaskExecution.getObject();
-			//db.submitTaskExecution(taskExec); // TODO
+			db.submitTaskExecution(taskExec);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();

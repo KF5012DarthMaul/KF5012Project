@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -20,36 +21,25 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions.FailedToConnectException;
 import domain.Task;
 import domain.TaskExecution;
-import domain.TaskPriority;
-import domain.Verification;
-import domain.VerificationExecution;
 import exceptions.TaskManagerExceptions;
 import guicomponents.formatters.TaskExecutionFormatter;
 import guicomponents.formatters.TaskFormatter;
 import guicomponents.utils.DateRangePicker;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
-import kf5012darthmaulapplication.User;
-import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Event;
-import temporal.IntervaledPeriodSet;
-import temporal.Period;
 import temporal.TemporalList;
+import javax.swing.BoxLayout;
 
 @SuppressWarnings("serial")
 public class ViewTasks extends JPanel {
-	private static final DateTimeFormatter dateTimeFormatter =
-		DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
-
 	private static final TaskFormatter TASK_FORMATTER = new TaskFormatter();
 	private static final TaskExecutionFormatter TASK_EXEC_FORMATTER = new TaskExecutionFormatter();
 
 	private DateRangePicker dateRangePicker;
+	private JCheckBox chkDisplayAllTasks;
 
+	private List<Task> allTasks;
 	private List<TaskExecution> allTaskExecs;
 	private Map<Task, List<TaskExecution>> taskTree;
 	private DefaultMutableTreeNode taskJTreeRoot;
@@ -69,7 +59,7 @@ public class ViewTasks extends JPanel {
 
 		// Date Range
 		dateRangePicker = new DateRangePicker();
-		dateRangePicker.addChangeListener((e) -> this.refresh());
+		dateRangePicker.addChangeListener((e) -> refresh(allTasks, allTaskExecs));
 		GridBagConstraints gbc_dateRangePicker = new GridBagConstraints();
 		gbc_dateRangePicker.fill = GridBagConstraints.HORIZONTAL;
 		gbc_dateRangePicker.insets = new Insets(0, 0, 5, 0);
@@ -84,10 +74,14 @@ public class ViewTasks extends JPanel {
 		gbc_instructionsPanel.gridx = 0;
 		gbc_instructionsPanel.gridy = 1;
 		this.add(instructionsPanel, gbc_instructionsPanel);
-		instructionsPanel.setLayout(new BorderLayout(0, 0));
+		instructionsPanel.setLayout(new BoxLayout(instructionsPanel, BoxLayout.X_AXIS));
 		
-		JLabel lblNewLabel = new JLabel("<html>Double-click on a task to view its instances in the selected range. Select a task or instance and click 'Edit Task' to view/edit details.<html>");
-		instructionsPanel.add(lblNewLabel);
+		JLabel lblInstructions = new JLabel("<html>Double-click on a task to view its instances in the selected range. Select a task or instance and click 'Edit Task' to view/edit details.<html>");
+		instructionsPanel.add(lblInstructions);
+		
+		chkDisplayAllTasks = new JCheckBox("Display All Tasks");
+		chkDisplayAllTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
+		instructionsPanel.add(chkDisplayAllTasks);
 		
 		// Tree
 		JScrollPane taskTreeScrollPane = new JScrollPane();
@@ -124,23 +118,10 @@ public class ViewTasks extends JPanel {
 		taskTreeScrollPane.setViewportView(this.taskJTree);
 	}
 	
-	public void reload() {
-		// Try to connect to the DB each time you refresh - if one fails, you
-		// can try again.
-		DBAbstraction db;
-		try {
-			db = DBAbstraction.getInstance();
-		} catch (FailedToConnectException e) {
-			new ExceptionDialog(
-				"Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
-			return;
-		}
-
-		this.allTaskExecs = db.getTaskExecutionList();
-		this.refresh();
-	}
-
-	public void refresh() {
+	public void refresh(List<Task> allTasks, List<TaskExecution> allTaskExecs) {
+		this.allTasks = allTasks;
+		this.allTaskExecs = allTaskExecs;
+		
 		// Filter list to relevant task executions
 		LocalDateTime start = this.dateRangePicker.getStartDateTime();
 		LocalDateTime end = this.dateRangePicker.getEndDateTime();
@@ -151,11 +132,16 @@ public class ViewTasks extends JPanel {
 		);
 		
 		// Map back to tasks
-		this.taskTree = new HashMap<>();
+		taskTree = new HashMap<>();
+		if (chkDisplayAllTasks.isSelected()) {
+			for (Task task : allTasks) {
+				taskTree.put(task, new ArrayList<>());
+			}
+		}
 		for (TaskExecution task : execsInRange) {
 			Task owningTask = task.getTask();
-			
-			if (!taskTree.containsKey(owningTask)) {
+
+			if (!chkDisplayAllTasks.isSelected() && !taskTree.containsKey(owningTask)) {
 				taskTree.put(owningTask, new ArrayList<TaskExecution>());
 			}
 			
