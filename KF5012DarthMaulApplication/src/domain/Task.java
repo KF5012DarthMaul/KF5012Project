@@ -7,6 +7,7 @@ import java.util.Map;
 
 import kf5012darthmaulapplication.User;
 import temporal.ConstrainedIntervaledPeriodSet;
+import temporal.EventDescriptor;
 import temporal.IntervaledPeriodSet;
 import temporal.Period;
 
@@ -15,7 +16,7 @@ import temporal.Period;
  * 
  * @author William Taylor
  */
-public class Task {
+public class Task implements EventDescriptor {
 	private Integer id; // Nullable
 	
 	private String name;
@@ -26,7 +27,7 @@ public class Task {
 	private Map<User, Integer> effectiveness;
 
 	private TaskPriority standardPriority;
-	private ConstrainedIntervaledPeriodSet scheduleConstraint;
+	private ConstrainedIntervaledPeriodSet schedule;
 	private User allocationConstraint; // Nullable
 	private Verification verification; // Nullable
 	
@@ -41,7 +42,7 @@ public class Task {
 	 * @param effectiveness ?
 	 * @param standardPriority The standard priority for this task. Used to
 	 * create executions of it.
-	 * @param scheduleConstraint The schedule for this task.
+	 * @param schedule The schedule for this task.
 	 * @param allocationConstraint The only caretaker that may be assigned this
 	 * task. Null if not constrained to any caretaker.
 	 * @param verification The verification associated with this task. Null if
@@ -58,7 +59,7 @@ public class Task {
 			Map<User, Integer> effectiveness,
 			
 			TaskPriority standardPriority,
-			ConstrainedIntervaledPeriodSet scheduleConstraint,
+			ConstrainedIntervaledPeriodSet schedule,
 			User allocationConstraint,
 			Verification verification
 	) {
@@ -69,7 +70,7 @@ public class Task {
 		this.efficiency = efficiency;
 		this.effectiveness = effectiveness;
 		this.standardPriority = standardPriority;
-		this.scheduleConstraint = scheduleConstraint;
+		this.schedule = schedule;
 		this.allocationConstraint = allocationConstraint;
 		this.verification = verification;
 	}
@@ -163,8 +164,9 @@ public class Task {
 	 * Get the schedule for this task.
 	 * @return The schedule for this task.
 	 */
-	public ConstrainedIntervaledPeriodSet getScheduleConstraint() {
-		return this.scheduleConstraint;
+	@Override
+	public ConstrainedIntervaledPeriodSet getSchedule() {
+		return this.schedule;
 	}
 
 	/**
@@ -211,11 +213,11 @@ public class Task {
 	
 	/**
 	 * Set the schedule for this task.
-	 * @param scheduleConstraint The schedule for this task.
+	 * @param schedule The schedule for this task.
 	 */
-	public void setScheduleConstraint(
-			ConstrainedIntervaledPeriodSet scheduleConstraint) {
-		this.scheduleConstraint = scheduleConstraint;
+	public void setSchedule(
+			ConstrainedIntervaledPeriodSet schedule) {
+		this.schedule = schedule;
 	}
 
 	/**

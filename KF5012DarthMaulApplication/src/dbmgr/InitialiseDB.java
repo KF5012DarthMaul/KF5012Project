@@ -384,7 +384,7 @@ public class InitialiseDB {
             User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
             //User myUser = new User("myuser", AccountType.CARETAKER);
             
-            Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+            Verification verification = new Verification(null, null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
             Task t_requiresVerif = new Task(
                 null,
                 "Fix Broken Pipe",
