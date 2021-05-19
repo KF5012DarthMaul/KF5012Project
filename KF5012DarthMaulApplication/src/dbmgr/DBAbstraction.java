@@ -1080,7 +1080,7 @@ public final class DBAbstraction
             if(verf.getID() == null)
             {
                 db.executePrepared();
-                verf.setID(getLastVerificationID()+1);
+                verf.setID(getLastVerificationID());
             }
             else
             {
