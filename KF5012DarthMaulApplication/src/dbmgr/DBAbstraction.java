@@ -32,6 +32,9 @@ public final class DBAbstraction
     private final DBConnection db;
     private static DBAbstraction instance;
     private ArrayList<User> userCache;
+    
+    private Map<Integer, Task> taskCache;
+    
     /** 
      * This DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
      * These methods utilize constructed SQL and prepared statements, preventing SQL injection.<p>
@@ -458,65 +461,72 @@ public final class DBAbstraction
                 while(res.next())
                 {
                     int taskID = res.getInt(1);
-                    String taskName = res.getString(2);
-                    String taskDesc = res.getString(3);
-                    int taskPrio = res.getInt(4);
-                    Period taskPeriodSetPeriod = periodFromEpoch(res.getLong(5), res.getLong(6));
-
-                    Duration taskPeriodSetInterval = Duration.ofMinutes(res.getLong(7));
-                    taskPeriodSetInterval = res.wasNull() ? null : taskPeriodSetInterval;
-
-                    Long taskPeriodSetConstraintPeriodStart = res.getLong(8);
-                    IntervaledPeriodSet periodSetConstraint = null;
-                    if(!res.wasNull())
-                    {
-                        Period taskPeriodSetConstraintPeriod = periodFromEpoch(taskPeriodSetConstraintPeriodStart, res.getLong(9));
-                        Duration taskPeriodSetConstraintInterval = Duration.ofMinutes(res.getLong(10));
-                        taskPeriodSetConstraintInterval = res.wasNull() ? null : taskPeriodSetConstraintInterval;
-                        periodSetConstraint = new IntervaledPeriodSet(taskPeriodSetConstraintPeriod, taskPeriodSetConstraintInterval);
-                    }
-
-                    String caretaker = res.getString(11);
-                    // If caretaker is null, set null, else call getUser
-                    User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
-                    int verification_id = res.getInt(12);
-                    // This should never fail unless the database has been compromised externally,
-                    // in which case data integrity has gone out the window
-                    Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
-                    IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
-                    ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
-
-                    Map<User, Integer> preferences = new HashMap<>();
-                    Map<User, Duration> efficiency = new HashMap<>();
-                    Map<User, Integer> effectiveness = new HashMap<>();
-                    if(!maps.isClosed())
-                    {
-                        while(maps.next())
+                    
+                    Task t;
+                    if (taskCache.containsKey(taskID)) {
+                    	t = taskCache.get(taskID);
+                    } else {
+	                    String taskName = res.getString(2);
+	                    String taskDesc = res.getString(3);
+	                    int taskPrio = res.getInt(4);
+	                    Period taskPeriodSetPeriod = periodFromEpoch(res.getLong(5), res.getLong(6));
+	
+	                    Duration taskPeriodSetInterval = Duration.ofMinutes(res.getLong(7));
+	                    taskPeriodSetInterval = res.wasNull() ? null : taskPeriodSetInterval;
+	
+	                    Long taskPeriodSetConstraintPeriodStart = res.getLong(8);
+	                    IntervaledPeriodSet periodSetConstraint = null;
+	                    if(!res.wasNull())
+	                    {
+	                        Period taskPeriodSetConstraintPeriod = periodFromEpoch(taskPeriodSetConstraintPeriodStart, res.getLong(9));
+	                        Duration taskPeriodSetConstraintInterval = Duration.ofMinutes(res.getLong(10));
+	                        taskPeriodSetConstraintInterval = res.wasNull() ? null : taskPeriodSetConstraintInterval;
+	                        periodSetConstraint = new IntervaledPeriodSet(taskPeriodSetConstraintPeriod, taskPeriodSetConstraintInterval);
+	                    }
+	
+	                    String caretaker = res.getString(11);
+	                    // If caretaker is null, set null, else call getUser
+	                    User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
+	                    int verification_id = res.getInt(12);
+	                    // This should never fail unless the database has been compromised externally,
+	                    // in which case data integrity has gone out the window
+	                    Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
+	                    IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
+	                    ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
+	
+	                    Map<User, Integer> preferences = new HashMap<>();
+	                    Map<User, Duration> efficiency = new HashMap<>();
+	                    Map<User, Integer> effectiveness = new HashMap<>();
+	                    if(!maps.isClosed())
+	                    {
+	                        while(maps.next())
+	                        {
+	                            int mapTaskID = maps.getInt(2);
+	                            if(taskID == mapTaskID)
+	                            {
+	                                String mapCaretaker = maps.getString(3);
+	                                User u = getUser(mapCaretaker);
+	                                Integer pref = maps.getInt(4);
+	                                Integer effic = maps.getInt(5);
+	                                Integer effect = maps.getInt(6);
+	                                Duration efficD = Duration.ofMinutes(effic);
+	                                preferences.put(u, pref);
+	                                efficiency.put(u, efficD);
+	                                effectiveness.put(u, effect);
+	                            }
+	                            else
+	                            {
+	                                break;
+	                            }
+	                        }
+	                    }
+	                    TaskPriority priority = TaskPriority.values()[taskPrio];
+	                    
+                    	t = new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, schedule, allocationConstraint, verification);
+                        if(verification != null)
                         {
-                            int mapTaskID = maps.getInt(2);
-                            if(taskID == mapTaskID)
-                            {
-                                String mapCaretaker = maps.getString(3);
-                                User u = getUser(mapCaretaker);
-                                Integer pref = maps.getInt(4);
-                                Integer effic = maps.getInt(5);
-                                Integer effect = maps.getInt(6);
-                                Duration efficD = Duration.ofMinutes(effic);
-                                preferences.put(u, pref);
-                                efficiency.put(u, efficD);
-                                effectiveness.put(u, effect);
-                            }
-                            else
-                            {
-                                break;
-                            }
+                            verification.setTask(t);
                         }
-                    }
-                    TaskPriority priority = TaskPriority.values()[taskPrio];
-                    Task t = new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, schedule, allocationConstraint, verification);
-                    if(verification != null)
-                    {
-                        verification.setTask(t);
                     }
                     tasks.add(t);
                 }
@@ -893,6 +903,8 @@ public final class DBAbstraction
                 db.add(task.getID());
                 db.executePrepared();
             }
+            
+            taskCache.put(task.getID(), task);
             return true;
         } 
         catch (SQLException ex) 
