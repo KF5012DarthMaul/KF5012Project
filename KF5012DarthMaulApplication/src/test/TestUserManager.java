@@ -18,6 +18,7 @@ import org.junit.Test;
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;
 import dbmgr.DBExceptions.UserAlreadyExistsException;
+import dbmgr.InitialiseDB;
 import exceptions.UserManagerExceptions.UserAuthenticationFailed;
 import exceptions.UserManagerExceptions.UserDoesNotExist;
 import kf5012darthmaulapplication.PermissionManager.AccountType;
@@ -41,12 +42,18 @@ public class TestUserManager {
 	public static void cleanBeforeRun(){
 		try {
 			db = DBAbstraction.getInstance();
-			db.createTables();
+			
+			InitialiseDB initDB = new InitialiseDB();
+			initDB.dropTables();
+			initDB.createTables();
+			
 			db.deleteUser(user);
+			
 		} catch (FailedToConnectException e) {
 			System.out.println("Error with TestUserManager BeforeAll Setup function");
 			fail(e);
 			e.printStackTrace();
+			
 		} catch (Exception e) {
 			System.out.println("Error with TestUserManager BeforeAll Setup function");
 			fail(e);

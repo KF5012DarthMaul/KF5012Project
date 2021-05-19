@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.Test;
 
 import dbmgr.DBAbstraction;
+import dbmgr.InitialiseDB;
 import dbmgr.DBExceptions.FailedToConnectException;
 import dbmgr.DBExceptions.UserAlreadyExistsException;
 import dbmgr.DBExceptions.UserDoesNotExistException;
@@ -29,8 +30,13 @@ public class TestDatabase {
 	static public void getConnection() {
 		try {
 			db = DBAbstraction.getInstance();
-			db.createTables();
+
+			InitialiseDB initDB = new InitialiseDB();
+			initDB.dropTables();
+			initDB.createTables();
+
 			db.createUser(username,password, accType);
+
 		} catch (FailedToConnectException | UserAlreadyExistsException e) {
 			fail(e);
 		}
