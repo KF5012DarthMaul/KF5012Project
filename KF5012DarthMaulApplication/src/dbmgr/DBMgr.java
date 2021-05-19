@@ -49,12 +49,12 @@ public class DBMgr {
             // Populate some fields
             IntervaledPeriodSet ips = new IntervaledPeriodSet(new Period(LocalDateTime.now(), LocalDateTime.now().plusMinutes(1)), Duration.ofMinutes(20));
             IntervaledPeriodSet ipsc = new IntervaledPeriodSet(new Period(LocalDateTime.now(), LocalDateTime.now().plusMinutes(1)), Duration.ofMinutes(20));
-            ConstrainedIntervaledPeriodSet scheduleConstraint = new ConstrainedIntervaledPeriodSet(ips, ipsc);
-            t.setScheduleConstraint(scheduleConstraint);
+            ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(ips, ipsc);
+            t.setSchedule(schedule);
             t.setAllocationConstraint(hr0);
             
             // Create a verification for this Task
-            Verification verf = new Verification();
+            Verification verf = new Verification(t);
             verf.setStandardDeadline(Duration.ofMinutes(15));
             verf.setAllocationConstraint(hr1);
             t.setVerification(verf);

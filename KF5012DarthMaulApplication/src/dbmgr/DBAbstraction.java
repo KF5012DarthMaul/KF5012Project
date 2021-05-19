@@ -446,7 +446,7 @@ public final class DBAbstraction
                         String verfCaretaker = verfResSet.getString(5);
                         User allocation = verfResSet.wasNull() ? null : getUser(verfCaretaker);
                         TaskPriority priority = TaskPriority.values()[verfPrio];
-                        verfList.add(new Verification(verfID, verfNotes, priority, duration, allocation));
+                        verfList.add(new Verification(verfID, null, verfNotes, priority, duration, allocation));
                     }
                 }
 
@@ -479,7 +479,7 @@ public final class DBAbstraction
                     // in which case data integrity has gone out the window
                     Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
                     IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
-                    ConstrainedIntervaledPeriodSet scheduleConstraint = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
+                     ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
 
                     Map<User, Integer> preferences = new HashMap<>();
                     Map<User, Duration> efficiency = new HashMap<>();
@@ -508,7 +508,12 @@ public final class DBAbstraction
                         }
                     }
                     TaskPriority priority = TaskPriority.values()[taskPrio];
-                    tasks.add(new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, scheduleConstraint, allocationConstraint, verification));
+                    Task t = new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, schedule, allocationConstraint, verification);
+                    if(verification != null)
+                    {
+                        verification.setTask(t);
+                    }
+                    tasks.add(t);
                 }
                 return tasks;
             }
@@ -818,8 +823,8 @@ public final class DBAbstraction
             db.add(task.getNotes());
             db.add(task.getStandardPriority().ordinal());
 
-            ConstrainedIntervaledPeriodSet schCon = task.getScheduleConstraint();
-            IntervaledPeriodSet periodSet = schCon.periodSet();
+            ConstrainedIntervaledPeriodSet sch = task.getSchedule();
+            IntervaledPeriodSet periodSet = sch.periodSet();
 
             PeriodUnwrapper periodSetPeriod = new PeriodUnwrapper(periodSet.referencePeriod());
             db.add(periodSetPeriod.start);
@@ -834,7 +839,7 @@ public final class DBAbstraction
             else
                 db.addNull();
 
-            IntervaledPeriodSet periodSetConstraint = schCon.periodSetConstraint();
+            IntervaledPeriodSet periodSetConstraint = sch.periodSetConstraint();
             if(periodSetConstraint != null)
             {
 
