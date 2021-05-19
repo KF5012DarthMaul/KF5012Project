@@ -587,17 +587,20 @@ public final class DBAbstraction
             {
                 while(res.next())
                 {
-                   int id = res.getInt(1);
-                   int verfID = res.getInt(2);
-                   Verification verf = taskList.stream().filter(task -> task.getVerification() != null && task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
-                   String notes = res.getString(3);
-                   Duration d = Duration.ofMinutes(res.getInt(4));
-                   String caretaker = res.getString(5);
-                   User u = res.wasNull() ? null : getUser(caretaker);
-                   int compid = res.getInt(6);
-                   // Could be not complete!
-                   Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().orElse(null);;
-                   execList.add(new VerificationExecution(id, verf, null, notes, d, u, c));
+                    int id = res.getInt(1);
+                    int verfID = res.getInt(2);
+                    Verification verf = null;
+                    Task taskWithVerfRefOrNull = taskList.stream().filter(task -> task.getVerification() != null && task.getVerification().getID().equals(verfID)).findFirst().orElse(null);
+                    if(taskWithVerfRefOrNull != null)
+                        verf = taskWithVerfRefOrNull.getVerification();
+                    String notes = res.getString(3);
+                    Duration d = Duration.ofMinutes(res.getInt(4));
+                    String caretaker = res.getString(5);
+                    User u = res.wasNull() ? null : getUser(caretaker);
+                    int compid = res.getInt(6);
+                    // Could be not complete!
+                    Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().orElse(null);
+                    execList.add(new VerificationExecution(id, verf, null, notes, d, u, c));
                 }
                 return execList;
             }
@@ -1133,10 +1136,12 @@ public final class DBAbstraction
                     if(i == 0 && verf.getID() != null ||
                        i == 1 && verf.getID() == null)
                         continue;
+                    
                     if(verf.getVerification() != null)
                         db.add(verf.getVerification().getID());
                     else
                         db.addNull();
+                    
                     db.add(verf.getNotes());
                     db.add(verf.getDeadline().toMinutes());
                     User u = verf.getAllocation();
