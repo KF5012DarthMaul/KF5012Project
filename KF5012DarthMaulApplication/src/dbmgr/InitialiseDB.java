@@ -379,7 +379,8 @@ public class InitialiseDB {
             allTasks.add(t_noExecs);
             
             // A high-priority one-off task with deadline and verification.
-            User myUser = new User("myuser", AccountType.CARETAKER);
+            User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
+            //User myUser = new User("myuser", AccountType.CARETAKER);
             
             Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
             Task t_requiresVerif = new Task(
