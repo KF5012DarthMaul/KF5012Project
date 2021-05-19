@@ -94,16 +94,15 @@ public class InitialiseDB {
 
     public void dropTables() {
     	try {
-	    	dbConn.execute("""
-	    			DROP TABLE IF EXISTS tblUsers;
-	    			DROP TABLE IF EXISTS tblTasks;
-	    			DROP TABLE IF EXISTS tblTaskMaps;
-	    			DROP TABLE IF EXISTS tblVerifications;
-	    			DROP TABLE IF EXISTS tblTaskExecutions;
-	    			DROP TABLE IF EXISTS tblVerfExecutions;
-	    			DROP TABLE IF EXISTS tblCompletions;
-	    			DROP TABLE IF EXISTS tblSystemLog;
-	    			""");
+	    	dbConn.execute("DROP TABLE IF EXISTS tblUsers;");
+	    	dbConn.execute("DROP TABLE IF EXISTS tblTasks;");
+			dbConn.execute("DROP TABLE IF EXISTS tblTaskMaps;");
+			dbConn.execute("DROP TABLE IF EXISTS tblVerifications;");
+			dbConn.execute("DROP TABLE IF EXISTS tblTaskExecutions;");
+			dbConn.execute("DROP TABLE IF EXISTS tblVerfExecutions;");
+			dbConn.execute("DROP TABLE IF EXISTS tblCompletions;");
+			dbConn.execute("DROP TABLE IF EXISTS tblSystemLog;");
+			
     	} catch (Exception e) {
 			new ExceptionDialog("Could not create database tables.", e);
     	}
