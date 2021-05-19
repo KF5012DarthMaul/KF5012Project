@@ -21,6 +21,8 @@ import guicomponents.ome.ListSelectionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
+import java.awt.BorderLayout;
+import javax.swing.BoxLayout;
 
 public class ViewReports extends JPanel {
 	private static final DateTimeFormatter formatter =
@@ -56,6 +58,7 @@ public class ViewReports extends JPanel {
 		
 		JPanel report1 = new JPanel();
 		tabbedPane.addTab("Task Status", report1);
+		report1.setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane scrollPane_Task_Status = new JScrollPane();
 		report1.add(scrollPane_Task_Status);
@@ -69,6 +72,7 @@ public class ViewReports extends JPanel {
 		report2.add(lsteCaretaker);
 			
 		loadUsers (true);
+		report2.setLayout(new BoxLayout(report2, BoxLayout.Y_AXIS));
 		
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
@@ -76,6 +80,7 @@ public class ViewReports extends JPanel {
 		
 		JPanel report3 = new JPanel();
 		tabbedPane.addTab("Task Performance", report3);
+		report3.setLayout(new BorderLayout(0, 0));
 		
 		JScrollPane scrollPane_Task_Performance = new JScrollPane();
 		report3.add(scrollPane_Task_Performance);
@@ -132,9 +137,9 @@ public class ViewReports extends JPanel {
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
 	        		List<TaskExecution> tasks;
-
+	        		
 					tasks = db.getTaskExecutionList().stream()
-							.filter(task -> task.getCompletion() == null)
+							.filter(task -> task.getCompletion() == null && task.getAllocation() != null)
 							.collect(Collectors.toList());
 
 	        		Object[][] data = new Object[tasks.size()][columns.length];
@@ -203,7 +208,7 @@ public class ViewReports extends JPanel {
 	        			LocalDateTime dueDate = tasks3.get(i).getPeriod().end();
 	        			LocalDateTime completionTime = tasks3.get(i).getCompletion().getCompletionTime();
 	        			
-	        			data3[i][0] = tasks3.get(i).getCompletion().getStaff();
+	        			data3[i][0] = tasks3.get(i).getCompletion().getStaff().getUsername();
 	        			data3[i][1] = tasks3.get(i).getName();
 	        			if (dueDate == null) {
 	        				data3[i][2] = "No Task Deadline Set";

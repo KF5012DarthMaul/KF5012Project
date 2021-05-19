@@ -9,7 +9,9 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import dbmgr.DBExceptions.FailedToConnectException;
+import domain.Completion;
 import domain.Task;
+import domain.TaskCompletionQuality;
 import domain.TaskExecution;
 import domain.TaskPriority;
 import domain.Verification;
@@ -377,7 +379,7 @@ public class InitialiseDB {
             );
             
             allTasks.add(t_noExecs);
-            
+
             // A high-priority one-off task with deadline and verification.
             User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
             //User myUser = new User("myuser", AccountType.CARETAKER);
@@ -417,6 +419,39 @@ public class InitialiseDB {
 
             // Add both
             allTaskExecs.add(t3Exec);
+            
+            //This is a example of a completed task
+            Task t_complete = new Task(
+                null,
+                "Make beds", "",
+                null, null, null,
+                TaskPriority.LOW,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        // Start no earlier than 3 hours after the program is
+                        // run, and finish no later than 2 hours after that.
+                        new Period(
+                            LocalDateTime.now().plus(Duration.ofHours(3)),
+                            Duration.ofDays(2) // It can wait for a bit
+                        ),
+                        null
+                    ),
+                    null
+                ),
+                null, null
+            );
+            
+            allTasks.add(t_complete);
+            
+            TaskExecution tCompleteExec = new TaskExecution(
+                null, t_complete, "", TaskPriority.HIGH,
+                new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                null,
+                new Completion(null, myUser, LocalDateTime.now(), LocalDateTime.now(), TaskCompletionQuality.ADEQUATE, "test completion"), 
+                null
+                
+            );
+            allTaskExecs.add(tCompleteExec);
             
             /* Add Tasks and Task Executions
              * -------------------- */
