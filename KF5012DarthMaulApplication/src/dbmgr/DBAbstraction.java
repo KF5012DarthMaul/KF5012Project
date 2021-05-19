@@ -409,6 +409,11 @@ public final class DBAbstraction
         return getAutoIncrement("tblVerfExecutions");
     }
 
+    private int getLastTaskExecutionID()
+    {
+        return getAutoIncrement("tblTaskExecutions");
+    }
+    
     // Retrieve all unique tasks and temporal rules
     public ArrayList<Task> getTaskList()
     {
@@ -479,7 +484,7 @@ public final class DBAbstraction
                     // in which case data integrity has gone out the window
                     Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
                     IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
-                     ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
+                    ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
 
                     Map<User, Integer> preferences = new HashMap<>();
                     Map<User, Duration> efficiency = new HashMap<>();
@@ -581,7 +586,7 @@ public final class DBAbstraction
                    User u = res.wasNull() ? null : getUser(caretaker);
                    int compid = res.getInt(6);
                    // Could be not complete!
-                   Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().get();
+                   Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().orElse(null);;
                    execList.add(new VerificationExecution(id, verf, null, notes, d, u, c));
                 }
                 return execList;
@@ -650,13 +655,14 @@ public final class DBAbstraction
                     int compID = res.getInt(8);
                     Completion c = null;
                     if(!res.wasNull())
-                        c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().get();
+                        c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().orElse(null);
                     int verfExeID = res.getInt(9);
                     TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
                     if(!res.wasNull())
                     {
-                        VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().get();
-                        verfExe.setTaskExec(exe);
+                        VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().orElse(null);
+                        if(verfExe != null)
+                            verfExe.setTaskExec(exe);
                         exe.setVerification(verfExe);
                     }
                     exes.add(exe);
@@ -926,6 +932,7 @@ public final class DBAbstraction
                 "UPDATE tblTaskExecutions SET task_id = ?, exe_notes = ?, exe_prio = ?, start_datetime = ?, end_datetime = ?, caretaker = ?, compl_id = ?, verf_exe_id = ?"
                     + " WHERE exe_id = ?"
             };
+            int taskExeID = getLastTaskExecutionID()+1;
             int verfExeID = getLastVerificationExecutionID()+1;
             int completionID = getLastCompletionID()+1;
             ArrayList<VerificationExecution> verfExecutions = new ArrayList<>();
@@ -935,6 +942,9 @@ public final class DBAbstraction
                 db.prepareStatement(statements[i]);
                 for(TaskExecution task: tasks)
                 {
+                    if(i == 0 && task.getID() != null ||
+                       i == 1 && task.getID() == null)
+                        continue;
                     db.add(task.getTask().getID());
                     db.add(task.getNotes());
                     db.add(task.getPriority().ordinal());
@@ -979,6 +989,15 @@ public final class DBAbstraction
                     else
                     {
                         db.addNull();
+                    }
+                    
+                    if(i == 1 && task.getID() != null)
+                    {
+                        db.add(task.getID());
+                    }
+                    else if(i == 0 && task.getID() == null)
+                    {
+                        task.setID(taskExeID++);
                     }
                     db.batch();
                 }
@@ -1037,7 +1056,7 @@ public final class DBAbstraction
             if(verf.getID() == null)
             {
                 db.executePrepared();
-                verf.setID(getLastVerificationID());
+                verf.setID(getLastVerificationID()+1);
             }
             else
             {
@@ -1081,6 +1100,7 @@ public final class DBAbstraction
                     + " WHERE exe_id = ?"
             };
             int completionID = getLastCompletionID()+1;
+            int verfExecID = getLastVerificationExecutionID()+1;
             ArrayList<Completion> completions = new ArrayList<>();
             for(int i = 0; i < 1; i++)
             {
@@ -1098,6 +1118,7 @@ public final class DBAbstraction
                         db.add(u.getUsername());
                     else
                         db.addNull();
+                    
                     if(verf.getCompletion() != null)
                     {
                         if(verf.getCompletion().getID() == null)
@@ -1114,9 +1135,14 @@ public final class DBAbstraction
                     {
                         db.addNull();
                     }
+                    
                     if(i == 1 && verf.getID() != null)
                     {
                         db.add(verf.getID());
+                    }
+                    else if(i == 0 && verf.getID() == null)
+                    {
+                        verf.setID(verfExecID++);
                     }
                     db.batch();
                 }
@@ -1158,6 +1184,7 @@ public final class DBAbstraction
                 "UPDATE tblCompletions SET caretaker = ?, start_time = ?, compl_time = ?, quality = ?, notes = ?"
                 + " WHERE compl_id = ?"
             };
+            int completionID = getLastCompletionID()+1;
             for(int i = 0; i < 1; i++)
             {
                 db.prepareStatement(statements[i]);
@@ -1174,6 +1201,10 @@ public final class DBAbstraction
                     if(i == 1 && comp.getID() != null)
                     {
                         db.add(comp.getID());
+                    }
+                    else if(i == 0 && comp.getID() == null)
+                    {
+                        comp.setID(completionID++);
                     }
                     db.batch();
                 }
