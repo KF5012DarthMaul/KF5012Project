@@ -159,8 +159,7 @@ public class TimelineDemo extends JFrame {
 		eventLists.add(task3Events);
 		
 		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
-		
-		Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+
 		Task t3 = new Task(
 			null,
 			"Fix Broken Pipe",
@@ -174,8 +173,10 @@ public class TimelineDemo extends JFrame {
 				null
 			),
 			null,
-			verification
+			null
 		);
+		Verification verification = new Verification(null, t3, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+		t3.setVerification(verification);
 		
 		// The task execution has been allocated to myUser
 		TaskExecution t3Exec = new TaskExecution(

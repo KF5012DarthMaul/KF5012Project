@@ -8,5 +8,5 @@ package temporal;
  * @author William Taylor
  */
 public interface EventDescriptor {
-	public ConstrainedIntervaledPeriodSet getCIPC();
+	public ConstrainedIntervaledPeriodSet getSchedule();
 }

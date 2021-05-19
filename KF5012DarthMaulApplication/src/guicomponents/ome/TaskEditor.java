@@ -223,7 +223,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 
 		JButton btnUpdateTimeline = new JButton("Update Timeline");
 		btnUpdateTimeline.addActionListener((e) -> {
-			this.updateTimeline(txteName.getObject(), getScheduleConstraint());
+			this.updateTimeline(txteName.getObject(), getSchedule());
 		});
 		GridBagConstraints gbc_btnUpdateTimeline = new GridBagConstraints();
 		gbc_btnUpdateTimeline.fill = GridBagConstraints.HORIZONTAL;
@@ -445,7 +445,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 
 		edtVerification = new VerificationEditor();
 		omgVerification = new DomainObjectManager<>(
-			"Requires Verification", edtVerification, () -> new Verification()
+			"Requires Verification", edtVerification, () -> new Verification(active)
 		);
 		GridBagConstraints gbc_edtVerification = new GridBagConstraints();
 		gbc_edtVerification.insets = new Insets(0, 5, 0, 0);
@@ -516,14 +516,14 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	 * the timeline panel to track the new map.
 	 * 
 	 * @param name The name to give events in the timeline.
-	 * @param cips The task schedule constraint to use for the timeline.
+	 * @param schedule The task schedule to use for the timeline.
 	 */
-	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet cips) {
+	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet schedule) {
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
 		
 		currentTaskTimelineHistory = new ArrayList<>();
 		currentTaskTimelineMap = new GenerativeTemporalMap<>(
-			currentTaskTimelineHistory, cips,
+			currentTaskTimelineHistory, schedule,
 			(p) -> new BasicChartableEvent(p, name, Color.CYAN)
 		);
 		maps.add(currentTaskTimelineMap);
@@ -531,70 +531,9 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		if (!omgVerification.getObjectManager().isObjectNull()) {
 			Verification ver = omgVerification.getObjectManager().getObject();
 			
-			Duration setRefDur = cips.periodSet().referencePeriod().duration();
-			
-			// Push back the start to the end of the task, or leave it at the
-			// start if there is no end.
-			
-			LocalDateTime verSetRefStart = cips.periodSet().referencePeriod().start();
-			if (setRefDur != null) {
-				verSetRefStart = verSetRefStart.plus(setRefDur);
-			};
-			
-			// Deal with verCSet
-
-			IntervaledPeriodSet cSet = cips.periodSetConstraint();
-			IntervaledPeriodSet verCSet;
-			if (cSet == null) {
-				// If the task set has no constraint, then the verification set
-				// has no constraint.
-				verCSet = null;
-				
-			} else {
-				LocalDateTime cSetRefStart = cips.periodSetConstraint().referencePeriod().start();
-				Duration cSetRefDur = cips.periodSetConstraint().referencePeriod().duration();
-				Duration cSetInterval = cips.periodSetConstraint().interval();
-
-				Duration verStdDeadline = ver.getStandardDeadline();
-				
-				if (setRefDur != null) {
-					// Push forward the constraint set start by the length of
-					// the task.
-					verCSet = new IntervaledPeriodSet(
-						new Period(cSetRefStart.plus(setRefDur), cSetRefDur),
-						cSetInterval
-					);
-				
-				} else if (verStdDeadline != null) {
-					// If the task has no deadline, then push forward by the
-					// duration of the verification.
-					verCSet = new IntervaledPeriodSet(
-						new Period(cSetRefStart.plus(verStdDeadline), cSetRefDur),
-						cSetInterval
-					);
-					
-				} else {
-					// If the verification has no deadline, then use the current
-					// cSet start, but add a second to the end to make the last
-					// event in each constraint period be generated.
-					verCSet = new IntervaledPeriodSet(
-						new Period(cSetRefStart, cSetRefDur.plusSeconds(1)),
-						cSetInterval
-					);
-				}
-			}
-			
-			ConstrainedIntervaledPeriodSet verificationCips = new ConstrainedIntervaledPeriodSet(
-				new IntervaledPeriodSet(
-					new Period(verSetRefStart, ver.getStandardDeadline()),
-					cips.periodSet().interval()
-				),
-				verCSet
-			);
-			
 			currentVerTimelineHistory = new ArrayList<>();
 			currentVerTimelineMap = new GenerativeTemporalMap<>(
-				currentVerTimelineHistory, verificationCips,
+				currentVerTimelineHistory, ver.getSchedule(),
 				(p) -> new BasicChartableEvent(p, name+" Verification", Color.MAGENTA)
 			);
 			maps.add(currentVerTimelineMap);
@@ -647,19 +586,19 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		active = task;
 
 		// For easier reading
-		ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
+		ConstrainedIntervaledPeriodSet schedule = task.getSchedule();
 		
 		// Set fields
 		txteName.setObject(task.getName());
 		txteNotes.setObject(task.getNotes());
 		lstePriority.setObject(task.getStandardPriority());
 		lsteAllocationConstraint.setObject(task.getAllocationConstraint());
-		setEditor.setObject(cips.periodSet());
-		cSetManager.setObject(cips.periodSetConstraint());
+		setEditor.setObject(schedule.periodSet());
+		cSetManager.setObject(schedule.periodSetConstraint());
 		omgVerification.getObjectManager().setObject(task.getVerification());
 		
 		// Update the timeline to use the new name/cips
-		this.updateTimeline(task.getName(), cips);
+		this.updateTimeline(task.getName(), schedule);
 	}
 
 	/**
@@ -693,7 +632,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		active.setNotes(txteNotes.getObject());
 		active.setStandardPriority(lstePriority.getObject());
 		active.setAllocationConstraint(lsteAllocationConstraint.getObject());
-		active.setScheduleConstraint(this.getScheduleConstraint());
+		active.setSchedule(this.getSchedule());
 		active.setVerification(omgVerification.getObjectManager().getObject());
 		
 		return active;
@@ -702,7 +641,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	/* Utilities used in multiple places
 	 * -------------------------------------------------- */
 	
-	private ConstrainedIntervaledPeriodSet getScheduleConstraint() {
+	private ConstrainedIntervaledPeriodSet getSchedule() {
 		return new ConstrainedIntervaledPeriodSet(
 			setEditor.getObject(), cSetManager.getObject()
 		);

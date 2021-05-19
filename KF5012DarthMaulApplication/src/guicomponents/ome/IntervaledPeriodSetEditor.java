@@ -80,9 +80,9 @@ public class IntervaledPeriodSetEditor
 		LocalDateTime refEnd = refEndManager.getObject();
 		Duration interval = intervalManager.getObject();
 
-		// Constructing a new ConstrainedIntervaledPeriodSet isn't that
-		// problematic memory-wise, and is less complicated than checking to see
-		// if it's changed.
+		// Constructing a new IntervaledPeriodSet isn't that problematic
+		// memory-wise, and is less complicated than checking to see if it's
+		// changed.
 		return new IntervaledPeriodSet(new Period(refStart, refEnd), interval);
 	}
 }

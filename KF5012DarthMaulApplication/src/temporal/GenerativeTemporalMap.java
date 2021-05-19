@@ -8,7 +8,7 @@ import java.util.function.Function;
 
 /**
  * An temporal list-like temporal map that generates requested events
- * incrementally according to the given ConstrainedIntervaledPeriodSet, and
+ * incrementally according to the given Task's schedule, and
  * tracks them in a (mutable) list given to it.
  * 
  * @author music

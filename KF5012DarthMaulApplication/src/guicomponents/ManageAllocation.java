@@ -162,11 +162,11 @@ public class ManageAllocation extends JPanel {
 		List<TemporalMap<Integer, TaskExecution>> taskMaps = new ArrayList<>();
 		
 		for (Task task : allTasks) {
-			ConstrainedIntervaledPeriodSet cips = task.getScheduleConstraint();
+			ConstrainedIntervaledPeriodSet schedule = task.getSchedule();
 			
 			taskMaps.add(new GenerativeTemporalMap<>(
 				new ArrayList<>(), // <all task executions for that task>,
-				cips,
+				schedule,
 				(p) -> {
 					TaskExecution taskExec = new TaskExecution(
 						null, task, "", TaskPriority.NORMAL, p, null, null, null
@@ -319,7 +319,6 @@ public class ManageAllocation extends JPanel {
 		// A high-priority one-off task with deadline and verification.
 		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
 		
-		Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
 		Task t3 = new Task(
 			null,
 			"Fix Broken Pipe",
@@ -333,8 +332,10 @@ public class ManageAllocation extends JPanel {
 				null
 			),
 			null,
-			verification
+			null
 		);
+		Verification verification = new Verification(null, t3, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+		t3.setVerification(verification);
 		testTasks.add(t3);
 		
 		// The task execution has been allocated to myUser
