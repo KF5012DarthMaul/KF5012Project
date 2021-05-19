@@ -130,105 +130,103 @@ public class ViewReports extends JPanel {
 		
 		ChangeListener changeTabs = new ChangeListener() {
 
-	        public void stateChanged(ChangeEvent e) {
-	        	int tabIndex = tabbedPane.getSelectedIndex();
-	        	switch (tabIndex) {
-	        	case 0:
-	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
-	        		
-	        		List<TaskExecution> tasks;
-	        		
-					tasks = db.getTaskExecutionList().stream()
-							.filter(task -> task.getCompletion() == null && task.getAllocation() != null)
-							.collect(Collectors.toList());
+                    public void stateChanged(ChangeEvent e) {
+                        int tabIndex = tabbedPane.getSelectedIndex();
+                        List<TaskExecution> tasks = db.getTaskExecutionList();
+                        switch (tabIndex) {
+                        case 0:
+                            Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 
-	        		Object[][] data = new Object[tasks.size()][columns.length];
-	        		for (int i = 0; i<tasks.size(); i++) {
-	        			data[i][0] = tasks.get(i).getName();
-	        			data[i][1] = tasks.get(i).getAllocation().getUsername();
-	        			LocalDateTime taskDeadline = tasks.get(i).getPeriod().end();
-	        			if (taskDeadline == null) {
-	        				data[i][2] = "No Task Deadline Set";
-	        			} 
-	        			else {
-	        				data[i][2] = taskDeadline.format(formatter);
-	        			}
-	        		}
-	        		
-	        		table = new JTable(data, columns);
-	        		scrollPane_Task_Status.setViewportView(table);	        		
-	        		break;
-	        		
-	        	case 1:
-	        		Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks2;
-	        		
-	    			db.getTaskExecutionList().forEach(t->System.out.println(t.getID()));
-	    			tasks2 = db.getTaskExecutionList().stream()
-	    				.filter(task -> task.getCompletion() != null && 
-	    					task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
-	    				.collect(Collectors.toList());
+                            List<TaskExecution> incompleteTaskExecsList = tasks.stream()
+                                    .filter(task -> task.getCompletion() == null 
+                                            && task.getAllocation() != null)
+                                    .collect(Collectors.toList());
 
-	        		Object[][] data2 = new Object[tasks2.size()][columns2.length];
-	        		
-	        		for (int i = 0; i<tasks2.size(); i++) {
-	        			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
-	        			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();	        			
-	        			data2[i][0] = tasks2.get(i).getName();
-	        			if (dueDate == null) {
-	        				data2[i][1] = "No Task Deadline Set";
-	        			}
-	        			else {
-	        				data2[i][1] = dueDate.format(formatter);
-	        			}
-	        			data2[i][2] = completionTime.format(formatter);
-	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
-	        				data2[i][3] = "Completed on-time";
-	        			}
-	        			else {
-	        				data2[i][3] = "Over deadline";	
-	        			}
-	        		}
-	        		
-	        		table = new JTable(data2, columns2);
-	        		scrollPane_Caretaker_Performance.setViewportView(table);
-	        		break;
-	        		
-	        	case 2:
-	        		Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks3;
+                            Object[][] data = new Object[incompleteTaskExecsList.size()][columns.length];
+                            for (int i = 0; i<incompleteTaskExecsList.size(); i++) {
+                                data[i][0] = incompleteTaskExecsList.get(i).getName();
+                                data[i][1] = incompleteTaskExecsList.get(i).getAllocation().getUsername();
+                                LocalDateTime taskDeadline = incompleteTaskExecsList.get(i).getPeriod().end();
+                                if (taskDeadline == null) {
+                                        data[i][2] = "No Task Deadline Set";
+                                } 
+                                else {
+                                        data[i][2] = taskDeadline.format(formatter);
+                                }
+                            }
 
-						tasks3 = db.getTaskExecutionList().stream()
-							.filter(task -> task.getCompletion() != null)
-							.collect(Collectors.toList());
+                            table = new JTable(data, columns);
+                            scrollPane_Task_Status.setViewportView(table);	        		
+                            break;
 
-	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
-	        		
-	        		for (int i = 0; i<tasks3.size(); i++) {
-	        			LocalDateTime dueDate = tasks3.get(i).getPeriod().end();
-	        			LocalDateTime completionTime = tasks3.get(i).getCompletion().getCompletionTime();
-	        			
-	        			data3[i][0] = tasks3.get(i).getCompletion().getStaff().getUsername();
-	        			data3[i][1] = tasks3.get(i).getName();
-	        			if (dueDate == null) {
-	        				data3[i][2] = "No Task Deadline Set";
-	        			}
-	        			else {
-	        				data3[i][2] = dueDate.format(formatter);
-	        			}
-	        			data3[i][3] = completionTime.format(formatter);
-	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
-	        				data3[i][4] = "Completed on-time";
-	        			}
-	        			else {
-	        				data3[i][4] = "Over deadline";	
-	        			}
-	        		}
-	        		table = new JTable(data3, columns3);
-	        		scrollPane_Task_Performance.setViewportView(table);
-	        		break;
-	        	}  
-	        }
+                        case 1:
+                            Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+                            List<TaskExecution> completedByUserTaskExecsList = tasks.stream()
+                                    .filter(task -> task.getCompletion() != null 
+                                            && task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+                                    .collect(Collectors.toList());
+
+                            Object[][] data2 = new Object[completedByUserTaskExecsList.size()][columns2.length];
+
+                            for (int i = 0; i<completedByUserTaskExecsList.size(); i++) {
+                                    LocalDateTime dueDate = completedByUserTaskExecsList.get(i).getPeriod().end();
+                                    LocalDateTime completionTime = completedByUserTaskExecsList.get(i).getCompletion().getCompletionTime();	        			
+                                    data2[i][0] = completedByUserTaskExecsList.get(i).getName();
+                                    if (dueDate == null) {
+                                            data2[i][1] = "No Task Deadline Set";
+                                    }
+                                    else {
+                                            data2[i][1] = dueDate.format(formatter);
+                                    }
+                                    data2[i][2] = completionTime.format(formatter);
+                                    if (dueDate == null || !completionTime.isAfter(dueDate)) {
+                                            data2[i][3] = "Completed on-time";
+                                    }
+                                    else {
+                                            data2[i][3] = "Over deadline";	
+                                    }
+                            }
+
+                            table = new JTable(data2, columns2);
+                            scrollPane_Caretaker_Performance.setViewportView(table);
+                            break;
+
+
+
+                        case 2:
+                            Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
+                            List<TaskExecution> allCompletedTaskExecsList = tasks.stream()
+                                                    .filter(task -> task.getCompletion() != null)
+                                                    .collect(Collectors.toList());
+
+                            Object[][] data3 = new Object[allCompletedTaskExecsList.size()][columns3.length];
+
+                            for (int i = 0; i<allCompletedTaskExecsList.size(); i++) {
+                                    LocalDateTime dueDate = allCompletedTaskExecsList.get(i).getPeriod().end();
+                                    LocalDateTime completionTime = allCompletedTaskExecsList.get(i).getCompletion().getCompletionTime();
+
+                                    data3[i][0] = allCompletedTaskExecsList.get(i).getCompletion().getStaff().getUsername();
+                                    data3[i][1] = allCompletedTaskExecsList.get(i).getName();
+                                    if (dueDate == null) {
+                                            data3[i][2] = "No Task Deadline Set";
+                                    }
+                                    else {
+                                            data3[i][2] = dueDate.format(formatter);
+                                    }
+                                    data3[i][3] = completionTime.format(formatter);
+                                    if (dueDate == null || !completionTime.isAfter(dueDate)) {
+                                            data3[i][4] = "Completed on-time";
+                                    }
+                                    else {
+                                            data3[i][4] = "Over deadline";	
+                                    }
+                            }
+                            table = new JTable(data3, columns3);
+                            scrollPane_Task_Performance.setViewportView(table);
+                            break;
+
+                        }  
+                    }
 		};		
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
