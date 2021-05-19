@@ -7,6 +7,7 @@ import javax.swing.event.ChangeListener;
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions;
+import dbmgr.DBExceptions.EmptyResultSetException;
 import dbmgr.DBExceptions.FailedToConnectException;
 
 import javax.swing.JButton;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.awt.FlowLayout;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -95,7 +97,14 @@ public class ViewReports extends JPanel {
 		
 		lsteCaretaker.addItemListener((e) -> {
 			Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
-    		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
+    		List<TaskExecution> tasks2;
+			try {
+				tasks2 = db.getCompletedTasksList().stream()
+						.filter(task -> task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+						.collect(Collectors.toList());
+			} catch (EmptyResultSetException e1) {
+				tasks2 = new ArrayList<>();
+			}
     		Object[][] data2 = new Object[tasks2.size()][columns2.length];
     		
     		for (int i = 0; i<tasks2.size(); i++) {
@@ -125,13 +134,18 @@ public class ViewReports extends JPanel {
 	        	case 0:
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
-	        		List<TaskExecution> tasks = db.getUnallocatedTaskExecutionList();
+	        		List<TaskExecution> tasks = db.getIncompleteTaskExecutionList();
 	        		Object[][] data = new Object[tasks.size()][columns.length];
-	        		
 	        		for (int i = 0; i<tasks.size(); i++) {
 	        			data[i][0] = tasks.get(i).getName();
 	        			data[i][1] = tasks.get(i).getAllocation().getUsername();
-	        			data[i][2] = tasks.get(i).getPeriod().end().format(formatter);
+	        			LocalDateTime taskDeadline = tasks.get(i).getPeriod().end();
+	        			if (taskDeadline == null) {
+	        				data[i][2] = "No Task Deadline Set";
+	        			} 
+	        			else {
+	        				data[i][2] = taskDeadline.format(formatter);
+	        			}
 	        		}
 	        		
 	        		table = new JTable(data, columns);
@@ -140,15 +154,26 @@ public class ViewReports extends JPanel {
 	        		
 	        	case 1:
 	        		Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks2 = db.getUnallocatedTaskExecutionList(lsteCaretaker.getObject());
+	        		List<TaskExecution> tasks2;
+	    			try {
+	    				tasks2 = db.getCompletedTasksList().stream()
+	    						.filter(task -> task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+	    						.collect(Collectors.toList());
+	    			} catch (EmptyResultSetException e1) {
+	    				tasks2 = new ArrayList<>();
+	    			}
 	        		Object[][] data2 = new Object[tasks2.size()][columns2.length];
 	        		
 	        		for (int i = 0; i<tasks2.size(); i++) {
 	        			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
-	        			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();
-	        			
+	        			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();	        			
 	        			data2[i][0] = tasks2.get(i).getName();
-	        			data2[i][1] = dueDate.format(formatter);
+	        			if (dueDate == null) {
+	        				data2[i][1] = "No Task Deadline Set";
+	        			}
+	        			else {
+	        				data2[i][1] = dueDate.format(formatter);
+	        			}
 	        			data2[i][2] = completionTime.format(formatter);
 	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
 	        				data2[i][3] = "Completed on-time";
@@ -164,7 +189,7 @@ public class ViewReports extends JPanel {
 	        		
 	        	case 2:
 	        		Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks3 = db.getUnallocatedTaskExecutionList();
+	        		List<TaskExecution> tasks3 = db.getCompletedTasksList();
 	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
 	        		
 	        		for (int i = 0; i<tasks3.size(); i++) {
@@ -173,7 +198,12 @@ public class ViewReports extends JPanel {
 	        			
 	        			data[i][0] = tasks3.get(i).getCompletion().getStaff();
 	        			data3[i][1] = tasks3.get(i).getName();
-	        			data3[i][2] = dueDate.format(formatter);
+	        			if (dueDate == null) {
+	        				data3[i][2] = "No Task Deadline Set";
+	        			}
+	        			else {
+	        				data3[i][2] = dueDate.format(formatter);
+	        			}
 	        			data3[i][3] = completionTime.format(formatter);
 	        			if (dueDate == null || !completionTime.isAfter(dueDate)) {
 	        				data3[i][4] = "Completed on-time";
@@ -187,9 +217,7 @@ public class ViewReports extends JPanel {
 	        		break;
 	        	}  
 	        }
-		};
-		
-		
+		};		
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
 	}
