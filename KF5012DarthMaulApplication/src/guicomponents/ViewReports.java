@@ -134,7 +134,9 @@ public class ViewReports extends JPanel {
 	        	case 0:
 	        		Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
 	        		
-	        		List<TaskExecution> tasks = db.getIncompleteTaskExecutionList();
+	        		List<TaskExecution> tasks = db.getTaskExecutionList().stream()
+	        				.filter(task -> task.getCompletion() == null)
+	        				.collect(Collectors.toList());
 	        		Object[][] data = new Object[tasks.size()][columns.length];
 	        		for (int i = 0; i<tasks.size(); i++) {
 	        			data[i][0] = tasks.get(i).getName();
@@ -156,8 +158,9 @@ public class ViewReports extends JPanel {
 	        		Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
 	        		List<TaskExecution> tasks2;
 	    			try {
-	    				tasks2 = db.getCompletedTasksList().stream()
-	    						.filter(task -> task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+	    				tasks2 = db.getTaskExecutionList().stream()
+	    						.filter(task -> task.getCompletion() != null && 
+	    							task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
 	    						.collect(Collectors.toList());
 	    			} catch (EmptyResultSetException e1) {
 	    				tasks2 = new ArrayList<>();
@@ -189,7 +192,9 @@ public class ViewReports extends JPanel {
 	        		
 	        	case 2:
 	        		Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
-	        		List<TaskExecution> tasks3 = db.getCompletedTasksList();
+	        		List<TaskExecution> tasks3 = db.getTaskExecutionList().stream()
+	        				.filter(task -> task.getCompletion() != null)
+	        				.collect(Collectors.toList());;
 	        		Object[][] data3 = new Object[tasks3.size()][columns3.length];
 	        		
 	        		for (int i = 0; i<tasks3.size(); i++) {
