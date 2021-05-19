@@ -95,37 +95,34 @@ public class ViewReports extends JPanel {
 		}
 		
 		lsteCaretaker.addItemListener((e) -> {
-			Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
-    		List<TaskExecution> tasks2;
+                    Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+                    List<TaskExecution> tasks2 = db.getTaskExecutionList().stream()
+                                    .filter(task -> task.getCompletion() != null && 
+                                            task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+                                    .collect(Collectors.toList());
 
-			db.getTaskExecutionList().forEach(t->System.out.println(t.getID()));
-			tasks2 = db.getTaskExecutionList().stream()
-				.filter(task -> task.getCompletion() != null && 
-					task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
-				.collect(Collectors.toList());
+                    Object[][] data2 = new Object[tasks2.size()][columns2.length];
 
-    		Object[][] data2 = new Object[tasks2.size()][columns2.length];
-    		
-    		for (int i = 0; i<tasks2.size(); i++) {
-    			LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
-    			LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();	        			
-    			data2[i][0] = tasks2.get(i).getName();
-    			if (dueDate == null) {
-    				data2[i][1] = "No Task Deadline Set";
-    			}
-    			else {
-    				data2[i][1] = dueDate.format(formatter);
-    			}
-    			data2[i][2] = completionTime.format(formatter);
-    			if (dueDate == null || !completionTime.isAfter(dueDate)) {
-    				data2[i][3] = "Completed on-time";
-    			}
-    			else {
-    				data2[i][3] = "Over deadline";	
-    			}
-    		}
-    		table = new JTable(data2, columns2);
-    		scrollPane_Caretaker_Performance.setViewportView(table);
+                    for (int i = 0; i<tasks2.size(); i++) {
+                            LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
+                            LocalDateTime completionTime = tasks2.get(i).getCompletion().getCompletionTime();	        			
+                            data2[i][0] = tasks2.get(i).getName();
+                            if (dueDate == null) {
+                                    data2[i][1] = "No Task Deadline Set";
+                            }
+                            else {
+                                    data2[i][1] = dueDate.format(formatter);
+                            }
+                            data2[i][2] = completionTime.format(formatter);
+                            if (dueDate == null || !completionTime.isAfter(dueDate)) {
+                                    data2[i][3] = "Completed on-time";
+                            }
+                            else {
+                                    data2[i][3] = "Over deadline";	
+                            }
+                    }
+                    table = new JTable(data2, columns2);
+                    scrollPane_Caretaker_Performance.setViewportView(table);
 		});
 		
 		ChangeListener changeTabs = new ChangeListener() {
@@ -191,8 +188,6 @@ public class ViewReports extends JPanel {
                             scrollPane_Caretaker_Performance.setViewportView(table);
                             break;
 
-
-
                         case 2:
                             Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
                             List<TaskExecution> allCompletedTaskExecsList = tasks.stream()
@@ -231,7 +226,7 @@ public class ViewReports extends JPanel {
 		changeTabs.stateChanged(null);
 		tabbedPane.addChangeListener(changeTabs);
 	}
-
+        
 	/**
 	 * Load users into the allocation constraint combo box and all other
 	 * components that require them.
