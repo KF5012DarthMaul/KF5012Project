@@ -616,6 +616,14 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		if (!cSetManager.validateFields()) valid = false;
 		if (!omgVerification.getObjectManager().validateFields()) valid = false;
 		
+		// You cannot constrain the allocation of a task to the same user as the
+		// allocation of its verification.
+		Verification verif = omgVerification.getObjectManager().getObject();
+		if (lsteAllocationConstraint.getObject() == verif.getAllocationConstraint()) {
+			new ExceptionDialog("Task and verification cannot be constrained to be allocated to the same person.");
+			valid = false;
+		}
+		
 		return valid;
 	}
 	

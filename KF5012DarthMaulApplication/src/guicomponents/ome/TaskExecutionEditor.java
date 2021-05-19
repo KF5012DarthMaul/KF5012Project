@@ -211,11 +211,21 @@ public class TaskExecutionEditor
 	@Override
 	public boolean validateFields() {
 		boolean valid = true;
-
+		
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
 		if (!omgVerificationExec.getObjectManager().validateFields()) valid = false;
 		if (!omgCompletion.getObjectManager().validateFields()) valid = false;
+		
+		// The same user cannot complete both a task execution and its
+		// verification execution.
+		VerificationExecution verifExec = omgVerificationExec.getObjectManager().getObject();
+		Completion compl = omgCompletion.getObjectManager().getObject();
+		Completion verifCompl = verifExec.getCompletion();
+		if (compl.getStaff() == verifCompl.getStaff()) {
+			new ExceptionDialog("Task and verification cannot be completed by the same person.");
+			valid = false;
+		}
 		
 		return valid;
 	}
