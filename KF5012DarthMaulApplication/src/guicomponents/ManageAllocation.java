@@ -162,11 +162,9 @@ public class ManageAllocation extends JPanel {
 		List<TemporalMap<Integer, TaskExecution>> taskMaps = new ArrayList<>();
 		
 		for (Task task : allTasks) {
-			ConstrainedIntervaledPeriodSet schedule = task.getSchedule();
-			
 			taskMaps.add(new GenerativeTemporalMap<>(
 				new ArrayList<>(), // <all task executions for that task>,
-				schedule,
+				task,
 				(p) -> {
 					TaskExecution taskExec = new TaskExecution(
 						null, task, "", TaskPriority.NORMAL, p, null, null, null

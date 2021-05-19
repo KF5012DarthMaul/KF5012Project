@@ -23,18 +23,18 @@ public class GenerativeTemporalMap<T extends Event>
 
 	private final List<T> events;
 	private final TemporalList<T> map;
-	private final ConstrainedIntervaledPeriodSet cips;
+	private final EventDescriptor eventDesc;
 	private final Function<Period, T> gen;
 	
 	public GenerativeTemporalMap(
 			List<T> events,
-			ConstrainedIntervaledPeriodSet cips,
+			EventDescriptor eventDesc,
 			Function<Period, T> gen
 	) {
 		this.events = events;
 		this.events.sort(Event.byStartTime);
 		this.map = new TemporalList<>(this.events);
-		this.cips = cips;
+		this.eventDesc = eventDesc;
 		this.gen = gen;
 	}
 	
@@ -70,7 +70,7 @@ public class GenerativeTemporalMap<T extends Event>
 		if (eventAfter != null) return;
 		
 		// If there isn't an event after time
-		IntervaledPeriodSet setRef = this.cips.periodSet();
+		IntervaledPeriodSet setRef = this.eventDesc.getSchedule().periodSet();
 		LocalDateTime setRefStart = setRef.referencePeriod().start();
 		Duration setInterval = setRef.interval();
 		
@@ -143,8 +143,10 @@ public class GenerativeTemporalMap<T extends Event>
 			boolean ignoreConstraint
 	) {
 		// Destructure info
-		IntervaledPeriodSet set = cips.periodSet();
-		IntervaledPeriodSet cSet = cips.periodSetConstraint();
+		ConstrainedIntervaledPeriodSet schedule = this.eventDesc.getSchedule();
+		
+		IntervaledPeriodSet set = schedule.periodSet();
+		IntervaledPeriodSet cSet = schedule.periodSetConstraint();
 		
 		Period setRef = set.referencePeriod();
 		LocalDateTime setRefStart = setRef.start();

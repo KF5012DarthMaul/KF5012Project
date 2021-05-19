@@ -222,9 +222,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		formPanel.add(boundedTimelinePanel, gbc_timelinePanel);
 
 		JButton btnUpdateTimeline = new JButton("Update Timeline");
-		btnUpdateTimeline.addActionListener((e) -> {
-			this.updateTimeline(txteName.getObject(), getSchedule());
-		});
+		btnUpdateTimeline.addActionListener((e) -> updateTimeline(getObject()));
 		GridBagConstraints gbc_btnUpdateTimeline = new GridBagConstraints();
 		gbc_btnUpdateTimeline.fill = GridBagConstraints.HORIZONTAL;
 		gbc_btnUpdateTimeline.insets = new Insets(0, 5, 5, 0);
@@ -518,13 +516,13 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 	 * @param name The name to give events in the timeline.
 	 * @param schedule The task schedule to use for the timeline.
 	 */
-	private void updateTimeline(String name, ConstrainedIntervaledPeriodSet schedule) {
+	private void updateTimeline(Task task) {
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
 		
 		currentTaskTimelineHistory = new ArrayList<>();
 		currentTaskTimelineMap = new GenerativeTemporalMap<>(
-			currentTaskTimelineHistory, schedule,
-			(p) -> new BasicChartableEvent(p, name, Color.CYAN)
+			currentTaskTimelineHistory, task,
+			(p) -> new BasicChartableEvent(p, task.getName(), Color.CYAN)
 		);
 		maps.add(currentTaskTimelineMap);
 		
@@ -533,8 +531,8 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 			
 			currentVerTimelineHistory = new ArrayList<>();
 			currentVerTimelineMap = new GenerativeTemporalMap<>(
-				currentVerTimelineHistory, ver.getSchedule(),
-				(p) -> new BasicChartableEvent(p, name+" Verification", Color.MAGENTA)
+				currentVerTimelineHistory, ver,
+				(p) -> new BasicChartableEvent(p, ver.getName(), Color.MAGENTA)
 			);
 			maps.add(currentVerTimelineMap);
 		}
@@ -598,7 +596,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		omgVerification.getObjectManager().setObject(task.getVerification());
 		
 		// Update the timeline to use the new name/cips
-		this.updateTimeline(task.getName(), schedule);
+		this.updateTimeline(task);
 	}
 
 	/**

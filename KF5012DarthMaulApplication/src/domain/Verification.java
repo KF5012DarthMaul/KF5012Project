@@ -87,6 +87,10 @@ public class Verification implements EventDescriptor {
 	}
 	
 	// Getters
+	public String getName() {
+		return this.task.getName() + " verification";
+	}
+	
 	public String getNotes() {
 		return this.notes;
 	}
