@@ -85,10 +85,10 @@ public class DBMgr {
             db.submitTaskExecution(tex);
             
             // Retrieving all completed tasks and checking for a specific user
-            ArrayList<TaskExecution> completed = db.getCompletedTasksList();
+            ArrayList<TaskExecution> completed = db.getTaskExecutionList();
             List<TaskExecution> completedByCT3 = completed.stream().filter(task -> task.getCompletion().getStaff().getUsername().equals("caretaker_3")).collect(toList());
             
-        } catch (DBExceptions.FailedToConnectException | DBExceptions.EmptyResultSetException | DBExceptions.UserDoesNotExistException ex) {
+        } catch (DBExceptions.FailedToConnectException | DBExceptions.UserDoesNotExistException ex) {
             Logger.getLogger(DBMgr.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

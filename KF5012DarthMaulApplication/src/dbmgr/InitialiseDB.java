@@ -9,7 +9,9 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 
 import dbmgr.DBExceptions.FailedToConnectException;
+import domain.Completion;
 import domain.Task;
+import domain.TaskCompletionQuality;
 import domain.TaskExecution;
 import domain.TaskPriority;
 import domain.Verification;
@@ -93,14 +95,14 @@ public class InitialiseDB {
     public void dropTables() {
     	try {
 	    	dbConn.execute("""
-	    			DROP TABLE tblUsers;
-	    			DROP TABLE tblTasks;
-	    			DROP TABLE tblTaskMaps;
-	    			DROP TABLE tblVerifications;
-	    			DROP TABLE tblTaskExecutions;
-	    			DROP TABLE tblVerfExecutions;
-	    			DROP TABLE tblCompletion;
-	    			DROP TABLE tblSystemLog;
+	    			DROP TABLE IF EXISTS tblUsers;
+	    			DROP TABLE IF EXISTS tblTasks;
+	    			DROP TABLE IF EXISTS tblTaskMaps;
+	    			DROP TABLE IF EXISTS tblVerifications;
+	    			DROP TABLE IF EXISTS tblTaskExecutions;
+	    			DROP TABLE IF EXISTS tblVerfExecutions;
+	    			DROP TABLE IF EXISTS tblCompletions;
+	    			DROP TABLE IF EXISTS tblSystemLog;
 	    			""");
     	} catch (Exception e) {
 			new ExceptionDialog("Could not create database tables.", e);
@@ -182,7 +184,7 @@ public class InitialiseDB {
                         FOREIGN KEY (compl_id) REFERENCES tblCompletion(compl_id) ON DELETE CASCADE
                    );""");
     		dbConn.execute(""" 
-                    CREATE TABLE IF NOT EXISTS tblCompletion(
+                    CREATE TABLE IF NOT EXISTS tblCompletions(
                         compl_id INTEGER PRIMARY KEY AUTOINCREMENT,
                         caretaker TEXT NOT NULL,
                         start_time INTEGER NOT NULL,
@@ -377,9 +379,10 @@ public class InitialiseDB {
             );
             
             allTasks.add(t_noExecs);
-            
+
             // A high-priority one-off task with deadline and verification.
-            User myUser = new User("myuser", AccountType.CARETAKER);
+            User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
+            //User myUser = new User("myuser", AccountType.CARETAKER);
             
             Verification verification = new Verification(null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
             Task t_requiresVerif = new Task(
@@ -416,6 +419,39 @@ public class InitialiseDB {
 
             // Add both
             allTaskExecs.add(t3Exec);
+            
+            //This is a example of a completed task
+            Task t_complete = new Task(
+                null,
+                "Make beds", "",
+                null, null, null,
+                TaskPriority.LOW,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        // Start no earlier than 3 hours after the program is
+                        // run, and finish no later than 2 hours after that.
+                        new Period(
+                            LocalDateTime.now().plus(Duration.ofHours(3)),
+                            Duration.ofDays(2) // It can wait for a bit
+                        ),
+                        null
+                    ),
+                    null
+                ),
+                null, null
+            );
+            
+            allTasks.add(t_complete);
+            
+            TaskExecution tCompleteExec = new TaskExecution(
+                null, t_complete, "", TaskPriority.HIGH,
+                new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                null,
+                new Completion(null, myUser, LocalDateTime.now(), LocalDateTime.now(), TaskCompletionQuality.ADEQUATE, "test completion"), 
+                null
+                
+            );
+            allTaskExecs.add(tCompleteExec);
             
             /* Add Tasks and Task Executions
              * -------------------- */

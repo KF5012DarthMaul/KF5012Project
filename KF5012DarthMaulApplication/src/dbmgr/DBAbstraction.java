@@ -410,7 +410,7 @@ public final class DBAbstraction
     }
 
     // Retrieve all unique tasks and temporal rules
-    public ArrayList<Task> getTaskList() throws EmptyResultSetException
+    public ArrayList<Task> getTaskList()
     {
         try 
         {
@@ -512,24 +512,20 @@ public final class DBAbstraction
                 }
                 return tasks;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
-    private ArrayList<Completion> getCompletionList() throws EmptyResultSetException
+    private ArrayList<Completion> getCompletionList()
     {
         try 
         {
             db.prepareStatement("SELECT compl_id, caretaker, start_time, compl_time, quality, notes"
-                    + " FROM tblCompletion");
+                    + " FROM tblCompletions");
             ArrayList<Completion> completions = new ArrayList<>();
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
@@ -549,26 +545,22 @@ public final class DBAbstraction
                 }
                 return completions;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
-    private ArrayList<VerificationExecution> getVerificationExecutionList() throws EmptyResultSetException
+    private ArrayList<VerificationExecution> getVerificationExecutionList()
     {
         try 
         {
             ArrayList<Completion> completions = getCompletionList();
             ArrayList<Task> taskList = getTaskList();
-            ArrayList<VerificationExecution> execList = new ArrayList();
-            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, completion_id"
+            ArrayList<VerificationExecution> execList = new ArrayList<>();
+            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, compl_id"
                     + " FROM tblVerfExecutions");
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
@@ -577,7 +569,7 @@ public final class DBAbstraction
                 {
                    int id = res.getInt(1);
                    int verfID = res.getInt(2);
-                   Verification verf = taskList.stream().filter(task -> task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
+                   Verification verf = taskList.stream().filter(task -> task.getVerification() != null && task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
                    String notes = res.getString(3);
                    Duration d = Duration.ofMinutes(res.getInt(4));
                    String caretaker = res.getString(5);
@@ -589,23 +581,19 @@ public final class DBAbstraction
                 }
                 return execList;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     // GET TASK EXECUTIONS
 
     // Retrieve today's task list for a given user
     // Untested
-    public ArrayList<TaskExecution> getUserDailyTaskList(String username) throws EmptyResultSetException
+    public ArrayList<TaskExecution> getUserDailyTaskList(String username)
     {
         try 
         {
@@ -615,7 +603,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> tasks = new ArrayList();
+                ArrayList<TaskExecution> tasks = new ArrayList<>();
                 while(res.next())
                 {
 
@@ -623,19 +611,16 @@ public final class DBAbstraction
                 }
                 return tasks;
             }
-            else 
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
+        return new ArrayList<>();
     }
     
-    public ArrayList<TaskExecution> getTaskExecutionList() throws EmptyResultSetException
+    public ArrayList<TaskExecution> getTaskExecutionList()
     {
         ArrayList<Task> tasks = getTaskList();
         ArrayList<Completion> completions = getCompletionList();
@@ -646,7 +631,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> exes = new ArrayList();
+                ArrayList<TaskExecution> exes = new ArrayList<>();
                 while(res.next())
                 {
                     int id = res.getInt(1);
@@ -673,21 +658,16 @@ public final class DBAbstraction
                 }
                 return exes;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
-
-        } 
+        }
         catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
     
     // Retrieve all non-priority tasks for a time period
-    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p) throws EmptyResultSetException
+    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p)
     {
         PeriodUnwrapper pw = new PeriodUnwrapper(p);
         try 
@@ -700,7 +680,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> exes = new ArrayList();
+                ArrayList<TaskExecution> exes = new ArrayList<>();
                 ArrayList<Task> tasks = getTaskList();
                 while(res.next())
                 {
@@ -714,13 +694,8 @@ public final class DBAbstraction
                     int prio = res.getInt(7);
                     TaskPriority taskPrio = TaskPriority.values()[prio];
                     exes.add(new TaskExecution(id, task, notes, taskPrio, taskP, u, null, null));
-
                 }
                 return exes;
-            }
-            else
-            {
-                throw new EmptyResultSetException();
             }
         } 
         catch (SQLException | UserDoesNotExistException ex) 
@@ -957,6 +932,7 @@ public final class DBAbstraction
                 {
                     db.add(task.getTask().getID());
                     db.add(task.getNotes());
+                    db.add(task.getPriority().ordinal());
                     PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
                     db.add(pw.start);
                     db.add(pw.end);
