@@ -13,10 +13,8 @@ import temporal.IntervaledPeriodSet;
 import temporal.Period;
 import temporal.TemporalMap;
 import temporal.Timeline;
-
-import guicomponents.formatters.TaskExecutionFormatter;
+import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
-import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 
@@ -46,7 +44,7 @@ public class ManageAllocation extends JPanel {
 	private static final DateTimeFormatter dateTimeFormatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 
-	private static final TaskExecutionFormatter TASK_EXEC_FORMATTER = new TaskExecutionFormatter();
+	private static final NamedTaskExecutionFormatter TASK_EXEC_FORMATTER = new NamedTaskExecutionFormatter();
 
 	private LocalDateTimeEditor ldteEndTime;
 	private JButton btnConfirm;
