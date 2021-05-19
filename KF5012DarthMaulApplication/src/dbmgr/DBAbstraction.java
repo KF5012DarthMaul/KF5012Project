@@ -559,7 +559,7 @@ public final class DBAbstraction
         {
             ArrayList<Completion> completions = getCompletionList();
             ArrayList<Task> taskList = getTaskList();
-            ArrayList<VerificationExecution> execList = new ArrayList();
+            ArrayList<VerificationExecution> execList = new ArrayList<>();
             db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, compl_id"
                     + " FROM tblVerfExecutions");
             ResultSet res = db.executePreparedQuery();
@@ -569,7 +569,7 @@ public final class DBAbstraction
                 {
                    int id = res.getInt(1);
                    int verfID = res.getInt(2);
-                   Verification verf = taskList.stream().filter(task -> task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
+                   Verification verf = taskList.stream().filter(task -> task.getVerification() != null && task.getVerification().getID().equals(verfID)).findFirst().get().getVerification();
                    String notes = res.getString(3);
                    Duration d = Duration.ofMinutes(res.getInt(4));
                    String caretaker = res.getString(5);
@@ -603,7 +603,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> tasks = new ArrayList();
+                ArrayList<TaskExecution> tasks = new ArrayList<>();
                 while(res.next())
                 {
 
@@ -631,7 +631,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> exes = new ArrayList();
+                ArrayList<TaskExecution> exes = new ArrayList<>();
                 while(res.next())
                 {
                     int id = res.getInt(1);
@@ -658,10 +658,7 @@ public final class DBAbstraction
                 }
                 return exes;
             }
-            else
-            {
-            }
-        } 
+        }
         catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
@@ -683,7 +680,7 @@ public final class DBAbstraction
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
             {
-                ArrayList<TaskExecution> exes = new ArrayList();
+                ArrayList<TaskExecution> exes = new ArrayList<>();
                 ArrayList<Task> tasks = getTaskList();
                 while(res.next())
                 {
@@ -697,7 +694,6 @@ public final class DBAbstraction
                     int prio = res.getInt(7);
                     TaskPriority taskPrio = TaskPriority.values()[prio];
                     exes.add(new TaskExecution(id, task, notes, taskPrio, taskP, u, null, null));
-
                 }
                 return exes;
             }
