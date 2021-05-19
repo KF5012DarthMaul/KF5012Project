@@ -1059,7 +1059,7 @@ public final class DBAbstraction
             }
             else
             {
-                db.prepareStatement("UPDATE tblVerification SET verf_notes = ?, verf_priority = ?, verf_duration = ?, verf_caretaker = ?"
+                db.prepareStatement("UPDATE tblVerifications SET verf_notes = ?, verf_priority = ?, verf_duration = ?, verf_caretaker = ?"
                         + " WHERE verf_id = ?");
             }
             db.add(verf.getNotes());
