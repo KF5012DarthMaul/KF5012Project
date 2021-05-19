@@ -1,31 +1,21 @@
 package guicomponents;
-
 import javax.swing.JPanel;
-import javax.swing.JTextPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions;
-import dbmgr.DBExceptions.EmptyResultSetException;
 import dbmgr.DBExceptions.FailedToConnectException;
-
-import javax.swing.JButton;
 import javax.swing.JTabbedPane;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.awt.FlowLayout;
-import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;  
-
 import domain.TaskExecution;
 import guicomponents.ome.ListSelectionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;

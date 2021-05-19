@@ -560,7 +560,7 @@ public final class DBAbstraction
             ArrayList<Completion> completions = getCompletionList();
             ArrayList<Task> taskList = getTaskList();
             ArrayList<VerificationExecution> execList = new ArrayList();
-            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, completion_id"
+            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, compl_id"
                     + " FROM tblVerfExecutions");
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())
