@@ -959,7 +959,7 @@ public final class DBAbstraction
             int completionID = getLastCompletionID()+1;
             ArrayList<VerificationExecution> verfExecutions = new ArrayList<>();
             ArrayList<Completion> completions = new ArrayList<>();
-            for(int i = 0; i < 1; i++)
+            for(int i = 0; i <= 1; i++)
             {
                 db.prepareStatement(statements[i]);
                 for(TaskExecution exe: tasks)
@@ -1125,7 +1125,7 @@ public final class DBAbstraction
             int completionID = getLastCompletionID()+1;
             int verfExecID = getLastVerificationExecutionID()+1;
             ArrayList<Completion> completions = new ArrayList<>();
-            for(int i = 0; i < 1; i++)
+            for(int i = 0; i <= 1; i++)
             {
                 db.prepareStatement(statements[i]);
                 for(VerificationExecution verf: verfs)
@@ -1208,7 +1208,7 @@ public final class DBAbstraction
                 + " WHERE compl_id = ?"
             };
             int completionID = getLastCompletionID()+1;
-            for(int i = 0; i < 1; i++)
+            for(int i = 0; i <= 1; i++)
             {
                 db.prepareStatement(statements[i]);
                 for(Completion comp: completions)
