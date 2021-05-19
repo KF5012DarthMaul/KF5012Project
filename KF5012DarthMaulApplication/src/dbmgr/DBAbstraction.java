@@ -525,7 +525,7 @@ public final class DBAbstraction
         try 
         {
             db.prepareStatement("SELECT compl_id, caretaker, start_time, compl_time, quality, notes"
-                    + " FROM tblCompletion");
+                    + " FROM tblCompletions");
             ArrayList<Completion> completions = new ArrayList<>();
             ResultSet res = db.executePreparedQuery();
             if(!res.isClosed())

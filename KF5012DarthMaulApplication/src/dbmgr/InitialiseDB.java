@@ -99,7 +99,7 @@ public class InitialiseDB {
 	    			DROP TABLE tblVerifications;
 	    			DROP TABLE tblTaskExecutions;
 	    			DROP TABLE tblVerfExecutions;
-	    			DROP TABLE tblCompletion;
+	    			DROP TABLE IF EXISTS tblCompletions;
 	    			DROP TABLE tblSystemLog;
 	    			""");
     	} catch (Exception e) {
@@ -182,7 +182,7 @@ public class InitialiseDB {
                         FOREIGN KEY (compl_id) REFERENCES tblCompletion(compl_id) ON DELETE CASCADE
                    );""");
     		dbConn.execute(""" 
-                    CREATE TABLE IF NOT EXISTS tblCompletion(
+                    CREATE TABLE IF NOT EXISTS tblCompletions(
                         compl_id INTEGER PRIMARY KEY AUTOINCREMENT,
                         caretaker TEXT NOT NULL,
                         start_time INTEGER NOT NULL,
