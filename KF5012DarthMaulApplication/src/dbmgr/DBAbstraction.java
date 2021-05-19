@@ -678,11 +678,10 @@ public final class DBAbstraction
                         }
                         taskExecutionCache.put(exe.getID(), exe);
                     }
-                    
-                    ArrayList<TaskExecution> allTasks = new ArrayList<>();
-                    allTasks.addAll(taskExecutionCache.values());
-                    return allTasks;
                 }
+                ArrayList<TaskExecution> allTasks = new ArrayList<>();
+                allTasks.addAll(taskExecutionCache.values());
+                return allTasks;
             }
         }
         catch (SQLException | UserDoesNotExistException ex) 
