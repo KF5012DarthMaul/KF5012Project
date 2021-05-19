@@ -410,7 +410,7 @@ public final class DBAbstraction
     }
 
     // Retrieve all unique tasks and temporal rules
-    public ArrayList<Task> getTaskList() throws EmptyResultSetException
+    public ArrayList<Task> getTaskList()
     {
         try 
         {
@@ -512,19 +512,15 @@ public final class DBAbstraction
                 }
                 return tasks;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
-    private ArrayList<Completion> getCompletionList() throws EmptyResultSetException
+    private ArrayList<Completion> getCompletionList()
     {
         try 
         {
@@ -549,19 +545,15 @@ public final class DBAbstraction
                 }
                 return completions;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
-    private ArrayList<VerificationExecution> getVerificationExecutionList() throws EmptyResultSetException
+    private ArrayList<VerificationExecution> getVerificationExecutionList()
     {
         try 
         {
@@ -589,23 +581,19 @@ public final class DBAbstraction
                 }
                 return execList;
             }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     // GET TASK EXECUTIONS
 
     // Retrieve today's task list for a given user
     // Untested
-    public ArrayList<TaskExecution> getUserDailyTaskList(String username) throws EmptyResultSetException
+    public ArrayList<TaskExecution> getUserDailyTaskList(String username)
     {
         try 
         {
@@ -623,19 +611,16 @@ public final class DBAbstraction
                 }
                 return tasks;
             }
-            else 
-            {
-                throw new EmptyResultSetException();
-            }
         }
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
+        return new ArrayList<>();
     }
     
-    public ArrayList<TaskExecution> getTaskExecutionList() throws EmptyResultSetException
+    public ArrayList<TaskExecution> getTaskExecutionList()
     {
         ArrayList<Task> tasks = getTaskList();
         ArrayList<Completion> completions = getCompletionList();
@@ -675,19 +660,17 @@ public final class DBAbstraction
             }
             else
             {
-                throw new EmptyResultSetException();
             }
-
         } 
         catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return null;
+        return new ArrayList<>();
     }
     
     // Retrieve all non-priority tasks for a time period
-    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p) throws EmptyResultSetException
+    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p)
     {
         PeriodUnwrapper pw = new PeriodUnwrapper(p);
         try 
@@ -717,10 +700,6 @@ public final class DBAbstraction
 
                 }
                 return exes;
-            }
-            else
-            {
-                throw new EmptyResultSetException();
             }
         } 
         catch (SQLException | UserDoesNotExistException ex) 
@@ -957,6 +936,7 @@ public final class DBAbstraction
                 {
                     db.add(task.getTask().getID());
                     db.add(task.getNotes());
+                    db.add(task.getPriority().ordinal());
                     PeriodUnwrapper pw = new PeriodUnwrapper(task.getPeriod());
                     db.add(pw.start);
                     db.add(pw.end);
