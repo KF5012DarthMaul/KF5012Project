@@ -43,7 +43,7 @@ public class DBMgr {
             db.submitTask(t);
             
             // Retrieve it for no reason
-            ArrayList<Task> ts = db.getTaskList();
+            List<Task> ts = db.getTaskList();
             t = ts.get(0);
             
             // Populate some fields
