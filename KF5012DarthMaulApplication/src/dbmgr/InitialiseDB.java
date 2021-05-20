@@ -132,6 +132,7 @@ public class InitialiseDB {
                         constraint_interval INTEGER,
                         allocation TEXT,
                         verification_id INTEGER,
+                        deleted INTEGER,
                         FOREIGN KEY(verification_id) REFERENCES tblVerications (verf_id) ON DELETE CASCADE,
                         FOREIGN KEY(allocation) REFERENCES tblUsers (username) ON DELETE CASCADE
                     );""");
