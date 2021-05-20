@@ -3,6 +3,7 @@ package dbmgr;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -328,6 +329,25 @@ public class InitialiseDB {
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+                null, null, null
+            ));
+
+            // Some on the today
+			LocalDateTime startOfToday = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
+			
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(startOfToday.plusHours(10), startOfToday.plusHours(11)),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(startOfToday.plusHours(12), startOfToday.plusHours(13)),
+                null, null, null
+            ));
+            allTaskExecs.add(new TaskExecution(
+                null, t_repeating, "", TaskPriority.NORMAL,
+                new Period(startOfToday.plusHours(14), startOfToday.plusHours(15)),
                 null, null, null
             ));
 
