@@ -49,13 +49,14 @@ public class ManageAccount extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public ManageAccount(User user, JFrame mainWindow) {
+	public ManageAccount() {
 		setMinimumSize(new Dimension(640, 400));
 		try {
 			db = DBAbstraction.getInstance();
 		} catch (FailedToConnectException exception) {
 			new ErrorDialog("Failed to make database connection");
 		}
+                User user = MainWindow.getCurrentUser();
 		setLayout(new BorderLayout(0, 0));
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -86,7 +87,7 @@ public class ManageAccount extends JPanel {
 		JButton btn_logout = new JButton("Logout");
 		btn_logout.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				mainWindow.dispose();
+				MainWindow.disposeWindow();
 				LoginForm loginForm = new LoginForm();
 				loginForm.setVisible(true);
 			}

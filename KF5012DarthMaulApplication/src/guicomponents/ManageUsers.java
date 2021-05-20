@@ -96,12 +96,13 @@ public class ManageUsers extends JPanel {
 	ArrayList<User> usersToRemove = new ArrayList<User>();
 	
 	private JPasswordField passfield_newUser;
-	public ManageUsers(User selfUser) {
+	public ManageUsers() {
 		try {
 			db = DBAbstraction.getInstance();		
 		} catch (FailedToConnectException e) {
 			e.printStackTrace();
 		}
+        User selfUser = MainWindow.getCurrentUser();
 		allUsersList = db.getAllUsers();
 		removeTableUsers = listWithoutSelf( db.getAllUsers(), selfUser);
 		
