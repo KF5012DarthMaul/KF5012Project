@@ -1216,6 +1216,7 @@ public final class DBAbstraction
                 db.add(task.getID());
                 db.batch();
                 taskCache.remove(task.getID());
+                deletedTaskCache.put(task.getID(), task);
             }
             db.executeBatch();
             return true;
