@@ -46,10 +46,17 @@ public class ManageAllocation extends JPanel {
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
 
-	private LocalDateTimeEditor ldteEndTime;
+	// Generation
+	private LocalDateTimeEditor ldteGenEndTime;
 	private JButton btnConfirm;
 	private JList<Object> previewList;
 	
+	// Allocation
+	private LocalDateTimeEditor ldteAllocEndTime;
+	private JList<Object> allocatedList;
+	private JList<Object> unallocatedList;
+	
+	// DB
 	private DBAbstraction db;
 	
 	/**
@@ -78,13 +85,13 @@ public class ManageAllocation extends JPanel {
 		gbc_lblNewLabel.gridy = 0;
 		generationPanel.add(lblNewLabel, gbc_lblNewLabel);
 		
-		ldteEndTime = new LocalDateTimeEditor();
+		ldteGenEndTime = new LocalDateTimeEditor();
 		GridBagConstraints gbc_ldteEndTime = new GridBagConstraints();
 		gbc_ldteEndTime.anchor = GridBagConstraints.WEST;
 		gbc_ldteEndTime.insets = new Insets(5, 5, 5, 5);
 		gbc_ldteEndTime.gridx = 1;
 		gbc_ldteEndTime.gridy = 0;
-		generationPanel.add(ldteEndTime, gbc_ldteEndTime);
+		generationPanel.add(ldteGenEndTime, gbc_ldteEndTime);
 		
 		JPanel panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
@@ -159,34 +166,16 @@ public class ManageAllocation extends JPanel {
 		
 		JPanel panel_allocationNorth = new JPanel();
 		allocationPanel.add(panel_allocationNorth, BorderLayout.NORTH);
-		GridBagLayout gbl_panel_allocationNorth = new GridBagLayout();
-		gbl_panel_allocationNorth.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_panel_allocationNorth.rowHeights = new int[]{0, 0, 0};
-		gbl_panel_allocationNorth.columnWeights = new double[]{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
-		gbl_panel_allocationNorth.rowWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
-		panel_allocationNorth.setLayout(gbl_panel_allocationNorth);
+		panel_allocationNorth.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 		
-		LocalDateTimeEditor ldteEndTime_1 = new LocalDateTimeEditor();
-		GridBagConstraints gbc_ldteEndTime_1 = new GridBagConstraints();
-		gbc_ldteEndTime_1.insets = new Insets(0, 0, 5, 5);
-		gbc_ldteEndTime_1.fill = GridBagConstraints.BOTH;
-		gbc_ldteEndTime_1.gridx = 3;
-		gbc_ldteEndTime_1.gridy = 0;
-		panel_allocationNorth.add(ldteEndTime_1, gbc_ldteEndTime_1);
+		ldteAllocEndTime = new LocalDateTimeEditor();
+		panel_allocationNorth.add(ldteAllocEndTime);
 		
-		JButton btn_showExecutions = new JButton("Load Tasks");
-		GridBagConstraints gbc_btn_showExecutions = new GridBagConstraints();
-		gbc_btn_showExecutions.insets = new Insets(0, 0, 5, 5);
-		gbc_btn_showExecutions.gridx = 10;
-		gbc_btn_showExecutions.gridy = 0;
-		panel_allocationNorth.add(btn_showExecutions, gbc_btn_showExecutions);
+		JButton btnShowExecutions = new JButton("Load Tasks");
+		panel_allocationNorth.add(btnShowExecutions);
 		
-		JButton btn_swapAllocations = new JButton("Swap");
-		GridBagConstraints gbc_btn_swapAllocations = new GridBagConstraints();
-		gbc_btn_swapAllocations.insets = new Insets(0, 0, 0, 5);
-		gbc_btn_swapAllocations.gridx = 3;
-		gbc_btn_swapAllocations.gridy = 1;
-		panel_allocationNorth.add(btn_swapAllocations, gbc_btn_swapAllocations);
+		JButton btnSwapAllocations = new JButton("Swap");
+		panel_allocationNorth.add(btnSwapAllocations);
 		
 		JPanel panel_allcoationCentre = new JPanel();
 		allocationPanel.add(panel_allcoationCentre, BorderLayout.CENTER);
@@ -205,8 +194,8 @@ public class ManageAllocation extends JPanel {
 		gbc_scrollPane_1.gridy = 0;
 		panel_allcoationCentre.add(scrollPane_1, gbc_scrollPane_1);
 		
-		JList list = new JList();
-		scrollPane_1.setViewportView(list);
+		allocatedList = new JList<>();
+		scrollPane_1.setViewportView(allocatedList);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
@@ -215,8 +204,8 @@ public class ManageAllocation extends JPanel {
 		gbc_scrollPane.gridy = 0;
 		panel_allcoationCentre.add(scrollPane, gbc_scrollPane);
 		
-		JList list_1 = new JList();
-		scrollPane.setViewportView(list_1);
+		unallocatedList = new JList<>();
+		scrollPane.setViewportView(unallocatedList);
 	}
 
 	private void preview() {
@@ -263,7 +252,7 @@ public class ManageAllocation extends JPanel {
 		// Generate the task/verification executions
 		Timeline<Integer, TaskExecution> tasksTimeline = new Timeline<>(taskMaps);
 		List<TaskExecution> genTaskExecs = tasksTimeline.getBetween(
-			LocalDateTime.now(), ldteEndTime.getObject(), Event.byStartTime, true, true
+			LocalDateTime.now(), ldteGenEndTime.getObject(), Event.byStartTime, true, true
 		);
 		
 		// Update the model
