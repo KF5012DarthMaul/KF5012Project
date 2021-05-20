@@ -4,9 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +22,8 @@ import javax.swing.tree.TreePath;
 import domain.Task;
 import domain.TaskExecution;
 import exceptions.TaskManagerExceptions;
+import guicomponents.formatters.Formatter;
+import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.TaskExecutionFormatter;
 import guicomponents.formatters.TaskFormatter;
 import guicomponents.utils.DateRangePicker;
@@ -33,8 +33,10 @@ import javax.swing.BoxLayout;
 
 @SuppressWarnings("serial")
 public class ViewTasks extends JPanel {
-	private static final TaskFormatter TASK_FORMATTER = new TaskFormatter();
-	private static final TaskExecutionFormatter TASK_EXEC_FORMATTER = new TaskExecutionFormatter();
+	private static final Formatter<Task> TASK_FORMATTER =
+		new HTMLFormatter<>(new TaskFormatter());
+	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
+		new HTMLFormatter<>(new TaskExecutionFormatter());
 
 	private DateRangePicker dateRangePicker;
 	private JCheckBox chkDisplayAllTasks;
