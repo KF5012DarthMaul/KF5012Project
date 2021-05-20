@@ -335,7 +335,7 @@ public final class DBAbstraction
                         "UPDATE tblUsers SET account_type = ?, display_name = ?"
                                 + " WHERE username = ?");
                 stmt.add(user.getAccountType().ordinal());
-                stmt.add(user.getUsername());
+                stmt.add(user.getDisplayName());
                 stmt.add(user.getUsername());
                 userCache.remove(getUser(user.getUsername()));
                 userCache.add(user);

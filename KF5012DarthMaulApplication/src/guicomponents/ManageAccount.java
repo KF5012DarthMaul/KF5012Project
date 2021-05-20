@@ -85,7 +85,7 @@ public class ManageAccount extends JPanel {
 		panel_information.add(lbl_displayname, "cell 1 2,alignx right");
 		
 		txt_displayname = new JTextField();
-		txt_displayname.setText(MainWindow.getCurrentUser().getDisplayName());
+		txt_displayname.setText(user.getDisplayName());
 		txt_displayname.setEditable(false);
 		txt_displayname.setColumns(10);
 		panel_information.add(txt_displayname, "cell 3 2,growx");
@@ -238,11 +238,11 @@ public class ManageAccount extends JPanel {
 		JButton btn_applyNewDisplayName = new JButton("Apply");
 		btn_applyNewDisplayName.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String newDisplayName = txt_displayname.getText();
+				String newDisplayName = txt_newDisplayName.getText();
 				if(newDisplayName.length() <= 0) return;
-				MainWindow.getCurrentUser().setDisplayName(newDisplayName);
+                                    user.setDisplayName(newDisplayName);
 				try {
-					db.updateUser(MainWindow.getCurrentUser());
+					db.updateUser(user);
 				} catch (UserDoesNotExistException e1) {
 					e1.printStackTrace();
 				}
