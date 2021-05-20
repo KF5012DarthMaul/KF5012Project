@@ -59,6 +59,7 @@ public class ManageTasks extends JPanel {
 				layout = (CardLayout) buttonPanel.getLayout();
 				layout.show(buttonPanel, "viewTasksButtons");
 
+				reload();
 				layout = (CardLayout) mainPanel.getLayout();
 				layout.show(mainPanel, "viewTasks");
 			}
@@ -154,7 +155,7 @@ public class ManageTasks extends JPanel {
 		/* Initialise the data model
 		 * -------------------------------------------------- */
 
-		reload();
+		views.get("viewTasks").run();
 	}
 
 	public void reload() {
