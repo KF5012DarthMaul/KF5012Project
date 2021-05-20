@@ -29,9 +29,4 @@ public class DBExceptions {
         }
     }
     
-    public static class EmptyInputException extends Exception {
-
-        public EmptyInputException() {
-        }
-    }
 }

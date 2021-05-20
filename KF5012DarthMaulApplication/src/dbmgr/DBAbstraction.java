@@ -77,13 +77,6 @@ public final class DBAbstraction
         return new Period(dtStart, dtEnd);
     }
 
-    // Convert from 1 Epoch seconds of type Long to a Period object
-    private Period periodFromEpoch(Long start)
-    {
-        LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
-        return new Period(dtStart);
-    }
-
     // Unwrapper class that converts Period to Epoch seconds of type Long
     private final class PeriodUnwrapper
     {
@@ -98,7 +91,14 @@ public final class DBAbstraction
                 end = p.end().toEpochSecond(ZoneOffset.UTC);
         }
     }
-
+    
+    private <T> List<T> listOfSingleItem(T item)
+    {
+        List<T> l = new ArrayList<>();
+        l.add(item);
+        return l;
+    }
+    
     /* Main API
      * -------------------- */
     
@@ -279,17 +279,6 @@ public final class DBAbstraction
     {
         return setHashedPassword(user.getUsername(), hashedPassword);
     }
-
-    /**
-     * Gets the permission flags as an integer for a key username.
-     * @param username The username whose permissions to retrieve.
-     * @return A positive integer representing the permission flags.
-     * @throws UserDoesNotExistException
-     */
-    /*public AccountType getAccountType(String username) throws UserDoesNotExistException
-    {
-        return getUser(username).getAccountType();
-    }*/
     
     private ArrayList<User> getAllUsersInternal()
     {
@@ -624,35 +613,6 @@ public final class DBAbstraction
     }
 
     // GET TASK EXECUTIONS
-
-    // Retrieve today's task list for a given user
-    // Untested
-    public ArrayList<TaskExecution> getUserDailyTaskList(String username)
-    {
-        try 
-        {
-            db.prepareStatement("SELECT exe_id, task_id, exe_notes, start_datetime, end_datetime, caretaker FROM tblTaskExecutions"
-                    + " WHERE caretaker = ? AND start_datetime > date('now', '+1 day', 'start of day')");
-            db.add(username);
-            ResultSet res = db.executePreparedQuery();
-            if(!res.isClosed())
-            {
-                ArrayList<TaskExecution> tasks = new ArrayList<>();
-                while(res.next())
-                {
-
-                    //tasks.add(new TaskExecution(res.getString(1), periodFromEpoch(res.getLong(2), res.getLong(3))));
-                }
-                return tasks;
-            }
-        }
-        catch (SQLException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return null;
-        }
-        return new ArrayList<>();
-    }
     
     public ArrayList<TaskExecution> getTaskExecutionList()
     {
@@ -707,57 +667,6 @@ public final class DBAbstraction
         return allTasks;
     }
     
-    // Retrieve all non-priority tasks for a time period
-    public ArrayList<TaskExecution> getUnallocatedTaskExecutionList(Period p)
-    {
-        PeriodUnwrapper pw = new PeriodUnwrapper(p);
-        try 
-        {
-            db.prepareStatement(
-                    "SELECT exe_id, task_id, exe_notes, start_datetime, end_datetime, caretaker FROM tblTaskExecutions"
-                    + " WHERE caretaker IS NULL AND start_datetime <= ? AND end_datetime >= ?");
-            db.add(pw.start);
-            db.add(pw.end == null ? 0 : pw.end);
-            ResultSet res = db.executePreparedQuery();
-            if(!res.isClosed())
-            {
-                ArrayList<TaskExecution> exes = new ArrayList<>();
-                ArrayList<Task> tasks = getTaskList();
-                while(res.next())
-                {
-                    int id = res.getInt(1);
-                    int taskID = res.getInt(2);
-                    Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
-                    String notes = res.getString(3);
-                    Period taskP = periodFromEpoch(res.getLong(4), res.getLong(5));
-                    String caretaker = res.getString(6);
-                    User u = getUser(caretaker);
-                    int prio = res.getInt(7);
-                    TaskPriority taskPrio = TaskPriority.values()[prio];
-                    exes.add(new TaskExecution(id, task, notes, taskPrio, taskP, u, null, null));
-                }
-                return exes;
-            }
-        } 
-        catch (SQLException | UserDoesNotExistException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
-
-    // Retrieve all tasks that were not completed before today
-    public ArrayList<TaskExecution> getUnallocatedOverflowTaskList()
-    {
-        return null;
-    }
-
-    // Retrieve all tasks that have time restrictions for today
-    public ArrayList<TaskExecution> getUnallocatedDailyPriorityTaskList()
-    {
-        return null;
-    }
-
     // SUBMISSIONS
 
     /**
@@ -870,34 +779,19 @@ public final class DBAbstraction
         }
     }
     
-    private <T> List<T> listOfSingleItem(T item)
-    {
-        List<T> l = new ArrayList<>();
-        l.add(item);
-        return l;
-    }
-    
     // Insert a new taskexecution
     public boolean submitTaskExecution(TaskExecution exe)
     {
-        try 
-        {
-            return submitTaskExecutions(listOfSingleItem(exe));
-        } 
-        catch (EmptyInputException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
-        }
+        return submitTaskExecutions(listOfSingleItem(exe));
     }
 
     // Insert all new taskexecutions in one go
-    public boolean submitTaskExecutions(List<TaskExecution> tasks) throws EmptyInputException
+    public boolean submitTaskExecutions(List<TaskExecution> tasks)
     {
         try 
         {
-            if(tasks.isEmpty())
-                throw new EmptyInputException();
+            if(tasks == null || tasks.isEmpty())
+                return false;
             String[] statements = 
             {
                "INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
@@ -979,18 +873,8 @@ public final class DBAbstraction
                 }
                 db.executeBatch();
             }
-            try
-            {
-                submitCompletions(completions);
-            }
-            catch(EmptyInputException ex)
-            {}
-            try
-            {
-                submitVerificationExecutions(verfExecutions);
-            }
-            catch(EmptyInputException ex)
-            {}
+            submitCompletions(completions);
+            submitVerificationExecutions(verfExecutions);
             return true;
         }
         catch (SQLException ex) 
@@ -1048,24 +932,12 @@ public final class DBAbstraction
         return false;
     }
 
-    private boolean submitVerificationExecution(VerificationExecution verf)
+    private boolean submitVerificationExecutions(List<VerificationExecution> verfs)
     {
         try 
         {
-            return submitVerificationExecutions(listOfSingleItem(verf));
-        } 
-        catch (EmptyInputException ex) 
-        {
-            return false;
-        }
-    }
-
-    private boolean submitVerificationExecutions(List<VerificationExecution> verfs) throws EmptyInputException
-    {
-        try 
-        {
-            if(verfs.isEmpty())
-                throw new EmptyInputException();
+            if(verfs == null || verfs.isEmpty())
+                return false;
             String[] statements = 
             {
                 "INSERT INTO tblVerfExecutions (verf_id, exe_notes, exe_duration, caretaker, compl_id)"
@@ -1138,24 +1010,12 @@ public final class DBAbstraction
         }
     }
 
-    private boolean submitCompletion(Completion comp)
+    private boolean submitCompletions(List<Completion> completions)
     {
         try 
         {
-            return submitCompletions(listOfSingleItem(comp));
-        } 
-        catch (EmptyInputException ex) 
-        {
-            return false;
-        }
-    }
-
-    private boolean submitCompletions(List<Completion> completions) throws EmptyInputException
-    {
-        try 
-        {
-            if(completions.isEmpty())
-                throw new EmptyInputException();
+            if(completions == null || completions.isEmpty())
+                return false;
             String[] statements = 
             {
                 "INSERT INTO tblCompletions (caretaker, start_time, compl_time, quality, notes)"
