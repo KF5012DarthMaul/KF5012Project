@@ -15,8 +15,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import javax.swing.JTable;
-import javax.swing.JScrollPane;  
+import javax.swing.JScrollPane;
+
+import domain.Completion;
 import domain.TaskExecution;
+import domain.VerificationExecution;
 import guicomponents.ome.ListSelectionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
@@ -99,7 +102,7 @@ public class ViewReports extends JPanel {
 		}
 		//connection to the database, or list that a database could not be connected to	
 		lsteCaretaker.addItemListener((e) -> {
-                    Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+                    Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                     //Columns to display data in a tidy format
                     List<TaskExecution> tasks2 = db.getTaskExecutionList().stream()
                                     .filter(task -> task.getCompletion() != null && 
@@ -134,6 +137,20 @@ public class ViewReports extends JPanel {
                             else {
                                     data2[i][3] = "Over deadline";	
                                     //Otherwise, it wasn't done on time so print that it wasn't
+                            }
+                            data2[i][4] = tasks2.get(i).getCompletion().getWorkQuality().toString();
+                            VerificationExecution verification = tasks2.get(i).getVerification();
+                            if (verification != null) {
+                            	Completion completion = verification.getCompletion();
+                            	if (completion != null) {
+                            		data2[i][5] = completion.getWorkQuality().toString();
+                            	}
+                            	else {
+                            		data2[i][5] = "No Verification";
+                            	}
+                            }
+                            else {
+                            	data2[i][6] = "No Verification";
                             }
                     }
                     table = new JTable(data2, columns2){
@@ -190,7 +207,7 @@ public class ViewReports extends JPanel {
 
                         case 1:
                         	//Case one shows a selected users history of completed tasks and performance
-                            Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?"};
+                            Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                             //Columns showing related information for this task, in an easy to read format
                             List<TaskExecution> completedByUserTaskExecsList = tasks.stream()
                                     .filter(task -> task.getCompletion() != null 
@@ -228,6 +245,20 @@ public class ViewReports extends JPanel {
                                             data2[i][3] = "Over deadline";
                                             //Print that it was not done on time
                                     }
+                                    data2[i][4] = completedByUserTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                    VerificationExecution verification = completedByUserTaskExecsList.get(i).getVerification();
+                                    if (verification != null) {
+                                    	Completion completion = verification.getCompletion();
+                                    	if (completion != null) {
+                                    		data2[i][5] = completion.getWorkQuality().toString();
+                                    	}
+                                    	else {
+                                    		data2[i][5] = "No Verification";
+                                    	}
+                                    }
+                                    else {
+                                    	data2[i][6] = "No Verification";
+                                    }
                             }
 
                             table = new JTable(data2, columns2){
@@ -241,7 +272,7 @@ public class ViewReports extends JPanel {
 
                         case 2:
                         	//Final case, shows the entire history of all completed tasks
-                            Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?"};
+                            Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                             //Columns related to this task, makes reading the UI a lot nicer and simpler
                             List<TaskExecution> allCompletedTaskExecsList = tasks.stream()
                                                     .filter(task -> task.getCompletion() != null)
@@ -281,6 +312,22 @@ public class ViewReports extends JPanel {
                                             data3[i][4] = "Over deadline";	
                                             //Print that it was over due
                                     }
+                                    data3[i][5] = allCompletedTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                    VerificationExecution verification = allCompletedTaskExecsList.get(i).getVerification();
+                                    if (verification != null) {
+                                    	Completion completion = verification.getCompletion();
+                                    	if (completion != null) {
+                                    		data3[i][6] = completion.getWorkQuality().toString();
+                                    	}
+                                    	else {
+                                    		data3[i][6] = "No Verification";
+                                    	}
+                                    }
+                                    else {
+                                    	data3[i][6] = "No Verification";
+                                    }
+
+                                    
                             }
                             table = new JTable(data3, columns3){
                         		public boolean editCellAt(int row, int column, java.util.EventObject e) {
