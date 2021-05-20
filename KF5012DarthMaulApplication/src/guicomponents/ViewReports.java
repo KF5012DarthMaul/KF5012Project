@@ -136,7 +136,12 @@ public class ViewReports extends JPanel {
                                     //Otherwise, it wasn't done on time so print that it wasn't
                             }
                     }
-                    table = new JTable(data2, columns2);
+                    table = new JTable(data2, columns2){
+                		public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                			return false;
+                			//Prevent edits being made 
+                		}
+                     };
                     scrollPane_Caretaker_Performance.setViewportView(table);
 		});	
 		ChangeListener changeTabs = new ChangeListener() {
@@ -174,7 +179,12 @@ public class ViewReports extends JPanel {
                                 }
                             }
 
-                            table = new JTable(data, columns);
+                            table = new JTable(data, columns){
+                        		public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                        			return false;
+                        			//Prevent edits being made 
+                        		}
+                             };
                             scrollPane_Task_Status.setViewportView(table);	        		
                             break;
 
@@ -220,7 +230,12 @@ public class ViewReports extends JPanel {
                                     }
                             }
 
-                            table = new JTable(data2, columns2);
+                            table = new JTable(data2, columns2){
+                        		public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                        			return false;
+                        			//Prevent edits being made 
+                        		}
+                             };
                             scrollPane_Caretaker_Performance.setViewportView(table);
                             break;
 
@@ -267,7 +282,13 @@ public class ViewReports extends JPanel {
                                             //Print that it was over due
                                     }
                             }
-                            table = new JTable(data3, columns3);
+                            table = new JTable(data3, columns3){
+                        		public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                        			return false;
+                        			//Prevent edits being made 
+                        		}
+                             };
+                         
                             scrollPane_Task_Performance.setViewportView(table);
                             break;
                         }  
