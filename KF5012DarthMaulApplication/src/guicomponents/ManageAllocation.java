@@ -77,13 +77,13 @@ public class ManageAllocation extends JPanel {
 		gbl_generationPanel.rowWeights = new double[]{0.0, 0.0, 1.0, 0.0, Double.MIN_VALUE};
 		generationPanel.setLayout(gbl_generationPanel);
 		
-		JLabel lblNewLabel = new JLabel("Generate from now until:");
-		GridBagConstraints gbc_lblNewLabel = new GridBagConstraints();
-		gbc_lblNewLabel.anchor = GridBagConstraints.WEST;
-		gbc_lblNewLabel.insets = new Insets(5, 5, 5, 5);
-		gbc_lblNewLabel.gridx = 0;
-		gbc_lblNewLabel.gridy = 0;
-		generationPanel.add(lblNewLabel, gbc_lblNewLabel);
+		JLabel lblGenUntil = new JLabel("Generate from now until:");
+		GridBagConstraints gbc_lblGenUntil = new GridBagConstraints();
+		gbc_lblGenUntil.anchor = GridBagConstraints.WEST;
+		gbc_lblGenUntil.insets = new Insets(5, 5, 5, 5);
+		gbc_lblGenUntil.gridx = 0;
+		gbc_lblGenUntil.gridy = 0;
+		generationPanel.add(lblGenUntil, gbc_lblGenUntil);
 		
 		ldteGenEndTime = new LocalDateTimeEditor();
 		GridBagConstraints gbc_ldteEndTime = new GridBagConstraints();
@@ -167,6 +167,14 @@ public class ManageAllocation extends JPanel {
 		JPanel panel_allocationNorth = new JPanel();
 		allocationPanel.add(panel_allocationNorth, BorderLayout.NORTH);
 		panel_allocationNorth.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+
+		JLabel lblAllocUntil = new JLabel("Generate from now until:");
+		GridBagConstraints gbc_lblAllocUntil = new GridBagConstraints();
+		gbc_lblAllocUntil.anchor = GridBagConstraints.WEST;
+		gbc_lblAllocUntil.insets = new Insets(5, 5, 5, 5);
+		gbc_lblAllocUntil.gridx = 0;
+		gbc_lblAllocUntil.gridy = 0;
+		generationPanel.add(lblAllocUntil, gbc_lblAllocUntil);
 		
 		ldteAllocEndTime = new LocalDateTimeEditor();
 		panel_allocationNorth.add(ldteAllocEndTime);
