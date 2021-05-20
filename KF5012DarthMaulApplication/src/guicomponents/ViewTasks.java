@@ -39,13 +39,16 @@ public class ViewTasks extends JPanel {
 		new HTMLFormatter<>(new TaskExecutionFormatter());
 
 	private DateRangePicker dateRangePicker;
-        private JCheckBox chkDisplayUserTasks;
+	private JCheckBox chkDisplayUserTasks;
 	private JCheckBox chkDisplayAllTasks;
 
+	// Tree state management and display
 	private List<Task> allTasks;
 	private List<TaskExecution> allTaskExecs;
+	
 	private Map<Task, List<TaskExecution>> taskTree;
 	private Map<Task, List<TaskExecution>> deletedTaskTree;
+	
 	private DefaultMutableTreeNode taskJTreeRoot;
 	private DefaultTreeModel taskJTreeModel;
 	private JTree taskJTree;
@@ -71,25 +74,25 @@ public class ViewTasks extends JPanel {
 		gbc_dateRangePicker.gridy = 0;
 		this.add(dateRangePicker, gbc_dateRangePicker);
 		
-		JPanel instructionsPanel = new JPanel();
-		GridBagConstraints gbc_instructionsPanel = new GridBagConstraints();
-		gbc_instructionsPanel.fill = GridBagConstraints.BOTH;
-		gbc_instructionsPanel.insets = new Insets(0, 0, 5, 0);
-		gbc_instructionsPanel.gridx = 0;
-		gbc_instructionsPanel.gridy = 1;
-		this.add(instructionsPanel, gbc_instructionsPanel);
-		instructionsPanel.setLayout(new BoxLayout(instructionsPanel, BoxLayout.X_AXIS));
+		JPanel infoAndOtherFiltersPanel = new JPanel();
+		GridBagConstraints gbc_infoAndOtherFiltersPanel = new GridBagConstraints();
+		gbc_infoAndOtherFiltersPanel.fill = GridBagConstraints.BOTH;
+		gbc_infoAndOtherFiltersPanel.insets = new Insets(0, 0, 5, 0);
+		gbc_infoAndOtherFiltersPanel.gridx = 0;
+		gbc_infoAndOtherFiltersPanel.gridy = 1;
+		this.add(infoAndOtherFiltersPanel, gbc_infoAndOtherFiltersPanel);
+		infoAndOtherFiltersPanel.setLayout(new BoxLayout(infoAndOtherFiltersPanel, BoxLayout.X_AXIS));
 		
 		JLabel lblInstructions = new JLabel("<html>Double-click on a task to view its instances in the selected range. Select a task or instance and click 'Edit Task' to view/edit details.<html>");
-		instructionsPanel.add(lblInstructions);
+		infoAndOtherFiltersPanel.add(lblInstructions);
 		
-                chkDisplayUserTasks = new JCheckBox("Display My Only Schedule");
-                chkDisplayUserTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
-                instructionsPanel.add(chkDisplayUserTasks);
-                
+		chkDisplayUserTasks = new JCheckBox("Display My Only Schedule");
+		chkDisplayUserTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
+		infoAndOtherFiltersPanel.add(chkDisplayUserTasks);
+
 		chkDisplayAllTasks = new JCheckBox("Display All Tasks");
 		chkDisplayAllTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
-		instructionsPanel.add(chkDisplayAllTasks);
+		infoAndOtherFiltersPanel.add(chkDisplayAllTasks);
 
 		// Tree
 		JScrollPane taskTreeScrollPane = new JScrollPane();
@@ -143,21 +146,21 @@ public class ViewTasks extends JPanel {
 		LocalDateTime start = this.dateRangePicker.getStartDateTime();
 		LocalDateTime end = this.dateRangePicker.getEndDateTime();
 		
-                List<TaskExecution> filtered = new ArrayList<>(allTaskExecs);
-                if(chkDisplayUserTasks.isSelected())
-                {
-                    filtered = filtered
-                        .stream()
-                        .filter(exec -> exec.getAllocation() != null 
-                                && exec.getAllocation().equals(MainWindow.getCurrentUser()))
-                        .collect(Collectors.toList());
-                }
-                
-		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(filtered);
+		List<TaskExecution> filteredTaskExecs = allTaskExecs;
+		if(chkDisplayUserTasks.isSelected()) {
+		    filteredTaskExecs = filteredTaskExecs.stream()
+				.filter(exec -> (
+					exec.getAllocation() != null &&
+					exec.getAllocation().equals(MainWindow.getCurrentUser())
+				))
+				.collect(Collectors.toList());
+		}
+		
+		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(filteredTaskExecs);
 		List<TaskExecution> execsInRange = taskExecTemporal.getBetween(
 			start, end, Event.byPeriodDefaultInf, true, true
 		);
-                
+		
 
 		/* Map back to tasks
 		 * -------------------- */

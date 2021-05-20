@@ -42,14 +42,15 @@ import java.util.logging.Logger;
 
 @SuppressWarnings("serial")
 public class ManageAllocation extends JPanel {
-
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
 
 	private LocalDateTimeEditor ldteEndTime;
 	private JButton btnConfirm;
 	private JList<Object> previewList;
+	
 	private DBAbstraction db;
+	
 	/**
 	 * Create the panel.
 	 */
@@ -156,22 +157,21 @@ public class ManageAllocation extends JPanel {
 	}
 
 	private void preview() {
-                if(db == null)
-                {
-                    try{
-                        db = DBAbstraction.getInstance();
-                    } catch (DBExceptions.FailedToConnectException ex) {
-                        Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
-                        return;
-                    }
-                }
-                
+		if (db == null) {
+		    try{
+		        db = DBAbstraction.getInstance();
+		    } catch (DBExceptions.FailedToConnectException ex) {
+		        Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
+		        return;
+		    }
+		}
+
 		// Get all tasks (maybe filtered on the DB end?)
 		List<Task> allTasks = db.getTaskList();
-		
+
 		// create generative temporal maps for all tasks and verifications
 		List<TemporalMap<Integer, TaskExecution>> taskMaps = new ArrayList<>();
-		
+
 		for (Task task : allTasks) {
 			taskMaps.add(new GenerativeTemporalMap<>(
 				new ArrayList<>(), // <all task executions for that task>,
@@ -229,7 +229,9 @@ public class ManageAllocation extends JPanel {
 			genTaskExecs.add((TaskExecution) model.get(i));
 		}
 		
+		// Submit to DB
 		db.submitTaskExecutions(genTaskExecs);
+		
 		// Remove graphically
 		model.removeAllElements();
 	}
