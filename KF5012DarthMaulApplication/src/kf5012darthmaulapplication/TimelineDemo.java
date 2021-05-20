@@ -158,7 +158,7 @@ public class TimelineDemo extends JFrame {
 		List<ChartableEvent> task3Events = new ArrayList<>();
 		eventLists.add(task3Events);
 		
-		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
+		User myUser = new User("myuser", "My User", PermissionManager.AccountType.CARETAKER);
 
 		Task t3 = new Task(
 			null,
