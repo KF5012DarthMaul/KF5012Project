@@ -41,7 +41,7 @@ public class GenerateTasks extends JPanel {
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
 
-	private LocalDateTimeEditor ldteEndTime;
+	private LocalDateTimeEditor lsteEndTime;
 	private JButton btnConfirm;
 	private JList<Object> previewList;
 
@@ -64,13 +64,13 @@ public class GenerateTasks extends JPanel {
 		gbc_lblGenUntil.gridy = 0;
 		add(lblGenUntil, gbc_lblGenUntil);
 		
-		ldteEndTime = new LocalDateTimeEditor();
-		GridBagConstraints gbc_ldteEndTime = new GridBagConstraints();
-		gbc_ldteEndTime.anchor = GridBagConstraints.WEST;
-		gbc_ldteEndTime.insets = new Insets(5, 5, 5, 5);
-		gbc_ldteEndTime.gridx = 1;
-		gbc_ldteEndTime.gridy = 0;
-		add(ldteEndTime, gbc_ldteEndTime);
+		lsteEndTime = new LocalDateTimeEditor();
+		GridBagConstraints gbc_lsteEndTime = new GridBagConstraints();
+		gbc_lsteEndTime.anchor = GridBagConstraints.WEST;
+		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 5);
+		gbc_lsteEndTime.gridx = 1;
+		gbc_lsteEndTime.gridy = 0;
+		add(lsteEndTime, gbc_lsteEndTime);
 		
 		JPanel panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
@@ -184,7 +184,7 @@ public class GenerateTasks extends JPanel {
 		// Generate the task/verification executions
 		Timeline<Integer, TaskExecution> tasksTimeline = new Timeline<>(taskMaps);
 		List<TaskExecution> genTaskExecs = tasksTimeline.getBetween(
-			LocalDateTime.now(), ldteEndTime.getObject(), Event.byStartTime, true, true
+			LocalDateTime.now(), lsteEndTime.getObject(), Event.byStartTime, true, true
 		);
 		
 		// Update the model

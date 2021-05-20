@@ -17,7 +17,7 @@ import guicomponents.ome.LocalDateTimeEditor;
 
 @SuppressWarnings("serial")
 public class AllocateTasks extends JPanel {
-	private LocalDateTimeEditor ldteEndTime;
+	private LocalDateTimeEditor lsteEndTime;
 	private JList<Object> allocatedList;
 	private JList<Object> unallocatedList;
 	
@@ -37,13 +37,13 @@ public class AllocateTasks extends JPanel {
 		gbc_lblGenUntil.gridy = 0;
 		add(lblGenUntil, gbc_lblGenUntil);
 		
-		ldteEndTime = new LocalDateTimeEditor();
-		GridBagConstraints gbc_ldteEndTime = new GridBagConstraints();
-		gbc_ldteEndTime.anchor = GridBagConstraints.WEST;
-		gbc_ldteEndTime.insets = new Insets(5, 5, 5, 5);
-		gbc_ldteEndTime.gridx = 1;
-		gbc_ldteEndTime.gridy = 0;
-		add(ldteEndTime, gbc_ldteEndTime);
+		lsteEndTime = new LocalDateTimeEditor();
+		GridBagConstraints gbc_lsteEndTime = new GridBagConstraints();
+		gbc_lsteEndTime.anchor = GridBagConstraints.WEST;
+		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 5);
+		gbc_lsteEndTime.gridx = 1;
+		gbc_lsteEndTime.gridy = 0;
+		add(lsteEndTime, gbc_lsteEndTime);
 		
 		JButton btnShowExecutions = new JButton("Load Tasks");
 		GridBagConstraints gbc_btnShowExecutions = new GridBagConstraints();
