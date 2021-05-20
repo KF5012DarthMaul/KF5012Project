@@ -1,24 +1,21 @@
 package guicomponents;
 
+import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions;
 import domain.TaskPriority;
 import domain.Task;
 import domain.TaskExecution;
 import domain.Verification;
 import domain.VerificationExecution;
 
-import temporal.ConstrainedIntervaledPeriodSet;
 import temporal.Event;
 import temporal.GenerativeTemporalMap;
-import temporal.IntervaledPeriodSet;
-import temporal.Period;
 import temporal.TemporalMap;
 import temporal.Timeline;
 import guicomponents.formatters.Formatter;
 import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
-import kf5012darthmaulapplication.PermissionManager;
-import kf5012darthmaulapplication.User;
 
 import java.awt.Component;
 import java.awt.BorderLayout;
@@ -38,14 +35,13 @@ import javax.swing.JSeparator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressWarnings("serial")
 public class ManageAllocation extends JPanel {
-	private static final DateTimeFormatter dateTimeFormatter =
-			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
 
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
@@ -53,7 +49,7 @@ public class ManageAllocation extends JPanel {
 	private LocalDateTimeEditor ldteEndTime;
 	private JButton btnConfirm;
 	private JList<Object> previewList;
-	
+	private DBAbstraction db;
 	/**
 	 * Create the panel.
 	 */
@@ -160,8 +156,18 @@ public class ManageAllocation extends JPanel {
 	}
 
 	private void preview() {
+                if(db == null)
+                {
+                    try{
+                        db = DBAbstraction.getInstance();
+                    } catch (DBExceptions.FailedToConnectException ex) {
+                        Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
+                        return;
+                    }
+                }
+                
 		// Get all tasks (maybe filtered on the DB end?)
-		List<Task> allTasks = testTasks;
+		List<Task> allTasks = db.getTaskList();
 		
 		// create generative temporal maps for all tasks and verifications
 		List<TemporalMap<Integer, TaskExecution>> taskMaps = new ArrayList<>();
@@ -223,143 +229,8 @@ public class ManageAllocation extends JPanel {
 			genTaskExecs.add((TaskExecution) model.get(i));
 		}
 		
-		// Add list to DB
-//		try {
-//			//
-//		} catch (WhateverException e) {
-//			new ExceptionDialog("Failed to add generated tasks", e);
-//			return;
-//		}
-		
+		db.submitTaskExecutions(genTaskExecs);
 		// Remove graphically
 		model.removeAllElements();
-	}
-
-	/* TEST
-	 * ---------- */
-	
-	private static final List<Task> testTasks;
-	static {
-		//////////////////////////////////////////////////
-		testTasks = new ArrayList<>();
-		List<TaskExecution> allTaskExecs = new ArrayList<>();
-		
-		Task t1 = new Task(
-			null,
-			"Check toilets", "",
-			null, null, null,
-			TaskPriority.NORMAL,
-			new ConstrainedIntervaledPeriodSet(
-				new IntervaledPeriodSet(
-					new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
-					Duration.ofHours(2)
-				),
-				new IntervaledPeriodSet(
-					new Period(dt("9:00am 9/5/2021"), dt("5:00pm 9/5/2021")),
-					Duration.ofDays(1)
-				)
-			),
-			null, null
-		);
-		testTasks.add(t1);
-		
-		// Some on the 9th
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
-			null, null, null
-		));
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
-			null, null, null
-		));
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
-			null, null, null
-		));
-
-		// Some on the 10th
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
-			null, null, null
-		));
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
-			null, null, null
-		));
-		allTaskExecs.add(new TaskExecution(
-			null, t1, "", TaskPriority.NORMAL,
-			new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
-			null, null, null
-		));
-
-		// A low-priority one-off task without a deadline
-		Task t2 = new Task(
-			null,
-			"Fix Window on bike shed", "",
-			null, null, null,
-			TaskPriority.LOW,
-			new ConstrainedIntervaledPeriodSet(
-				new IntervaledPeriodSet(
-					new Period(dt("9:45am 9/5/2021"), (Duration) null), null
-				),
-				null
-			),
-			null, null
-		);
-		testTasks.add(t2);
-		
-		allTaskExecs.add(new TaskExecution(
-			null, t2, "", TaskPriority.LOW,
-			new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
-			null, null, null
-		));
-
-		// A high-priority one-off task with deadline and verification.
-		User myUser = new User("myuser", PermissionManager.AccountType.CARETAKER);
-		
-		Task t3 = new Task(
-			null,
-			"Fix Broken Pipe",
-			"The waste pipe outside of the toilets on the 3rd floor of Big Building is broken and leaking. Health hazard - fix ASAP.",
-			null, null, null,
-			TaskPriority.HIGH,
-			new ConstrainedIntervaledPeriodSet(
-				new IntervaledPeriodSet(
-					new Period(dt("1:32pm 10/5/2021"), dt("5:00pm 10/5/2021")), null
-				),
-				null
-			),
-			null,
-			null
-		);
-		Verification verification = new Verification(null, t3, "", TaskPriority.HIGH, Duration.ofHours(3), null);
-		t3.setVerification(verification);
-		testTasks.add(t3);
-		
-		// The task execution has been allocated to myUser
-		TaskExecution t3Exec = new TaskExecution(
-			null, t3, "", TaskPriority.HIGH,
-			new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
-			myUser,
-			null, null
-		);
-		
-		// The verification execution
-		VerificationExecution t3VerExec = new VerificationExecution(
-			null, verification, t3Exec, "", Duration.ofHours(3), null, null
-		);
-		t3Exec.setVerification(t3VerExec);
-
-		// Add both
-		allTaskExecs.add(t3Exec);
-	}
-
-	private static LocalDateTime dt(String dateTimeString) {
-		return LocalDateTime.parse(dateTimeString, dateTimeFormatter);
 	}
 }
