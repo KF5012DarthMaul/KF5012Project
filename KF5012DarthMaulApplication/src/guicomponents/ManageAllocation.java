@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JSplitPane;
 
 @SuppressWarnings("serial")
 public class ManageAllocation extends JPanel {
@@ -154,6 +155,68 @@ public class ManageAllocation extends JPanel {
 		
 		JPanel allocationPanel = new JPanel();
 		tabbedPane.addTab("Task Allocation", null, allocationPanel, null);
+		allocationPanel.setLayout(new BorderLayout(0, 0));
+		
+		JPanel panel_allocationNorth = new JPanel();
+		allocationPanel.add(panel_allocationNorth, BorderLayout.NORTH);
+		GridBagLayout gbl_panel_allocationNorth = new GridBagLayout();
+		gbl_panel_allocationNorth.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel_allocationNorth.rowHeights = new int[]{0, 0, 0};
+		gbl_panel_allocationNorth.columnWeights = new double[]{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel_allocationNorth.rowWeights = new double[]{1.0, 0.0, Double.MIN_VALUE};
+		panel_allocationNorth.setLayout(gbl_panel_allocationNorth);
+		
+		LocalDateTimeEditor ldteEndTime_1 = new LocalDateTimeEditor();
+		GridBagConstraints gbc_ldteEndTime_1 = new GridBagConstraints();
+		gbc_ldteEndTime_1.insets = new Insets(0, 0, 5, 5);
+		gbc_ldteEndTime_1.fill = GridBagConstraints.BOTH;
+		gbc_ldteEndTime_1.gridx = 3;
+		gbc_ldteEndTime_1.gridy = 0;
+		panel_allocationNorth.add(ldteEndTime_1, gbc_ldteEndTime_1);
+		
+		JButton btn_showExecutions = new JButton("Load Tasks");
+		GridBagConstraints gbc_btn_showExecutions = new GridBagConstraints();
+		gbc_btn_showExecutions.insets = new Insets(0, 0, 5, 5);
+		gbc_btn_showExecutions.gridx = 10;
+		gbc_btn_showExecutions.gridy = 0;
+		panel_allocationNorth.add(btn_showExecutions, gbc_btn_showExecutions);
+		
+		JButton btn_swapAllocations = new JButton("Swap");
+		GridBagConstraints gbc_btn_swapAllocations = new GridBagConstraints();
+		gbc_btn_swapAllocations.insets = new Insets(0, 0, 0, 5);
+		gbc_btn_swapAllocations.gridx = 3;
+		gbc_btn_swapAllocations.gridy = 1;
+		panel_allocationNorth.add(btn_swapAllocations, gbc_btn_swapAllocations);
+		
+		JPanel panel_allcoationCentre = new JPanel();
+		allocationPanel.add(panel_allcoationCentre, BorderLayout.CENTER);
+		GridBagLayout gbl_panel_allcoationCentre = new GridBagLayout();
+		gbl_panel_allcoationCentre.columnWidths = new int[]{0, 0, 0};
+		gbl_panel_allcoationCentre.rowHeights = new int[]{0, 0};
+		gbl_panel_allcoationCentre.columnWeights = new double[]{1.0, 1.0, Double.MIN_VALUE};
+		gbl_panel_allcoationCentre.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		panel_allcoationCentre.setLayout(gbl_panel_allcoationCentre);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		GridBagConstraints gbc_scrollPane_1 = new GridBagConstraints();
+		gbc_scrollPane_1.insets = new Insets(0, 0, 0, 5);
+		gbc_scrollPane_1.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane_1.gridx = 0;
+		gbc_scrollPane_1.gridy = 0;
+		panel_allcoationCentre.add(scrollPane_1, gbc_scrollPane_1);
+		
+		JList list = new JList();
+		scrollPane_1.setViewportView(list);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		GridBagConstraints gbc_scrollPane = new GridBagConstraints();
+		gbc_scrollPane.fill = GridBagConstraints.BOTH;
+		gbc_scrollPane.gridx = 1;
+		gbc_scrollPane.gridy = 0;
+		panel_allcoationCentre.add(scrollPane, gbc_scrollPane);
+		
+		JList list_1 = new JList();
+		scrollPane.setViewportView(list_1);
 	}
 
 	private void preview() {
