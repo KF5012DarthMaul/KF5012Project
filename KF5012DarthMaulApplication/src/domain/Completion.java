@@ -53,7 +53,22 @@ public class Completion {
 		this.workQuality = workQuality;
 		this.notes = notes;
 	}
-	
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param completion The completion to copy.
+	 */
+	public Completion(Completion c) {
+		this.id = c.id;
+		
+		this.staff = c.staff;
+		this.startTime = c.startTime;
+		this.completionTime = c.completionTime;
+		this.workQuality = c.workQuality;
+		this.notes = c.notes;
+	}
+
 	/**
 	 * Create a new completion with sensible default values. These should be
 	 * filled out by the user who completed the associated task.

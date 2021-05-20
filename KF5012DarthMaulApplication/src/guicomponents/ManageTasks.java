@@ -196,7 +196,7 @@ public class ManageTasks extends JPanel {
 
 	private void addTask() {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
-		active = newTask; // Keep a reference to it (the task being edited)
+		active = newTask; // Keep a reference to it (the real task being edited)
 		views.get("editTask").run(); // Show the edit view
 		edtTask.setObject(newTask); // Set up the edit view to edit that task
 	}
@@ -209,12 +209,17 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof Task) {
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
-			edtTask.setObject((Task) obj); // Set up the edit view to edit that task
+
+			// Copy task and edit the copy
+			Task taskCopy = new Task((Task) obj);
+			edtTask.setObject(taskCopy); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
 			views.get("editTaskInstance").run(); // Show the edit view
-			edtTaskExecution.setObject((TaskExecution) obj);
+			
+			TaskExecution taskExecCopy = new TaskExecution((TaskExecution) obj);
+			edtTaskExecution.setObject(taskExecCopy);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -243,7 +248,9 @@ public class ManageTasks extends JPanel {
 				return;
 			}
 			
-			Task task = edtTask.getObject();
+			// Get the new copy, overwrite the 'real' one, then flush to DB
+			Task task = (Task) active;
+			task.copyFrom(edtTask.getObject());
 			db.submitTask(task);
 			
 		} else if (active instanceof TaskExecution) {
@@ -252,8 +259,9 @@ public class ManageTasks extends JPanel {
 				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
 				return;
 			}
-			
-			TaskExecution taskExec = edtTaskExecution.getObject();
+
+			TaskExecution taskExec = (TaskExecution) active;
+			taskExec.copyFrom(edtTaskExecution.getObject());
 			db.submitTaskExecution(taskExec);
 			
 		} else {
