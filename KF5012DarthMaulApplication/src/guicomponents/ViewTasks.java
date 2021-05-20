@@ -86,7 +86,7 @@ public class ViewTasks extends JPanel {
 		JLabel lblInstructions = new JLabel("<html>Double-click on a task to view its instances in the selected range. Select a task or instance and click 'Edit Task' to view/edit details.<html>");
 		infoAndOtherFiltersPanel.add(lblInstructions);
 		
-		chkDisplayUserTasks = new JCheckBox("Display My Only Schedule");
+		chkDisplayUserTasks = new JCheckBox("Display Only My Tasks");
 		chkDisplayUserTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
 		infoAndOtherFiltersPanel.add(chkDisplayUserTasks);
 
