@@ -1,4 +1,5 @@
 package dbmgr;
+import dbmgr.DBConnection.DBPreparedStatement;
 import dbmgr.DBExceptions.*;
 import domain.*;
 import java.sql.SQLException;
@@ -31,13 +32,16 @@ public final class DBAbstraction
 {
     private final DBConnection db;
     private static DBAbstraction instance;
-    private final ArrayList<User> userCache;
+    private final List<User> userCache;
     
-    private boolean tasksCached;
-    private boolean execsCached;
+    // These caches are populated once
+    private boolean tasksCached; // set by getAllTasks()
+    private boolean execsCached; // set by getAllTasksExecutions()
     private final Map<Integer, Task> taskCache;
     private final Map<Integer, Task> deletedTaskCache;
     private final Map<Integer, TaskExecution> taskExecutionCache;
+    private final Map<Integer, Verification> verificationCache;
+    private final Map<Integer, Completion> completionCache;
     /** 
      * This DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
      * These methods utilize constructed SQL and prepared statements, preventing SQL injection.<p>
@@ -50,6 +54,8 @@ public final class DBAbstraction
         taskCache = new HashMap<>();
         deletedTaskCache = new HashMap<>();
         taskExecutionCache = new HashMap<>();
+        verificationCache = new HashMap<>();
+        completionCache = new HashMap<>();
     }
 
     /**
@@ -130,14 +136,14 @@ public final class DBAbstraction
         {
             try 
             {
-                db.prepareStatement(
+                DBPreparedStatement stmt = db.prepareStatement(
                         "INSERT INTO tblUsers (username, hashpass, display_name, account_type)"
                         + " VALUES (?, ?, ?, ?)");
-                db.add(username);
-                db.add(hashedPassword);
-                db.add(username);
-                db.add(accountType.ordinal());
-                boolean b = db.executePrepared();
+                stmt.add(username);
+                stmt.add(hashedPassword);
+                stmt.add(username);
+                stmt.add(accountType.ordinal());
+                boolean b = stmt.executePrepared();
                 userCache.add(new User(username, accountType));
                 return b;
             }
@@ -211,9 +217,9 @@ public final class DBAbstraction
     {
         try 
         {
-            db.prepareStatement("SELECT hashpass FROM tblUsers WHERE username = ?");
-            db.add(username);
-            ResultSet res =  db.executePreparedQuery();
+            DBPreparedStatement stmt = db.prepareStatement("SELECT hashpass FROM tblUsers WHERE username = ?");
+            stmt.add(username);
+            ResultSet res =  stmt.executePreparedQuery();
             if(!res.isClosed())
                 return res.getString(1);
             else
@@ -252,11 +258,11 @@ public final class DBAbstraction
         {
             if(doesUserExist(username))
             {
-                db.prepareStatement("UPDATE tblUsers SET hashpass = ?"
+                DBPreparedStatement stmt = db.prepareStatement("UPDATE tblUsers SET hashpass = ?"
                         + " WHERE username = ?");
-                db.add(hashedPassword);
-                db.add(username);
-                return db.executePrepared();
+                stmt.add(hashedPassword);
+                stmt.add(username);
+                return stmt.executePrepared();
             }
             else
                 throw new UserDoesNotExistException();
@@ -280,13 +286,14 @@ public final class DBAbstraction
         return setHashedPassword(user.getUsername(), hashedPassword);
     }
     
-    private ArrayList<User> getAllUsersInternal()
+    // Internally fill up the list of immutable User objects
+    private List<User> getAllUsersInternal()
     {
-        ArrayList<User> allUsers = new ArrayList<>();
+        List<User> allUsers = new ArrayList<>();
         try 
         {
-            db.prepareStatement("SELECT username, display_name, account_type FROM tblUsers");
-            ResultSet res = db.executePreparedQuery();
+            DBPreparedStatement stmt = db.prepareStatement("SELECT username, display_name, account_type FROM tblUsers");
+            ResultSet res = stmt.executePreparedQuery();
             if(!res.isClosed())
             {
                 while(res.next())
@@ -303,12 +310,12 @@ public final class DBAbstraction
     }
     
     /**
-     * @return 
+     * Gets a list containing all users currently registered in the database.
+     * @return The list of users.
      */
     public ArrayList<User> getAllUsers()
     {
-        ArrayList<User> allUsers = new ArrayList<>();
-        allUsers.addAll(userCache);
+        ArrayList<User> allUsers = new ArrayList<>(userCache);
         return allUsers;
     }
 
@@ -324,15 +331,15 @@ public final class DBAbstraction
         {
             if(doesUserExist(user))
             {
-                db.prepareStatement(
+                DBPreparedStatement stmt = db.prepareStatement(
                         "UPDATE tblUsers SET account_type = ?, display_name = ?"
                                 + " WHERE username = ?");
-                db.add(user.getAccountType().ordinal());
-                db.add(user.getUsername());
-                db.add(user.getUsername());
+                stmt.add(user.getAccountType().ordinal());
+                stmt.add(user.getUsername());
+                stmt.add(user.getUsername());
                 userCache.remove(getUser(user.getUsername()));
                 userCache.add(user);
-                return db.executePrepared();
+                return stmt.executePrepared();
             }
             else
             {
@@ -355,9 +362,9 @@ public final class DBAbstraction
     {
         try
         {
-            db.prepareStatement("DELETE FROM tblUsers WHERE username = ?");
-            db.add(user.getUsername());
-            boolean b = db.executePrepared();
+            DBPreparedStatement stmt = db.prepareStatement("DELETE FROM tblUsers WHERE username = ?");
+            stmt.add(user.getUsername());
+            boolean b = stmt.executePrepared();
             userCache.remove(user);
             return b;
         }
@@ -367,15 +374,17 @@ public final class DBAbstraction
             return false;
         }
     }
-
+    
+    
+    // Gets the last sequence integer for an auto-incremented primary key in a given table
     private int getAutoIncrement(String s)
     {
         try {
-            db.prepareStatement(
+            DBPreparedStatement stmt = db.prepareStatement(
                     "SELECT seq FROM sqlite_sequence"
                             + " WHERE name = ?");
-            db.add(s);
-            ResultSet res =  db.executePreparedQuery();
+            stmt.add(s);
+            ResultSet res = stmt.executePreparedQuery();
             if(!res.isClosed())
                 return res.getInt(1);
             else return 0;
@@ -398,60 +407,66 @@ public final class DBAbstraction
     {
         return getAutoIncrement("tblVerifications");
     }
-
+    
+    // Retrieve the last completion ID
     private int getLastCompletionID()
     {
         return getAutoIncrement("tblCompletions");
     }
-
+    
+    // Retrieve the last verification execution ID
     private int getLastVerificationExecutionID()
     {
         return getAutoIncrement("tblVerfExecutions");
     }
-
+    
+    // Retrieve the last task execution ID
     private int getLastTaskExecutionID()
     {
         return getAutoIncrement("tblTaskExecutions");
     }
     
-    // Retrieve all unique tasks and temporal rules
-    public ArrayList<Task> getTaskList()
+    /**
+     * Internally fills up a cache.<p>
+     * Returns the list of non-deleted tasks from the database, including all temporal rules<p>
+     * user preference and verification objects.<p>
+     * @return The list of tasks with all valid fields populated.
+     */
+    public List<Task> getTaskList()
     {
         if(!tasksCached)
         {
             try 
             {
-                db.prepareStatement(
+                DBPreparedStatement getTaskStmt = db.prepareStatement(
                         "SELECT task_id, task_name, task_desc, task_priority, "
                         + "task_intervaled_period_start, intervaled_period_end, period_interval, "
                         + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
                         + "allocation, verification_id, deleted FROM tblTasks");
-                ResultSet res = db.executePreparedQuery();
-                db.prepareStatement(
+                ResultSet res = getTaskStmt.executePreparedQuery(); // Get the non deleted tasks
+                DBPreparedStatement getMapsStmt = db.prepareStatement(
                         "SELECT map_id, task_id, caretaker, preferences, efficiency, effectiveness"
                         + " FROM tblTaskMaps ORDER BY task_id, map_id");
-                ResultSet maps = db.executePreparedQuery();
-                db.prepareStatement(
+                ResultSet maps = getMapsStmt.executePreparedQuery(); // Get the user preference, efficiency and effectiveness.
+                DBPreparedStatement getVerfsStmt = db.prepareStatement(
                         "SELECT verf_id, verf_notes, verf_priority, verf_duration, verf_caretaker"
                         + " FROM tblVerifications");
-                ResultSet verfResSet = db.executePreparedQuery();
-                if(!res.isClosed())
+                ResultSet verfResSet = getVerfsStmt.executePreparedQuery(); // Get the verifications.
+                if(!res.isClosed()) // If there are any results
                 {
-                    // Get a list of verifications
-                    ArrayList<Verification> verfList = new ArrayList<>();
-                    if(!verfResSet.isClosed())
+                    if(!verfResSet.isClosed()) // If there are any results
                     {
-                         while(verfResSet.next())
+                         while(verfResSet.next()) // Iterate over the verifications
                         {
                             int verfID = verfResSet.getInt(1);
                             String verfNotes = verfResSet.getString(2);
                             int verfPrio = verfResSet.getInt(3);
                             int verfDura = verfResSet.getInt(4);
-                            Duration duration = verfResSet.wasNull() ? null : Duration.ofMinutes(verfDura);
+                            Duration duration = verfResSet.wasNull() ? null : Duration.ofMinutes(verfDura); // If duration wasn't null in the DB, set it to a duration
                             String verfCaretaker = verfResSet.getString(5);
                             User allocation = verfResSet.wasNull() ? null : getUser(verfCaretaker);
                             TaskPriority priority = TaskPriority.values()[verfPrio];
-                            verfList.add(new Verification(verfID, null, verfNotes, priority, duration, allocation));
+                            verificationCache.put(verfID, new Verification(verfID, null, verfNotes, priority, duration, allocation)); // Add it to the cache
                         }
                     }
 
@@ -481,10 +496,10 @@ public final class DBAbstraction
                             String caretaker = res.getString(11);
                             // If caretaker is null, set null, else call getUser
                             User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
+
                             int verification_id = res.getInt(12);
-                            // This should never fail unless the database has been compromised externally,
-                            // in which case data integrity has gone out the window
-                            Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
+                            Verification verification = verificationCache.get(verification_id);
+                            
                             IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
                             ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
 
@@ -535,19 +550,18 @@ public final class DBAbstraction
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        ArrayList<Task> allTasks = new ArrayList<>();
-        allTasks.addAll(taskCache.values());
+        List<Task> allTasks = new ArrayList<>(taskCache.values());
         return allTasks;
     }
 
-    private ArrayList<Completion> getCompletionList()
+    // Gets the list of all completions
+    private void fillCompletionCache()
     {
         try 
         {
-            db.prepareStatement("SELECT compl_id, caretaker, start_time, compl_time, quality, notes"
+            DBPreparedStatement stmt = db.prepareStatement("SELECT compl_id, caretaker, start_time, compl_time, quality, notes"
                     + " FROM tblCompletions");
-            ArrayList<Completion> completions = new ArrayList<>();
-            ResultSet res = db.executePreparedQuery();
+            ResultSet res = stmt.executePreparedQuery();
             if(!res.isClosed())
             {
                 while(res.next())
@@ -561,46 +575,39 @@ public final class DBAbstraction
                     String notes = res.getString(6);
                     LocalDateTime startTime = LocalDateTime.ofEpochSecond(st, 0, ZoneOffset.UTC);
                     LocalDateTime endTime = LocalDateTime.ofEpochSecond(et, 0, ZoneOffset.UTC);
-                    completions.add(new Completion(compID, user, startTime, endTime, tcq, notes));
+                    completionCache.put(compID, new Completion(compID, user, startTime, endTime, tcq, notes));
                 }
-                return completions;
             }
         }
         catch(SQLException | UserDoesNotExistException ex)
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return new ArrayList<>();
     }
 
-    private ArrayList<VerificationExecution> getVerificationExecutionList()
+    private Map<Integer, VerificationExecution> getVerificationExecutionList()
     {
         try 
         {
-            ArrayList<Completion> completions = getCompletionList();
-            ArrayList<Task> taskList = getTaskList();
-            ArrayList<VerificationExecution> execList = new ArrayList<>();
-            db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, compl_id"
+            Map<Integer, VerificationExecution> execList = new HashMap<>();
+            DBPreparedStatement stmt = db.prepareStatement("SELECT exe_id, verf_id, exe_notes, exe_duration, caretaker, compl_id"
                     + " FROM tblVerfExecutions");
-            ResultSet res = db.executePreparedQuery();
+            ResultSet res = stmt.executePreparedQuery();
             if(!res.isClosed())
             {
                 while(res.next())
                 {
                     int id = res.getInt(1);
                     int verfID = res.getInt(2);
-                    Verification verf = null;
-                    Task taskWithVerfRefOrNull = taskList.stream().filter(task -> task.getVerification() != null && task.getVerification().getID().equals(verfID)).findFirst().orElse(null);
-                    if(taskWithVerfRefOrNull != null)
-                        verf = taskWithVerfRefOrNull.getVerification();
+                    Verification verf = verificationCache.get(verfID);
                     String notes = res.getString(3);
                     Duration d = Duration.ofMinutes(res.getInt(4));
                     String caretaker = res.getString(5);
                     User u = res.wasNull() ? null : getUser(caretaker);
-                    int compid = res.getInt(6);
+                    int compID = res.getInt(6);
                     // Could be not complete!
-                    Completion c = res.wasNull() ? null : completions.stream().filter(comp -> comp.getID().equals(compid)).findFirst().orElse(null);
-                    execList.add(new VerificationExecution(id, verf, null, notes, d, u, c));
+                    Completion c = completionCache.get(compID);
+                    execList.put(id, new VerificationExecution(id, verf, null, notes, d, u, c));
                 }
                 return execList;
             }
@@ -609,7 +616,7 @@ public final class DBAbstraction
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return new ArrayList<>();
+        return new HashMap<>();
     }
 
     // GET TASK EXECUTIONS
@@ -618,36 +625,34 @@ public final class DBAbstraction
     {
         if(!execsCached)
         {
-            ArrayList<Task> tasks = getTaskList();
-            tasks.addAll(deletedTaskCache.values()); // Allow referencing of deleted tasks
-            ArrayList<Completion> completions = getCompletionList();
-            ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
+            fillCompletionCache();
+            Map<Integer, Task> allTasks = new HashMap<>(taskCache);
+            allTasks.putAll(deletedTaskCache); // Allow referencing of deleted tasks
+            Map<Integer, VerificationExecution> verificationExes = getVerificationExecutionList();
             try 
             {
-                db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id"
+                DBPreparedStatement stmt = db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id"
                         + " FROM tblTaskExecutions");
-                ResultSet res = db.executePreparedQuery();
+                ResultSet res = stmt.executePreparedQuery();
                 if(!res.isClosed())
                 {
                     while(res.next())
                     {
                         int id = res.getInt(1);
                         int taskID = res.getInt(2);
-                        Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
+                        Task task = allTasks.get(taskID);
                         String notes = res.getString(3);
                         TaskPriority prio = TaskPriority.values()[res.getInt(4)];
                         Period taskP = periodFromEpoch(res.getLong(5), res.getLong(6));
                         String caretaker = res.getString(7);
                         User u = res.wasNull() ? null : getUser(caretaker);
                         int compID = res.getInt(8);
-                        Completion c = null;
-                        if(!res.wasNull())
-                            c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().orElse(null);
+                        Completion c = completionCache.get(compID);
                         int verfExeID = res.getInt(9);
                         TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
                         if(!res.wasNull())
                         {
-                            VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().orElse(null);
+                            VerificationExecution verfExe = verificationExes.get(verfExeID);
                             if(verfExe != null)
                                 verfExe.setTaskExec(exe);
                             exe.setVerification(verfExe);
@@ -662,8 +667,7 @@ public final class DBAbstraction
                 Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        ArrayList<TaskExecution> allTasks = new ArrayList<>();
-        allTasks.addAll(taskExecutionCache.values());
+        ArrayList<TaskExecution> allTasks = new ArrayList<>(taskExecutionCache.values());
         return allTasks;
     }
     
@@ -684,9 +688,10 @@ public final class DBAbstraction
             {
                 submitVerification(task.getVerification());
             }
+            DBPreparedStatement stmt;
             if(task.getID() == null)
             {
-                db.prepareStatement(
+                stmt = db.prepareStatement(
                     "INSERT INTO tblTasks (task_name, task_desc, task_priority, "
                     + "task_intervaled_period_start, intervaled_period_end, period_interval, "
                     + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
@@ -695,78 +700,78 @@ public final class DBAbstraction
             }
             else
             {
-                db.prepareStatement(
+                stmt = db.prepareStatement(
                         "UPDATE tblTasks SET task_name = ?, task_desc = ?, task_priority = ?, task_intervaled_period_start = ?, intervaled_period_end = ?, period_interval = ?, intervaled_period_constraint_start = ?, invervaled_period_constraint_end = ?, constraint_interval = ?, allocation = ?, verification_id = ?"
                                     + " WHERE task_id = ?");
             }
 
-            db.add(task.getName());
-            db.add(task.getNotes());
-            db.add(task.getStandardPriority().ordinal());
+            stmt.add(task.getName());
+            stmt.add(task.getNotes());
+            stmt.add(task.getStandardPriority().ordinal());
 
             ConstrainedIntervaledPeriodSet sch = task.getSchedule();
             IntervaledPeriodSet periodSet = sch.periodSet();
 
             PeriodUnwrapper periodSetPeriod = new PeriodUnwrapper(periodSet.referencePeriod());
-            db.add(periodSetPeriod.start);
-            db.add(periodSetPeriod.end);
+            stmt.add(periodSetPeriod.start);
+            stmt.add(periodSetPeriod.end);
 
             Duration periodSetInterval = periodSet.interval();
             if(periodSetInterval != null)
             {
                 long pSI = periodSetInterval.toMinutes();
-                db.add(pSI);
+                stmt.add(pSI);
             }
             else
-                db.addNull();
+                stmt.addNull();
 
             IntervaledPeriodSet periodSetConstraint = sch.periodSetConstraint();
             if(periodSetConstraint != null)
             {
 
                 PeriodUnwrapper constrainPeriod = new PeriodUnwrapper(periodSetConstraint.referencePeriod());
-                db.add(constrainPeriod.start);
-                db.add(constrainPeriod.end);
+                stmt.add(constrainPeriod.start);
+                stmt.add(constrainPeriod.end);
                 Duration constrainInterval = periodSetConstraint.interval();
                 if(constrainInterval != null)
                 {
                     long cI = constrainInterval.toMinutes();
-                    db.add(cI);
+                    stmt.add(cI);
                 }
                 else
-                    db.addNull();
+                    stmt.addNull();
             }
             else
             {
                 for(int i =0;i<3;i++)
-                    db.addNull();
+                    stmt.addNull();
             }
 
             if(task.getAllocationConstraint() != null)
             {
-                db.add(task.getAllocationConstraint().getUsername());
+                stmt.add(task.getAllocationConstraint().getUsername());
             }
             else
             {
-                db.addNull();
+                stmt.addNull();
             }
 
             if(task.getVerification() != null)
             {
-                db.add(task.getVerification().getID());
+                stmt.add(task.getVerification().getID());
             }
             else
-                db.addNull();
+                stmt.addNull();
 
             if(task.getID() == null)
             {
-                db.executePrepared();
+                stmt.executePrepared();
                 task.setID(getLastTaskID());
             }
             else
             {
-                db.add(task.getID());
-                db.executePrepared();
+                stmt.add(task.getID());
+                stmt.executePrepared();
             }
             
             taskCache.put(task.getID(), task);
@@ -792,87 +797,78 @@ public final class DBAbstraction
         {
             if(tasks == null || tasks.isEmpty())
                 return false;
-            String[] statements = 
-            {
-               "INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-
-                "UPDATE tblTaskExecutions SET task_id = ?, exe_notes = ?, exe_prio = ?, start_datetime = ?, end_datetime = ?, caretaker = ?, compl_id = ?, verf_exe_id = ?"
-                    + " WHERE exe_id = ?"
-            };
+            DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            DBPreparedStatement updateStatement = db.prepareStatement("UPDATE tblTaskExecutions SET task_id = ?, exe_notes = ?, exe_prio = ?, start_datetime = ?, end_datetime = ?, caretaker = ?, compl_id = ?, verf_exe_id = ?"
+                    + " WHERE exe_id = ?");
             int taskExeID = getLastTaskExecutionID()+1;
             int verfExeID = getLastVerificationExecutionID()+1;
             int completionID = getLastCompletionID()+1;
             ArrayList<VerificationExecution> verfExecutions = new ArrayList<>();
             ArrayList<Completion> completions = new ArrayList<>();
-            for(int i = 0; i <= 1; i++)
+            for(TaskExecution exe: tasks)
             {
-                db.prepareStatement(statements[i]);
-                for(TaskExecution exe: tasks)
+                DBPreparedStatement stmt = exe.getID() == null ? insertStatement : updateStatement;
+                stmt.add(exe.getTask().getID());
+                stmt.add(exe.getNotes());
+                stmt.add(exe.getPriority().ordinal());
+                PeriodUnwrapper pw = new PeriodUnwrapper(exe.getPeriod());
+                stmt.add(pw.start);
+                stmt.add(pw.end);
+                User u = exe.getAllocation();
+                if(u != null)
+                    stmt.add(u.getUsername());
+                else
+                    stmt.addNull();
+
+                Completion c = exe.getCompletion();
+                if(c != null)
                 {
-                    if(i == 0 && exe.getID() != null ||
-                       i == 1 && exe.getID() == null)
-                        continue;
-                    db.add(exe.getTask().getID());
-                    db.add(exe.getNotes());
-                    db.add(exe.getPriority().ordinal());
-                    PeriodUnwrapper pw = new PeriodUnwrapper(exe.getPeriod());
-                    db.add(pw.start);
-                    db.add(pw.end);
-                    User u = exe.getAllocation();
-                    if(u != null)
-                        db.add(u.getUsername());
-                    else
-                        db.addNull();
-
-                    Completion c = exe.getCompletion();
-                    if(c != null)
+                    if(c.getID() == null)
                     {
-                        if(c.getID() == null)
-                        {
-                            db.add(completionID++);
-                        }
-                        else
-                        {
-                            db.add(c.getID());
-                        }
-                        completions.add(c);
+                        stmt.add(completionID++);
                     }
                     else
                     {
-                        db.addNull(); // Completion of a new task execution should always be null
+                        stmt.add(c.getID());
                     }
-
-                    // If there is a verification execution linked, we must add it to a batch list
-                    VerificationExecution verf = exe.getVerification();
-                    if(verf != null)
-                    {
-                        if(verf.getID() == null)
-                            db.add(verfExeID++);
-                        else
-                            db.add(verf.getID());
-
-                        verfExecutions.add(verf);
-                    }
-                    else
-                    {
-                        db.addNull();
-                    }
-                    
-                    if(i == 1 && exe.getID() != null)
-                    {
-                        db.add(exe.getID());
-                    }
-                    else if(i == 0 && exe.getID() == null)
-                    {
-                        exe.setID(taskExeID++);
-                    }
-                    
-                    taskExecutionCache.put(exe.getID(), exe);
-                    db.batch();
+                    completions.add(c);
                 }
-                db.executeBatch();
+                else
+                {
+                    stmt.addNull(); // Completion of a new task execution should always be null
+                }
+
+                // If there is a verification execution linked, we must add it to a batch list
+                VerificationExecution verf = exe.getVerification();
+                if(verf != null)
+                {
+                    if(verf.getID() == null)
+                        stmt.add(verfExeID++);
+                    else
+                        stmt.add(verf.getID());
+
+                    verfExecutions.add(verf);
+                }
+                else
+                {
+                    stmt.addNull();
+                }
+
+                if(exe.getID() != null)
+                {
+                    stmt.add(exe.getID());
+                }
+                else
+                {
+                    exe.setID(taskExeID++);
+                }
+
+                taskExecutionCache.put(exe.getID(), exe);
+                stmt.batch();
             }
+            insertStatement.executeBatch();
+            updateStatement.executeBatch();
             submitCompletions(completions);
             submitVerificationExecutions(verfExecutions);
             return true;
@@ -888,41 +884,43 @@ public final class DBAbstraction
     {
         try 
         { 
+            DBPreparedStatement stmt;
             if(verf.getID() == null)
             {
-                db.prepareStatement("INSERT INTO tblVerifications (verf_notes, verf_priority, verf_duration, verf_caretaker)"
+                stmt = db.prepareStatement("INSERT INTO tblVerifications (verf_notes, verf_priority, verf_duration, verf_caretaker)"
                     + " VALUES (?, ?, ?, ?)");
             }
             else
             {
-                db.prepareStatement("UPDATE tblVerifications SET verf_notes = ?, verf_priority = ?, verf_duration = ?, verf_caretaker = ?"
+                stmt = db.prepareStatement("UPDATE tblVerifications SET verf_notes = ?, verf_priority = ?, verf_duration = ?, verf_caretaker = ?"
                         + " WHERE verf_id = ?");
             }
-            db.add(verf.getNotes());
-            db.add(verf.getStandardPriority().ordinal());
+            stmt.add(verf.getNotes());
+            stmt.add(verf.getStandardPriority().ordinal());
 
             Duration d = verf.getStandardDeadline();
             if(d != null)
-                db.add(d.toMinutes());
+                stmt.add(d.toMinutes());
             else
-                db.addNull();
+                stmt.addNull();
 
             User u = verf.getAllocationConstraint();
             if(u != null)
-                db.add(u.getUsername());
+                stmt.add(u.getUsername());
             else
-                db.addNull();
+                stmt.addNull();
 
             if(verf.getID() == null)
             {
-                db.executePrepared();
+                stmt.executePrepared();
                 verf.setID(getLastVerificationID());
             }
             else
             {
-                db.add(verf.getID());
-                db.executePrepared();
+                stmt.add(verf.getID());
+                stmt.executePrepared();
             }
+            verificationCache.put(verf.getID(), verf);
         } 
         catch (SQLException ex) 
         {
@@ -938,68 +936,58 @@ public final class DBAbstraction
         {
             if(verfs == null || verfs.isEmpty())
                 return false;
-            String[] statements = 
-            {
-                "INSERT INTO tblVerfExecutions (verf_id, exe_notes, exe_duration, caretaker, compl_id)"
-                    + " VALUES (?, ?, ?, ?, ?)",
-
-                "UPDATE tblVerfExecutions SET verf_id = ?, exe_notes = ?, exe_duration = ?, caretaker = ?, compl_id = ?"
-                    + " WHERE exe_id = ?"
-            };
+            DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblVerfExecutions (verf_id, exe_notes, exe_duration, caretaker, compl_id)"
+                    + " VALUES (?, ?, ?, ?, ?)");
+            DBPreparedStatement updateStatement = db.prepareStatement("UPDATE tblVerfExecutions SET verf_id = ?, exe_notes = ?, exe_duration = ?, caretaker = ?, compl_id = ?"
+                    + " WHERE exe_id = ?");
             int completionID = getLastCompletionID()+1;
             int verfExecID = getLastVerificationExecutionID()+1;
             ArrayList<Completion> completions = new ArrayList<>();
-            for(int i = 0; i <= 1; i++)
+            for(VerificationExecution verf: verfs)
             {
-                db.prepareStatement(statements[i]);
-                for(VerificationExecution verf: verfs)
+                DBPreparedStatement stmt = verf.getID() == null ? insertStatement : updateStatement;
+                if(verf.getVerification() != null)
+                    stmt.add(verf.getVerification().getID());
+                else
+                    stmt.addNull();
+
+                stmt.add(verf.getNotes());
+                stmt.add(verf.getDeadline().toMinutes());
+                User u = verf.getAllocation();
+                if(u != null)
+                    stmt.add(u.getUsername());
+                else
+                    stmt.addNull();
+
+                if(verf.getCompletion() != null)
                 {
-                    if(i == 0 && verf.getID() != null ||
-                       i == 1 && verf.getID() == null)
-                        continue;
-                    
-                    if(verf.getVerification() != null)
-                        db.add(verf.getVerification().getID());
-                    else
-                        db.addNull();
-                    
-                    db.add(verf.getNotes());
-                    db.add(verf.getDeadline().toMinutes());
-                    User u = verf.getAllocation();
-                    if(u != null)
-                        db.add(u.getUsername());
-                    else
-                        db.addNull();
-                    
-                    if(verf.getCompletion() != null)
+                    if(verf.getCompletion().getID() == null)
                     {
-                        if(verf.getCompletion().getID() == null)
-                        {
-                            db.add(completionID++);
-                        }
-                        else
-                        {
-                            db.add(verf.getCompletion().getID());
-                        }
-                        completions.add(verf.getCompletion());
+                        stmt.add(completionID++);
                     }
                     else
                     {
-                        db.addNull();
+                        stmt.add(verf.getCompletion().getID());
                     }
-                    
-                    if(i == 1 && verf.getID() != null)
-                    {
-                        db.add(verf.getID());
-                    }
-                    else if(i == 0 && verf.getID() == null)
-                    {
-                        verf.setID(verfExecID++);
-                    }
-                    db.batch();
+                    completions.add(verf.getCompletion());
                 }
-                db.executeBatch();
+                else
+                {
+                    stmt.addNull();
+                }
+
+                if(verf.getID() != null)
+                {
+                    stmt.add(verf.getID());
+                }
+                else
+                {
+                    verf.setID(verfExecID++);
+                }
+                stmt.batch();
             }
+            insertStatement.executeBatch();
+            updateStatement.executeBatch();
             submitCompletions(completions);
             return true;
         }
@@ -1016,39 +1004,32 @@ public final class DBAbstraction
         {
             if(completions == null || completions.isEmpty())
                 return false;
-            String[] statements = 
-            {
-                "INSERT INTO tblCompletions (caretaker, start_time, compl_time, quality, notes)"
-                + " VALUES (?, ?, ?, ?, ?)",
-                "UPDATE tblCompletions SET caretaker = ?, start_time = ?, compl_time = ?, quality = ?, notes = ?"
-                + " WHERE compl_id = ?"
-            };
+            DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblCompletions (caretaker, start_time, compl_time, quality, notes)"
+                + " VALUES (?, ?, ?, ?, ?)");
+            DBPreparedStatement updateStatement = db.prepareStatement("UPDATE tblCompletions SET caretaker = ?, start_time = ?, compl_time = ?, quality = ?, notes = ?"
+                + " WHERE compl_id = ?");
             int completionID = getLastCompletionID()+1;
-            for(int i = 0; i <= 1; i++)
+            for(Completion comp: completions)
             {
-                db.prepareStatement(statements[i]);
-                for(Completion comp: completions)
+                DBPreparedStatement stmt = comp.getID() == null ? insertStatement : updateStatement;
+                stmt.add(comp.getStaff().getUsername());
+                stmt.add(comp.getStartTime().toEpochSecond(ZoneOffset.UTC));
+                stmt.add(comp.getCompletionTime().toEpochSecond(ZoneOffset.UTC));
+                stmt.add(comp.getWorkQuality().ordinal());
+                stmt.add(comp.getNotes());
+                if(comp.getID() != null)
                 {
-                    if(i == 0 && comp.getID() != null ||
-                       i == 1 && comp.getID() == null)
-                        continue;
-                    db.add(comp.getStaff().getUsername());
-                    db.add(comp.getStartTime().toEpochSecond(ZoneOffset.UTC));
-                    db.add(comp.getCompletionTime().toEpochSecond(ZoneOffset.UTC));
-                    db.add(comp.getWorkQuality().ordinal());
-                    db.add(comp.getNotes());
-                    if(i == 1 && comp.getID() != null)
-                    {
-                        db.add(comp.getID());
-                    }
-                    else if(i == 0 && comp.getID() == null)
-                    {
-                        comp.setID(completionID++);
-                    }
-                    db.batch();
+                    stmt.add(comp.getID());
                 }
-                db.executeBatch();
+                else if(comp.getID() == null)
+                {
+                    comp.setID(completionID++);
+                }
+                stmt.batch();
+                completionCache.put(comp.getID(), comp);
             }
+            insertStatement.executeBatch();
+            updateStatement.executeBatch();
             return true;
         }
         catch (SQLException ex) 
@@ -1068,17 +1049,17 @@ public final class DBAbstraction
     {
         try 
         {
-            db.prepareStatement("UPDATE tblTasks SET deleted = ?"
+            DBPreparedStatement stmt = db.prepareStatement("UPDATE tblTasks SET deleted = ?"
                 + " WHERE task_id = ?");
             for(Task task: tasks)
             {
-                db.add(1);
-                db.add(task.getID());
-                db.batch();
+                stmt.add(1);
+                stmt.add(task.getID());
+                stmt.batch();
                 taskCache.remove(task.getID());
                 deletedTaskCache.put(task.getID(), task);
             }
-            db.executeBatch();
+            stmt.executeBatch();
             return true;
         } 
         catch (SQLException ex) 
@@ -1098,50 +1079,29 @@ public final class DBAbstraction
     {
         try 
         {
-            ArrayList<VerificationExecution> verfs = new ArrayList<>();
-            db.prepareStatement("DELETE FROM tblTaskExecutions "
+            DBPreparedStatement taskStmt = db.prepareStatement("DELETE FROM tblTaskExecutions "
+                + " WHERE exe_id = ?");
+            DBPreparedStatement verfStmt = db.prepareStatement("DELETE FROM tblVerfExecutions "
                 + " WHERE exe_id = ?");
             for(TaskExecution exec: execs)
             {
-                db.add(exec.getID());
+                taskStmt.add(exec.getID());
                 if(exec.getVerification() != null)
-                    verfs.add(exec.getVerification());
+                {
+                    verfStmt.add(exec.getVerification().getID());
+                    verfStmt.batch();
+                }
                 taskExecutionCache.remove(exec.getID());
-                db.batch();
+                taskStmt.batch();
             }
-            db.executeBatch();
-            
-            db.prepareStatement("DELETE FROM tblVerfExecutions "
-                + " WHERE exe_id = ?");
-            for(VerificationExecution exec: verfs)
-            {
-                db.add(exec.getID());
-                db.batch();
-            }
-            db.executeBatch();
-            
+            taskStmt.executeBatch();
+            verfStmt.executeBatch();
             return true;
         } 
         catch (SQLException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             return false;
-        }
-    }
-    
-    private void logDB(String info)
-    {
-        try
-        {
-            db.prepareStatement("INSERT INTO tblSystemLog (log_info, log_timestamp)"
-                    + " VALUES (?, ?)");
-            db.add(info);
-            db.add(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC));
-            db.executePrepared();
-        }
-        catch(SQLException ex)
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
