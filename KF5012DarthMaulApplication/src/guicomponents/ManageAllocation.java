@@ -169,12 +169,7 @@ public class ManageAllocation extends JPanel {
 		panel_allocationNorth.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
 		JLabel lblAllocUntil = new JLabel("Generate from now until:");
-		GridBagConstraints gbc_lblAllocUntil = new GridBagConstraints();
-		gbc_lblAllocUntil.anchor = GridBagConstraints.WEST;
-		gbc_lblAllocUntil.insets = new Insets(5, 5, 5, 5);
-		gbc_lblAllocUntil.gridx = 0;
-		gbc_lblAllocUntil.gridy = 0;
-		generationPanel.add(lblAllocUntil, gbc_lblAllocUntil);
+		panel_allocationNorth.add(lblAllocUntil);
 		
 		ldteAllocEndTime = new LocalDateTimeEditor();
 		panel_allocationNorth.add(ldteAllocEndTime);
