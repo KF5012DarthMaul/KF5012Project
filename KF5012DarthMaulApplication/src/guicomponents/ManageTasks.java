@@ -25,6 +25,8 @@ import java.util.Map;
 public class ManageTasks extends JPanel {
 	private Map<String, Action> views = new HashMap<>();
 
+	private DBAbstraction db;
+	
 	private JPanel buttonPanel;
 	private JPanel mainPanel;
 	
@@ -158,7 +160,6 @@ public class ManageTasks extends JPanel {
 	public void reload() {
 		// Try to connect to the DB each time you refresh - if one fails, you
 		// can try again.
-		DBAbstraction db;
 		try {
 			db = DBAbstraction.getInstance();
 		} catch (FailedToConnectException e) {
@@ -173,15 +174,19 @@ public class ManageTasks extends JPanel {
 	}
 	
 	private void removeTask() {
+		if (db == null) return;
+		
 		Object obj = viewTasksComponent.getSelectedObject();
 		if (obj == null) {
 			new ExceptionDialog("You must select a task or instance to remove.");
 			
 		} else if (obj instanceof Task) {
-			// TODO: remove how?
+			db.deleteTask((Task) obj);
+			reload();
 			
 		} else if (obj instanceof TaskExecution) {
-			// TODO: remove how?
+			db.deleteTaskExecution((TaskExecution) obj);
+			reload();
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
