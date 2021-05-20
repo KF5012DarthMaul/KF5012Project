@@ -35,6 +35,10 @@ import javax.swing.JTextField;
 import java.awt.Component;
 import javax.swing.Box;
 import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 
 @SuppressWarnings("serial")
 public class ManageAccount extends JPanel {
@@ -45,6 +49,8 @@ public class ManageAccount extends JPanel {
 	UserManager UserManager = new UserManager();
 	private JTextField txt_username;
 	private JTextField txt_role;
+	private JTextField txt_displayname;
+	private JTextField txt_newDisplayName;
 
 	/**
 	 * Create the panel.
@@ -57,10 +63,10 @@ public class ManageAccount extends JPanel {
 			new ErrorDialog("Failed to make database connection");
 		}
                 User user = MainWindow.getCurrentUser();
-		setLayout(new BorderLayout(0, 0));
+		setLayout(new GridLayout(0, 1, 0, 0));
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		add(tabbedPane, BorderLayout.CENTER);
+		add(tabbedPane);
 		
 		JPanel panel_information = new JPanel();
 		tabbedPane.addTab("My Information", null, panel_information, null);
@@ -74,6 +80,15 @@ public class ManageAccount extends JPanel {
 		txt_username.setText(user.getUsername());
 		panel_information.add(txt_username, "cell 3 1,growx");
 		txt_username.setColumns(10);
+		
+		JLabel lbl_displayname = new JLabel("Display Name");
+		panel_information.add(lbl_displayname, "cell 1 2,alignx right");
+		
+		txt_displayname = new JTextField();
+		txt_displayname.setText(MainWindow.getCurrentUser().getDisplayName());
+		txt_displayname.setEditable(false);
+		txt_displayname.setColumns(10);
+		panel_information.add(txt_displayname, "cell 3 2,growx");
 		
 		JLabel lbl_role = new JLabel("Role");
 		panel_information.add(lbl_role, "cell 1 3,alignx right");
@@ -92,6 +107,7 @@ public class ManageAccount extends JPanel {
 				loginForm.setVisible(true);
 			}
 		});
+		
 		panel_information.add(btn_logout, "cell 1 11");
 		
 		JPanel panel_password = new JPanel();
@@ -190,6 +206,55 @@ public class ManageAccount extends JPanel {
 			}
 		});
 		panel_password.add(btn_changePassword, "cell 3 5,alignx right");
+		
+		JTabbedPane tabbedPane_changeDisplayName = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.addTab("Change Display name", null, tabbedPane_changeDisplayName, null);
+		
+		JPanel panel = new JPanel();
+		tabbedPane_changeDisplayName.addTab("New tab", null, panel, null);
+		GridBagLayout gbl_panel = new GridBagLayout();
+		gbl_panel.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		panel.setLayout(gbl_panel);
+		
+		JLabel lbl_newDisplayName = new JLabel("New Display Name");
+		GridBagConstraints gbc_lbl_newDisplayName = new GridBagConstraints();
+		gbc_lbl_newDisplayName.insets = new Insets(0, 0, 5, 5);
+		gbc_lbl_newDisplayName.gridx = 2;
+		gbc_lbl_newDisplayName.gridy = 1;
+		panel.add(lbl_newDisplayName, gbc_lbl_newDisplayName);
+		
+		txt_newDisplayName = new JTextField();
+		GridBagConstraints gbc_txt_newDisplayName = new GridBagConstraints();
+		gbc_txt_newDisplayName.insets = new Insets(0, 0, 5, 5);
+		gbc_txt_newDisplayName.fill = GridBagConstraints.HORIZONTAL;
+		gbc_txt_newDisplayName.gridx = 4;
+		gbc_txt_newDisplayName.gridy = 1;
+		panel.add(txt_newDisplayName, gbc_txt_newDisplayName);
+		txt_newDisplayName.setColumns(10);
+		
+		JButton btn_applyNewDisplayName = new JButton("Apply");
+		btn_applyNewDisplayName.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String newDisplayName = txt_displayname.getText();
+				if(newDisplayName.length() <= 0) return;
+				MainWindow.getCurrentUser().setDisplayName(newDisplayName);
+				try {
+					db.updateUser(MainWindow.getCurrentUser());
+				} catch (UserDoesNotExistException e1) {
+					e1.printStackTrace();
+				}
+				txt_displayname.setText(newDisplayName);
+			}
+		});
+		GridBagConstraints gbc_btn_applyNewDisplayName = new GridBagConstraints();
+		gbc_btn_applyNewDisplayName.anchor = GridBagConstraints.WEST;
+		gbc_btn_applyNewDisplayName.insets = new Insets(0, 0, 5, 5);
+		gbc_btn_applyNewDisplayName.gridx = 4;
+		gbc_btn_applyNewDisplayName.gridy = 3;
+		panel.add(btn_applyNewDisplayName, gbc_btn_applyNewDisplayName);
 
 	}
 

@@ -31,10 +31,10 @@ public class TestUserManager {
 	
 	static String username = "username1";
 	static String password = "Password1#";
-	static User user = new User(username, AccountType.HR_PERSONNEL);
+	static User user = new User(username, username, AccountType.HR_PERSONNEL);
 
-	static User tempUser = new User("tempUser", AccountType.CARETAKER);
-	static User tempUser2 = new User("tempUser2", AccountType.CARETAKER);
+	static User tempUser = new User("tempUser","tempUser", AccountType.CARETAKER);
+	static User tempUser2 = new User("tempUser2","tempUser2", AccountType.CARETAKER);
 	
 	UserManager um = new UserManager();
 	

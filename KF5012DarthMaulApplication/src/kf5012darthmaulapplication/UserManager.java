@@ -62,7 +62,7 @@ public class UserManager {
 	 * @throws UserAlreadyExistsException 
 	 */
 	public void addUser(User authorisedUser, String newUserName, int newAccountValue, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException {
-		addUser(authorisedUser, new User(newUserName, PermissionManager.intToAccountType(newAccountValue)), hashedPassword);
+		addUser(authorisedUser, new User(newUserName, newUserName, PermissionManager.intToAccountType(newAccountValue)), hashedPassword);
 	}
 	/**
 	 * Takes in the User Currently logged in as the AuthorisedUser and then takes a User Object for the new user.
@@ -75,7 +75,7 @@ public class UserManager {
 	 * @throws UserAlreadyExistsException 
 	 */
 	public void addUser(User authorisedUser, String newUserName, PermissionManager.AccountType newUserAccountType, String hashedPassword) throws UserAuthenticationFailed, UserAlreadyExistsException{
-		addUser(authorisedUser, new User(newUserName, newUserAccountType), hashedPassword);
+		addUser(authorisedUser, new User(newUserName, newUserName, newUserAccountType), hashedPassword);
 	}
 	/**
 	 * Removes a user from the user table

@@ -256,6 +256,7 @@ public class ManageUsers extends JPanel {
 		btn_newUserAddToList.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String username = txt_newUserUsername.getText();
+				if(username.length() <= 0) return;
 				if(!db.doesUserExist(username) || findUsernameInTable(usersToAdd, username)) {
 
 					AccountType ac = comboBoxParser(comboBox_newUserAssignRole);
@@ -263,7 +264,7 @@ public class ManageUsers extends JPanel {
 					if(SecurityManager.passwordStrengthValidator(passfield_newUser.getPassword())) {
 						try {
 							txt_newUserUsername.setText("");								
-							User tempUser = new User(username, ac);
+							User tempUser = new User(username, username, ac);
 							usersToAdd.add(tempUser);
 							passwordMap.put(tempUser , SecurityManager.generatePassword(passfield_newUser.getPassword().toString()));
 							updateTable(usersToAdd,tbl_addUsersTable);						
