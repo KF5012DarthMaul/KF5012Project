@@ -17,7 +17,7 @@ public class TestUser {
 	@Test
 	public void testUsernameMatches() {
 		String username = "username";
-		User user = new User(username,PermissionManager.AccountType.CARETAKER);
+		User user = new User(username,username,PermissionManager.AccountType.CARETAKER);
 		assertEquals(user.getUsername(),username);
 	}
 	
@@ -25,7 +25,7 @@ public class TestUser {
 	public void testAccountTypeMatches() {
 		PermissionManager.AccountType[] accounts = PermissionManager.AccountType.values();
 		PermissionManager.AccountType accountType = accounts[(int) Math.floor(Math.random() * accounts.length)];
-		User user = new User("test", accountType);
+		User user = new User("test", "test", accountType);
 		assertEquals(user.getAccountType(), accountType);
 	}
 
@@ -37,7 +37,7 @@ public class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ALLOCATION);
 		try {
-			User user = new User("test", PermissionManager.AccountType.CARETAKER);
+			User user = new User("test", "test", PermissionManager.AccountType.CARETAKER);
 			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
 			
 			assertEquals(expectedPermissions, actualPermissions);
@@ -54,7 +54,7 @@ public class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.VIEW_REPORTS);
 
 		try {
-			User user = new User("test", PermissionManager.AccountType.MANAGER);
+			User user = new User("test","test", PermissionManager.AccountType.MANAGER);
 			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
 			
 			assertEquals(expectedPermissions,actualPermissions);
@@ -69,7 +69,7 @@ public class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_USERS);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
 		try {
-			User user = new User("test", PermissionManager.AccountType.HR_PERSONNEL);
+			User user = new User("test","test", PermissionManager.AccountType.HR_PERSONNEL);
 			ArrayList<PermissionManager.Permission> actualPermissions = user.pm.getPermissions();
 			
 			assertEquals(expectedPermissions,actualPermissions);
@@ -80,7 +80,7 @@ public class TestUser {
 	
 	@Test
 	public void testUserPermissionCheck() {
-		User user = new User("test",AccountType.ESTATE);
+		User user = new User("test","test",AccountType.ESTATE);
 		assertTrue(user.pm.hasPermission(PermissionManager.Permission.MANAGE_TASKS));
 	}
 	
@@ -109,13 +109,13 @@ public class TestUser {
 	
 	@Test
 	public void testAUsereDoesNotHavePermission() {
-		User user = new User("test", AccountType.HR_PERSONNEL);
+		User user = new User("test", "test",AccountType.HR_PERSONNEL);
 		assertFalse(user.pm.hasPermission(PermissionManager.Permission.VIEW_REPORTS));
 	}
 	
 	@Test
 	public void testUserDoesHavePermission() {
-		User user = new User("test", AccountType.HR_PERSONNEL);
+		User user = new User("test", "test", AccountType.HR_PERSONNEL);
 		assertTrue(user.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS));
 	}
 	

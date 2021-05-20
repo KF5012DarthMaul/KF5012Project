@@ -11,7 +11,6 @@ import javax.swing.border.EmptyBorder;
 import dbmgr.DBAbstraction;
 import dbmgr.DBMgr;
 import kf5012darthmaulapplication.ErrorDialog;
-import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.SecurityManager;
 import kf5012darthmaulapplication.User;
 
@@ -128,7 +127,8 @@ public class LoginForm extends JFrame {
 					try {
 						if(SecurityManager.validatePassword(password, db.getHashedPassword(username))) {
 							User authorisedUser = db.getUser(username);
-							MainWindow MainWindow = new MainWindow(authorisedUser);
+                            MainWindow.setUser(authorisedUser);
+							MainWindow MainWindow = new MainWindow();
 							MainWindow.setVisible(true);
 							dispose();
 						}else {

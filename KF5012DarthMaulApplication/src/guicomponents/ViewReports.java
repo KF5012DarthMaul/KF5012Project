@@ -72,7 +72,7 @@ public class ViewReports extends JPanel {
 		tabbedPane.addTab("Caretaker Performance", report2);
 		//New tab for showing a single caretakers task performance history
 		lsteCaretaker = new ListSelectionEditor<>(
-			(user) -> user.getUsername() 
+			(user) -> user.getDisplayName()
 			//Drop down list to dynamically get the list of all caretakers on the system
 		);
 		report2.add(lsteCaretaker);
@@ -182,7 +182,7 @@ public class ViewReports extends JPanel {
                             	//A for loop lasting the amount of time based upon the size of the query
                                 data[i][0] = incompleteTaskExecsList.get(i).getName();
                                 //Get the name of the task currently selected in the loop
-                                data[i][1] = incompleteTaskExecsList.get(i).getAllocation().getUsername();
+                                data[i][1] = incompleteTaskExecsList.get(i).getAllocation().getDisplayName();
                                 //Get the related user name for this task
                                 LocalDateTime taskDeadline = incompleteTaskExecsList.get(i).getPeriod().end();
                                 //Get the related due date 
@@ -286,7 +286,7 @@ public class ViewReports extends JPanel {
                                     //Store the time in which the task was expected to be completed
                                     LocalDateTime completionTime = allCompletedTaskExecsList.get(i).getCompletion().getCompletionTime();
                                     //Store the time the task was actually completed
-                                    data3[i][0] = allCompletedTaskExecsList.get(i).getCompletion().getStaff().getUsername();
+                                    data3[i][0] = allCompletedTaskExecsList.get(i).getCompletion().getStaff().getDisplayName();
                                     //Get the related staffs username for the query
                                     data3[i][1] = allCompletedTaskExecsList.get(i).getName();
                                     //Get the name of the task this query is selecting

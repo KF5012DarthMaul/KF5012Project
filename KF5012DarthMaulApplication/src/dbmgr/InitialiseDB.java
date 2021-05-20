@@ -253,23 +253,23 @@ public class InitialiseDB {
 
             for(int i = 0 ; i < hrCount; i++) {
                     String username = "hr_" + i;
-                    db.createUser(username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
+                    db.createUser(username, username,SecurityManager.generatePassword(password),AccountType.HR_PERSONNEL);
             }
             for(int i = 0 ; i < managerCount; i++) {
                     String username = "manager_" + i;
-                    db.createUser(username,SecurityManager.generatePassword(password),AccountType.MANAGER);
+                    db.createUser(username, username,SecurityManager.generatePassword(password),AccountType.MANAGER);
             }
             for(int i = 0 ; i < estateCount; i++) {
                     String username = "estate_" + i;
-                    db.createUser(username,SecurityManager.generatePassword(password),AccountType.ESTATE);
+                    db.createUser(username, username,SecurityManager.generatePassword(password),AccountType.ESTATE);
             }
             for(int i = 0 ; i < caretakerCount; i++) {
                     String username = "caretaker_" + i;
-                    db.createUser(username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
+                    db.createUser(username, username,SecurityManager.generatePassword(password),AccountType.CARETAKER);
             }
             
             // Also, a test user
-            db.createUser("test",SecurityManager.generatePassword("password"),AccountType.HR_PERSONNEL);
+            db.createUser("test", "Super User",SecurityManager.generatePassword("password"),AccountType.HR_PERSONNEL);
 
             /* Populate Tasks
              * -------------------------------------------------- */

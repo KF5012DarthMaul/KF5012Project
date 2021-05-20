@@ -8,6 +8,7 @@ package kf5012darthmaulapplication;
 
 public class User {
 	String username;
+    String displayName;
 	int encodedPermission;
 	public PermissionManager pm;
 	PermissionManager.AccountType accountType;
@@ -17,8 +18,9 @@ public class User {
 	 * @param accountType
 	 * @throws Exception
 	 */
-	public User(String username, PermissionManager.AccountType accountType){
+	public User(String username, String name, PermissionManager.AccountType accountType){
 		this.username = username;
+                this.displayName = name;
 		this.accountType = accountType;
 		pm = new PermissionManager(this.accountType);
 	}
@@ -29,6 +31,16 @@ public class User {
 	public String getUsername() {
 		return this.username;
 	}
+        
+        public String getDisplayName(){
+            return this.displayName;
+        }
+        
+        public void setDisplayName(String name)
+        {
+            this.displayName = name;
+        }
+        
 	/**
 	 * Gets User AccountType
 	 * @return PermissionManager.AccountType

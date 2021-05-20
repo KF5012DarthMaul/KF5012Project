@@ -15,6 +15,7 @@ public class MainWindow extends JFrame {
 
 	private JPanel contentPane;
         private static User currentUser;
+        private static MainWindow instance;
 	/**
 	 * Launch the application.
 	 */
@@ -34,8 +35,10 @@ public class MainWindow extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public MainWindow(User user) {
-                currentUser = user;
+	public MainWindow() {
+                if(instance != null)
+                    disposeWindow();
+                instance = this;
 		setResizable(false);
 		boolean bingBangBongYourSecurityIsGone = true;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -48,28 +51,37 @@ public class MainWindow extends JFrame {
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
 		
-		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.MANAGE_ACCOUNT)) {
-			tabbedPane.addTab("My Account", null, new ManageAccount(user, this) , null);
+		if(bingBangBongYourSecurityIsGone || currentUser.pm.hasPermission(PermissionManager.Permission.MANAGE_ACCOUNT)) {
+			tabbedPane.addTab("My Account", null, new ManageAccount() , null);
 		}
 		
-		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.MANAGE_ALLOCATION )) {
+		if(bingBangBongYourSecurityIsGone || currentUser.pm.hasPermission(PermissionManager.Permission.MANAGE_ALLOCATION )) {
 			tabbedPane.addTab("Allocations", null, new ManageAllocation()  , null);
 		}
 		
-		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.MANAGE_TASKS)) {
+		if(bingBangBongYourSecurityIsGone || currentUser.pm.hasPermission(PermissionManager.Permission.MANAGE_TASKS)) {
 			tabbedPane.addTab("Tasks", null, new ManageTasks(), null);
 		}
 		
-		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)){
-			tabbedPane.addTab("Users", null, new ManageUsers(user), null);
+		if(bingBangBongYourSecurityIsGone || currentUser.pm.hasPermission(PermissionManager.Permission.MANAGE_USERS)){
+			tabbedPane.addTab("Users", null, new ManageUsers(), null);
 		}
 		
-		if(bingBangBongYourSecurityIsGone || user.pm.hasPermission(PermissionManager.Permission.VIEW_REPORTS)){
+		if(bingBangBongYourSecurityIsGone || currentUser.pm.hasPermission(PermissionManager.Permission.VIEW_REPORTS)){
 			tabbedPane.addTab("Reports", null, new ViewReports(), null);
 		}
 	}
         public static User getCurrentUser()
         {
             return currentUser;
+        }
+        
+        public static void disposeWindow()
+        {
+            instance.dispose();
+        }
+        public static void setUser(User user)
+        {
+            currentUser = user;
         }
 }

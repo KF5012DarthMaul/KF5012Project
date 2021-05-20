@@ -24,7 +24,7 @@ public class TestDatabase {
 	static String username = "tempUser1";
 	static String password = "asdasd";
 	static AccountType accType = AccountType.CARETAKER;
-	static User tempUser1 = new User("tempUser1", accType);
+	static User tempUser1 = new User(username,username, accType);
 	
 	@BeforeClass
 	static public void getConnection() {
@@ -35,7 +35,7 @@ public class TestDatabase {
 			initDB.dropTables();
 			initDB.createTables();
 
-			db.createUser(username,password, accType);
+			db.createUser(username,username,password, accType);
 
 		} catch (FailedToConnectException | UserAlreadyExistsException e) {
 			fail(e);

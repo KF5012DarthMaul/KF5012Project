@@ -118,19 +118,19 @@ public final class DBAbstraction
      */
     public boolean createUser(User user, String hashedPassword) throws UserAlreadyExistsException
     {
-        return createUser(user.getUsername(), hashedPassword, user.getAccountType());
+        return createUser(user.getUsername(), user.getDisplayName(), hashedPassword, user.getAccountType());
     }
 
     /**
-     * Attempts to create a new user in the Database.
-     * If the user already exists, this function will return false.
+     * Attempts to create a new user in the Database.If the user already exists, this function will return false.
      * @param username The username of the new user.
+     * @param name The user's display name
      * @param hashedPassword A password (encrypted).
      * @param accountType The Account type of the user
      * @return A boolean representing success.
      * @throws UserAlreadyExistsException
      */
-    public boolean createUser(String username, String hashedPassword, AccountType accountType) throws UserAlreadyExistsException
+    public boolean createUser(String username, String name, String hashedPassword, AccountType accountType) throws UserAlreadyExistsException
     {
         if(!doesUserExist(username))
         {
@@ -141,10 +141,10 @@ public final class DBAbstraction
                         + " VALUES (?, ?, ?, ?)");
                 stmt.add(username);
                 stmt.add(hashedPassword);
-                stmt.add(username);
+                stmt.add(name);
                 stmt.add(accountType.ordinal());
                 boolean b = stmt.executePrepared();
-                userCache.add(new User(username, accountType));
+                userCache.add(new User(username, name, accountType));
                 return b;
             }
             catch (SQLException ex) 
@@ -298,7 +298,7 @@ public final class DBAbstraction
             {
                 while(res.next())
                 {
-                    allUsers.add(new User(res.getString(1), PermissionManager.intToAccountType(res.getInt(3))));
+                    allUsers.add(new User(res.getString(1), res.getString(2), PermissionManager.intToAccountType(res.getInt(3))));
                 }
             }
         } 
@@ -335,7 +335,7 @@ public final class DBAbstraction
                         "UPDATE tblUsers SET account_type = ?, display_name = ?"
                                 + " WHERE username = ?");
                 stmt.add(user.getAccountType().ordinal());
-                stmt.add(user.getUsername());
+                stmt.add(user.getDisplayName());
                 stmt.add(user.getUsername());
                 userCache.remove(getUser(user.getUsername()));
                 userCache.add(user);

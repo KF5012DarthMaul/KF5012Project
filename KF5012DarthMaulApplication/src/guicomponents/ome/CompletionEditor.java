@@ -51,7 +51,7 @@ public class CompletionEditor
 		gbc_lblUserSelection.gridy = 0;
 		add(lblUserSelection, gbc_lblUserSelection);
 
-                lsteUser = new ListSelectionEditor<>((user) -> { return user.getUsername();});
+                lsteUser = new ListSelectionEditor<>((user) -> { return user.getDisplayName();});
                 
 		GridBagConstraints gbc_lsteUserSelection = new GridBagConstraints();
 		gbc_lsteUserSelection.insets = new Insets(5, 5, 5, 5);

@@ -102,7 +102,7 @@ public class VerificationEditor
 				if (user == null) {
 					return "No Allocation Constraint";
 				} else {
-					return user.getUsername();
+					return user.getDisplayName();
 				}
 			}
 		);
