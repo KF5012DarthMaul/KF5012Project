@@ -27,9 +27,11 @@ import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.TaskExecutionFormatter;
 import guicomponents.formatters.TaskFormatter;
 import guicomponents.utils.DateRangePicker;
+import java.util.stream.Collectors;
 import temporal.Event;
 import temporal.TemporalList;
 import javax.swing.BoxLayout;
+import kf5012darthmaulapplication.PermissionManager;
 
 @SuppressWarnings("serial")
 public class ViewTasks extends JPanel {
@@ -37,6 +39,7 @@ public class ViewTasks extends JPanel {
 		new HTMLFormatter<>(new TaskExecutionFormatter());
 
 	private DateRangePicker dateRangePicker;
+        private JCheckBox chkDisplayUserTasks;
 	private JCheckBox chkDisplayAllTasks;
 
 	private List<Task> allTasks;
@@ -80,10 +83,14 @@ public class ViewTasks extends JPanel {
 		JLabel lblInstructions = new JLabel("<html>Double-click on a task to view its instances in the selected range. Select a task or instance and click 'Edit Task' to view/edit details.<html>");
 		instructionsPanel.add(lblInstructions);
 		
+                chkDisplayUserTasks = new JCheckBox("Display My Only Schedule");
+                chkDisplayUserTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
+                instructionsPanel.add(chkDisplayUserTasks);
+                
 		chkDisplayAllTasks = new JCheckBox("Display All Tasks");
 		chkDisplayAllTasks.addItemListener((e) -> refresh(allTasks, allTaskExecs));
 		instructionsPanel.add(chkDisplayAllTasks);
-		
+
 		// Tree
 		JScrollPane taskTreeScrollPane = new JScrollPane();
 		GridBagConstraints gbc_taskTreeScrollPane = new GridBagConstraints();
@@ -136,11 +143,22 @@ public class ViewTasks extends JPanel {
 		LocalDateTime start = this.dateRangePicker.getStartDateTime();
 		LocalDateTime end = this.dateRangePicker.getEndDateTime();
 		
-		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(this.allTaskExecs);
+                List<TaskExecution> filtered = new ArrayList<>(allTaskExecs);
+                if(chkDisplayUserTasks.isSelected())
+                {
+                    filtered = filtered
+                        .stream()
+                        .filter(exec -> exec.getAllocation() != null 
+                                && exec.getAllocation().equals(MainWindow.getCurrentUser()))
+                        .collect(Collectors.toList());
+                }
+                
+		TemporalList<TaskExecution> taskExecTemporal = new TemporalList<>(filtered);
 		List<TaskExecution> execsInRange = taskExecTemporal.getBetween(
 			start, end, Event.byPeriodDefaultInf, true, true
 		);
-		
+                
+
 		/* Map back to tasks
 		 * -------------------- */
 		
