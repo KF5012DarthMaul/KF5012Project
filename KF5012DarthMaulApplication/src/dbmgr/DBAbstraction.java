@@ -33,7 +33,10 @@ public final class DBAbstraction
     private static DBAbstraction instance;
     private final ArrayList<User> userCache;
     
+    private boolean tasksCached;
+    private boolean execsCached;
     private final Map<Integer, Task> taskCache;
+    private final Map<Integer, Task> deletedTaskCache;
     private final Map<Integer, TaskExecution> taskExecutionCache;
     /** 
      * This DBAbstraction class provides methods for other classes to use that permit interaction with a database.<p>
@@ -45,6 +48,7 @@ public final class DBAbstraction
         db = DBConnection.getInstance();
         userCache = getAllUsersInternal();
         taskCache = new HashMap<>();
+        deletedTaskCache = new HashMap<>();
         taskExecutionCache = new HashMap<>();
     }
 
@@ -424,120 +428,127 @@ public final class DBAbstraction
     // Retrieve all unique tasks and temporal rules
     public ArrayList<Task> getTaskList()
     {
-        try 
+        if(!tasksCached)
         {
-            db.prepareStatement(
-                    "SELECT task_id, task_name, task_desc, task_priority, "
-                    + "task_intervaled_period_start, intervaled_period_end, period_interval, "
-                    + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
-                    + "allocation, verification_id FROM tblTasks");
-            ResultSet res = db.executePreparedQuery();
-            db.prepareStatement(
-                    "SELECT map_id, task_id, caretaker, preferences, efficiency, effectiveness"
-                    + " FROM tblTaskMaps ORDER BY task_id, map_id");
-            ResultSet maps = db.executePreparedQuery();
-            db.prepareStatement(
-                    "SELECT verf_id, verf_notes, verf_priority, verf_duration, verf_caretaker"
-                    + " FROM tblVerifications");
-            ResultSet verfResSet = db.executePreparedQuery();
-            if(!res.isClosed())
+            try 
             {
-                // Get a list of verifications
-                ArrayList<Verification> verfList = new ArrayList<>();
-                if(!verfResSet.isClosed())
+                db.prepareStatement(
+                        "SELECT task_id, task_name, task_desc, task_priority, "
+                        + "task_intervaled_period_start, intervaled_period_end, period_interval, "
+                        + "intervaled_period_constraint_start, invervaled_period_constraint_end, constraint_interval,"
+                        + "allocation, verification_id, deleted FROM tblTasks");
+                ResultSet res = db.executePreparedQuery();
+                db.prepareStatement(
+                        "SELECT map_id, task_id, caretaker, preferences, efficiency, effectiveness"
+                        + " FROM tblTaskMaps ORDER BY task_id, map_id");
+                ResultSet maps = db.executePreparedQuery();
+                db.prepareStatement(
+                        "SELECT verf_id, verf_notes, verf_priority, verf_duration, verf_caretaker"
+                        + " FROM tblVerifications");
+                ResultSet verfResSet = db.executePreparedQuery();
+                if(!res.isClosed())
                 {
-                     while(verfResSet.next())
+                    // Get a list of verifications
+                    ArrayList<Verification> verfList = new ArrayList<>();
+                    if(!verfResSet.isClosed())
                     {
-                        int verfID = verfResSet.getInt(1);
-                        String verfNotes = verfResSet.getString(2);
-                        int verfPrio = verfResSet.getInt(3);
-                        int verfDura = verfResSet.getInt(4);
-                        Duration duration = verfResSet.wasNull() ? null : Duration.ofMinutes(verfDura);
-                        String verfCaretaker = verfResSet.getString(5);
-                        User allocation = verfResSet.wasNull() ? null : getUser(verfCaretaker);
-                        TaskPriority priority = TaskPriority.values()[verfPrio];
-                        verfList.add(new Verification(verfID, null, verfNotes, priority, duration, allocation));
-                    }
-                }
-
-                while(res.next())
-                {
-                    int taskID = res.getInt(1);
-                    if (!taskCache.containsKey(taskID)) 
-                    {
-                        String taskName = res.getString(2);
-                        String taskDesc = res.getString(3);
-                        int taskPrio = res.getInt(4);
-                        Period taskPeriodSetPeriod = periodFromEpoch(res.getLong(5), res.getLong(6));
-
-                        Duration taskPeriodSetInterval = Duration.ofMinutes(res.getLong(7));
-                        taskPeriodSetInterval = res.wasNull() ? null : taskPeriodSetInterval;
-
-                        Long taskPeriodSetConstraintPeriodStart = res.getLong(8);
-                        IntervaledPeriodSet periodSetConstraint = null;
-                        if(!res.wasNull())
+                         while(verfResSet.next())
                         {
-                            Period taskPeriodSetConstraintPeriod = periodFromEpoch(taskPeriodSetConstraintPeriodStart, res.getLong(9));
-                            Duration taskPeriodSetConstraintInterval = Duration.ofMinutes(res.getLong(10));
-                            taskPeriodSetConstraintInterval = res.wasNull() ? null : taskPeriodSetConstraintInterval;
-                            periodSetConstraint = new IntervaledPeriodSet(taskPeriodSetConstraintPeriod, taskPeriodSetConstraintInterval);
+                            int verfID = verfResSet.getInt(1);
+                            String verfNotes = verfResSet.getString(2);
+                            int verfPrio = verfResSet.getInt(3);
+                            int verfDura = verfResSet.getInt(4);
+                            Duration duration = verfResSet.wasNull() ? null : Duration.ofMinutes(verfDura);
+                            String verfCaretaker = verfResSet.getString(5);
+                            User allocation = verfResSet.wasNull() ? null : getUser(verfCaretaker);
+                            TaskPriority priority = TaskPriority.values()[verfPrio];
+                            verfList.add(new Verification(verfID, null, verfNotes, priority, duration, allocation));
                         }
+                    }
 
-                        String caretaker = res.getString(11);
-                        // If caretaker is null, set null, else call getUser
-                        User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
-                        int verification_id = res.getInt(12);
-                        // This should never fail unless the database has been compromised externally,
-                        // in which case data integrity has gone out the window
-                        Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
-                        IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
-                        ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
-
-                        Map<User, Integer> preferences = new HashMap<>();
-                        Map<User, Duration> efficiency = new HashMap<>();
-                        Map<User, Integer> effectiveness = new HashMap<>();
-                        if(!maps.isClosed())
+                    while(res.next())
+                    {
+                        int taskID = res.getInt(1);
+                        if (!taskCache.containsKey(taskID)) 
                         {
-                            while(maps.next())
+                            String taskName = res.getString(2);
+                            String taskDesc = res.getString(3);
+                            int taskPrio = res.getInt(4);
+                            Period taskPeriodSetPeriod = periodFromEpoch(res.getLong(5), res.getLong(6));
+
+                            Duration taskPeriodSetInterval = Duration.ofMinutes(res.getLong(7));
+                            taskPeriodSetInterval = res.wasNull() ? null : taskPeriodSetInterval;
+
+                            Long taskPeriodSetConstraintPeriodStart = res.getLong(8);
+                            IntervaledPeriodSet periodSetConstraint = null;
+                            if(!res.wasNull())
                             {
-                                int mapTaskID = maps.getInt(2);
-                                if(taskID == mapTaskID)
+                                Period taskPeriodSetConstraintPeriod = periodFromEpoch(taskPeriodSetConstraintPeriodStart, res.getLong(9));
+                                Duration taskPeriodSetConstraintInterval = Duration.ofMinutes(res.getLong(10));
+                                taskPeriodSetConstraintInterval = res.wasNull() ? null : taskPeriodSetConstraintInterval;
+                                periodSetConstraint = new IntervaledPeriodSet(taskPeriodSetConstraintPeriod, taskPeriodSetConstraintInterval);
+                            }
+
+                            String caretaker = res.getString(11);
+                            // If caretaker is null, set null, else call getUser
+                            User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
+                            int verification_id = res.getInt(12);
+                            // This should never fail unless the database has been compromised externally,
+                            // in which case data integrity has gone out the window
+                            Verification verification = res.wasNull() ? null : verfList.stream().filter(verf -> verf.getID().equals(verification_id)).findFirst().get();
+                            IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
+                            ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
+
+                            Map<User, Integer> preferences = new HashMap<>();
+                            Map<User, Duration> efficiency = new HashMap<>();
+                            Map<User, Integer> effectiveness = new HashMap<>();
+                            if(!maps.isClosed())
+                            {
+                                while(maps.next())
                                 {
-                                    String mapCaretaker = maps.getString(3);
-                                    User u = getUser(mapCaretaker);
-                                    Integer pref = maps.getInt(4);
-                                    Integer effic = maps.getInt(5);
-                                    Integer effect = maps.getInt(6);
-                                    Duration efficD = Duration.ofMinutes(effic);
-                                    preferences.put(u, pref);
-                                    efficiency.put(u, efficD);
-                                    effectiveness.put(u, effect);
-                                }
-                                else
-                                {
-                                    break;
+                                    int mapTaskID = maps.getInt(2);
+                                    if(taskID == mapTaskID)
+                                    {
+                                        String mapCaretaker = maps.getString(3);
+                                        User u = getUser(mapCaretaker);
+                                        Integer pref = maps.getInt(4);
+                                        Integer effic = maps.getInt(5);
+                                        Integer effect = maps.getInt(6);
+                                        Duration efficD = Duration.ofMinutes(effic);
+                                        preferences.put(u, pref);
+                                        efficiency.put(u, efficD);
+                                        effectiveness.put(u, effect);
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
                                 }
                             }
+                            TaskPriority priority = TaskPriority.values()[taskPrio];
+                            Task t = new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, schedule, allocationConstraint, verification);
+                            if(verification != null)
+                            {
+                                verification.setTask(t);
+                            }
+                            boolean deleted = res.getInt(13) != 0;
+                            if(deleted)
+                                deletedTaskCache.put(t.getID(), t);
+                            else
+                                taskCache.put(t.getID(), t);
                         }
-                        TaskPriority priority = TaskPriority.values()[taskPrio];
-                        Task t = new Task(taskID, taskName, taskDesc, preferences, efficiency, effectiveness, priority, schedule, allocationConstraint, verification);
-                        if(verification != null)
-                        {
-                            verification.setTask(t);
-                        }
-                        taskCache.put(t.getID(), t);
                     }
                 }
-                ArrayList<Task> allTasks = new ArrayList<>();
-                allTasks.addAll(taskCache.values());
-                return allTasks;
+                tasksCached = true;
+            }
+            catch (SQLException | UserDoesNotExistException ex) 
+            {
+                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        catch (SQLException | UserDoesNotExistException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return new ArrayList<>();
+        ArrayList<Task> allTasks = new ArrayList<>();
+        allTasks.addAll(taskCache.values());
+        return allTasks;
     }
 
     private ArrayList<Completion> getCompletionList()
@@ -645,20 +656,22 @@ public final class DBAbstraction
     
     public ArrayList<TaskExecution> getTaskExecutionList()
     {
-        ArrayList<Task> tasks = getTaskList();
-        ArrayList<Completion> completions = getCompletionList();
-        ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
-        try 
+        if(!execsCached)
         {
-            db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id FROM tblTaskExecutions");
-            ResultSet res = db.executePreparedQuery();
-            if(!res.isClosed())
+            ArrayList<Task> tasks = getTaskList();
+            tasks.addAll(deletedTaskCache.values()); // Allow referencing of deleted tasks
+            ArrayList<Completion> completions = getCompletionList();
+            ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
+            try 
             {
-                while(res.next())
+                db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id"
+                        + " FROM tblTaskExecutions");
+                ResultSet res = db.executePreparedQuery();
+                if(!res.isClosed())
                 {
-                    int id = res.getInt(1);
-                    if (!taskExecutionCache.containsKey(id)) 
+                    while(res.next())
                     {
+                        int id = res.getInt(1);
                         int taskID = res.getInt(2);
                         Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
                         String notes = res.getString(3);
@@ -682,16 +695,16 @@ public final class DBAbstraction
                         taskExecutionCache.put(exe.getID(), exe);
                     }
                 }
-                ArrayList<TaskExecution> allTasks = new ArrayList<>();
-                allTasks.addAll(taskExecutionCache.values());
-                return allTasks;
+                execsCached = true;
+            }
+            catch (SQLException | UserDoesNotExistException ex) 
+            {
+                Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        catch (SQLException | UserDoesNotExistException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return new ArrayList<>();
+        ArrayList<TaskExecution> allTasks = new ArrayList<>();
+        allTasks.addAll(taskExecutionCache.values());
+        return allTasks;
     }
     
     // Retrieve all non-priority tasks for a time period
@@ -744,70 +757,6 @@ public final class DBAbstraction
     {
         return null;
     }
-
-    /*public ArrayList<TaskExecution> getCompletedTaskExecutionsForUser(User user) throws EmptyResultSetException
-    {
-        return getCompletedTaskExecutionsForUser(user.getUsername());
-    }
-
-    // FIXME: ONLY GET COMPLETIONS OF USERNAME
-    public ArrayList<TaskExecution> getCompletedTaskExecutionsForUser(String username) throws EmptyResultSetException
-    {
-        ArrayList<Task> tasks = getTaskList();
-        ArrayList<Completion> completions = getCompletionList();
-        ArrayList<VerificationExecution> verificationExes = getVerificationExecutionList();
-        try 
-        {
-            // LOOK AT THIS SQL STATEMENT TO FIX PROBLEM YES. VERY GOOD.
-            db.prepareStatement( "SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id FROM tblTaskExecutions"
-                    + " WHERE caretaker = ? AND compl_id IS NOT NULL");
-            db.add(username);
-            ResultSet res = db.executePreparedQuery();
-            if(!res.isClosed())
-            {
-                ArrayList<TaskExecution> exes = new ArrayList();
-                while(res.next())
-                {
-                    int id = res.getInt(1);
-
-                    int taskID = res.getInt(2);
-                    Task task = tasks.stream().filter(t -> t.getID().equals(taskID)).findFirst().get();
-
-                    String notes = res.getString(3);
-                    TaskPriority prio = TaskPriority.values()[res.getInt(4)];
-                    Period taskP = periodFromEpoch(res.getLong(5), res.getLong(6));
-
-                    String caretaker = res.getString(7);
-                    User u = res.wasNull() ? null : getUser(caretaker);
-
-                    int compID = res.getInt(8);
-                    Completion c = completions.stream().filter(comp -> comp.getID().equals(compID)).findFirst().get();
-
-                    int verfExeID = res.getInt(9);
-
-                    TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
-                    if(!res.wasNull())
-                    {
-                        VerificationExecution verfExe = verificationExes.stream().filter(verf -> verf.getID().equals(verfExeID)).findFirst().get();
-                        verfExe.setTaskExec(exe);
-                        exe.setVerification(verfExe);
-                    }
-                    exes.add(exe);
-                }
-                return exes;
-            }
-            else
-            {
-                throw new EmptyResultSetException();
-            }
-
-        } 
-        catch (SQLException | UserDoesNotExistException ex) 
-        {
-            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }*/
 
     // SUBMISSIONS
 
@@ -921,7 +870,7 @@ public final class DBAbstraction
         }
     }
     
-    private <T> List<T> createListOfSingleItem(T item)
+    private <T> List<T> listOfSingleItem(T item)
     {
         List<T> l = new ArrayList<>();
         l.add(item);
@@ -933,7 +882,7 @@ public final class DBAbstraction
     {
         try 
         {
-            return submitTaskExecutions(createListOfSingleItem(exe));
+            return submitTaskExecutions(listOfSingleItem(exe));
         } 
         catch (EmptyInputException ex) 
         {
@@ -1103,7 +1052,7 @@ public final class DBAbstraction
     {
         try 
         {
-            return submitVerificationExecutions(createListOfSingleItem(verf));
+            return submitVerificationExecutions(listOfSingleItem(verf));
         } 
         catch (EmptyInputException ex) 
         {
@@ -1193,8 +1142,7 @@ public final class DBAbstraction
     {
         try 
         {
-            List l = new ArrayList(){{add(comp);}};
-            return submitTaskExecutions(l);
+            return submitCompletions(listOfSingleItem(comp));
         } 
         catch (EmptyInputException ex) 
         {
@@ -1249,7 +1197,75 @@ public final class DBAbstraction
             return false;
         }
     }
-
+    
+    // Delete Task
+    public boolean deleteTask(Task t)
+    {
+        return deleteTasks(listOfSingleItem(t));
+    }
+    
+    public boolean deleteTasks(List<Task> tasks)
+    {
+        try 
+        {
+            db.prepareStatement("UPDATE tblTasks SET deleted = ?"
+                + " WHERE task_id = ?");
+            for(Task task: tasks)
+            {
+                db.add(1);
+                db.add(task.getID());
+                db.batch();
+            }
+            db.executeBatch();
+            return true;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    // Delete Task Execution?
+    public boolean deleteTaskExecution(TaskExecution t)
+    {
+        return deleteTaskExecutions(listOfSingleItem(t));
+    }
+    
+    public boolean deleteTaskExecutions(List<TaskExecution> execs)
+    {
+        try 
+        {
+            ArrayList<VerificationExecution> verfs = new ArrayList<>();
+            db.prepareStatement("DELETE FROM tblTaskExecutions "
+                + " WHERE exe_id = ?");
+            for(TaskExecution exec: execs)
+            {
+                db.add(exec.getID());
+                if(exec.getVerification() != null)
+                    verfs.add(exec.getVerification());
+                db.batch();
+            }
+            db.executeBatch();
+            
+            db.prepareStatement("DELETE FROM tblVerfExecutions "
+                + " WHERE exe_id = ?");
+            for(VerificationExecution exec: verfs)
+            {
+                db.add(exec.getID());
+                db.batch();
+            }
+            db.executeBatch();
+            
+            return true;
+        } 
+        catch (SQLException ex) 
+        {
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
     private void logDB(String info)
     {
         try
