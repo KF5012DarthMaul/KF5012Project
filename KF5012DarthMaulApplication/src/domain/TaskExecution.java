@@ -65,6 +65,46 @@ public class TaskExecution implements ChartableEvent {
 		this.completion = completion;
 		this.priority = priority;
 	}
+	
+	/**
+	 * Copy constructor. See copyFrom().
+	 * @param tex The task execution to copy from.
+	 */
+	public TaskExecution(TaskExecution tex) {
+		this.copyFrom(tex);
+	}
+
+	/**
+	 * Copy method.
+	 * 
+	 * WARNING: Do not submit copied task executions to the DB, as all objects
+	 * that reference the old task execution will *not* be moved to the new task
+	 * execution. Instead, copy back the changes into the old task execution and
+	 * flush that to the DB.
+	 * 
+	 * @param tex The task execution to copy.
+	 */
+	public void copyFrom(TaskExecution tex) {
+		this.id = tex.id;
+		this.task = tex.task; // Backref the same task - that isn't being copied
+		
+		this.notes = tex.notes;
+		this.period = tex.period;
+		this.allocation = tex.allocation;
+		this.priority = tex.priority;
+		
+		if (tex.verification == null) {
+			this.verification = null;
+		} else {
+			this.verification = new VerificationExecution(tex.verification, this);
+		}
+		
+		if (tex.completion == null) {
+			this.completion = null;
+		} else {
+			this.completion = new Completion(tex.completion);
+		}
+	}
 
 	// ID and reference management
 	/**

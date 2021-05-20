@@ -66,6 +66,27 @@ public class VerificationExecution implements ChartableEvent {
 		this.completion = completion;
 	}
 
+	/**
+	 * 
+	 * 
+	 * @param verification2
+	 */
+	public VerificationExecution(VerificationExecution v, TaskExecution t) {
+		this.id = v.id;
+		this.verification = v.verification; // Backref the same verification - that isn't being copied
+		this.taskExec = t;
+		
+		this.notes = v.notes;
+		this.deadline = v.deadline;
+		this.allocation = v.allocation;
+		
+		if (v.completion == null) {
+			this.completion = null;
+		} else {
+			this.completion = new Completion(v.completion);
+		}
+	}
+
 	// ID and reference management
 	public Integer getID() {
 		return this.id;

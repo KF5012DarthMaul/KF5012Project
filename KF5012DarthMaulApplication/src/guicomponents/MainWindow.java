@@ -14,7 +14,7 @@ import javax.swing.JTabbedPane;
 public class MainWindow extends JFrame {
 
 	private JPanel contentPane;
-
+        private static User currentUser;
 	/**
 	 * Launch the application.
 	 */
@@ -35,6 +35,7 @@ public class MainWindow extends JFrame {
 	 * Create the frame.
 	 */
 	public MainWindow(User user) {
+                currentUser = user;
 		setResizable(false);
 		boolean bingBangBongYourSecurityIsGone = true;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -67,5 +68,8 @@ public class MainWindow extends JFrame {
 			tabbedPane.addTab("Reports", null, new ViewReports(), null);
 		}
 	}
-
+        public static User getCurrentUser()
+        {
+            return currentUser;
+        }
 }

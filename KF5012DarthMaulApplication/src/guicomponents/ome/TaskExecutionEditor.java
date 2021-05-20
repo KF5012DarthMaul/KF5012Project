@@ -43,10 +43,10 @@ public class TaskExecutionEditor
 	// Verification Execution
 	private VerificationExecutionEditor edtVerificationExec;
 	private DomainObjectManager<VerificationExecution> omgVerificationExec;
-        
-        //Completion editor
-        private CompletionEditor edtCompletion;
-        private DomainObjectManager<Completion> omgCompletion;
+	
+	//Completion editor
+	private CompletionEditor edtCompletion;
+	private DomainObjectManager<Completion> omgCompletion;
 	/**
 	 * Create the panel.
 	 */
@@ -108,6 +108,42 @@ public class TaskExecutionEditor
 		gbc_lblNewLabel.gridx = 0;
 		gbc_lblNewLabel.gridy = 2;
 		formPanel.add(lblNewLabel, gbc_lblNewLabel);
+	
+		/* Completion Editor
+		 * -------------------- */
+		
+		JSeparator sep2 = new JSeparator();
+		GridBagConstraints gbc_sep2 = new GridBagConstraints();
+		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep2.insets = new Insets(0, 5, 5, 5);
+		gbc_sep2.gridwidth = 2;
+		gbc_sep2.gridx = 0;
+		gbc_sep2.gridy = 3;
+		formPanel.add(sep2, gbc_sep2);
+
+		edtCompletion = new CompletionEditor();
+
+		omgCompletion = new DomainObjectManager<>(
+			"Is complete", edtCompletion,
+
+			// Create a new one each time the checkbox is re-ticked
+			() -> new Completion(
+				null, // No ID
+				active.getAllocation(),
+				active.getPeriod().start(),
+				LocalDateTime.now(),
+				TaskCompletionQuality.GOOD,
+				"" // No notes
+			)
+		);
+
+		GridBagConstraints gbc_compPanel = new GridBagConstraints();
+		gbc_compPanel.insets = new Insets(5, 5, 5, 5);
+		gbc_compPanel.anchor = GridBagConstraints.WEST;
+		gbc_compPanel.gridwidth = 2;
+		gbc_compPanel.gridx = 0;
+		gbc_compPanel.gridy = 4;
+		formPanel.add(omgCompletion, gbc_compPanel);
 
 		/* Verification Execution
 		 * -------------------- */
@@ -118,7 +154,7 @@ public class TaskExecutionEditor
 		gbc_sep1.insets = new Insets(0, 5, 5, 5);
 		gbc_sep1.gridwidth = 2;
 		gbc_sep1.gridx = 0;
-		gbc_sep1.gridy = 3;
+		gbc_sep1.gridy = 5;
 		formPanel.add(sep1, gbc_sep1);
 
 		edtVerificationExec = new VerificationExecutionEditor();
@@ -141,43 +177,8 @@ public class TaskExecutionEditor
 		gbc_panel.anchor = GridBagConstraints.WEST;
 		gbc_panel.gridwidth = 2;
 		gbc_panel.gridx = 0;
-		gbc_panel.gridy = 4;
+		gbc_panel.gridy = 6;
 		formPanel.add(omgVerificationExec, gbc_panel);
-                
-                /* Completion Editor
-		 * -------------------- */
-                JSeparator sep2 = new JSeparator();
-                GridBagConstraints gbc_sep2 = new GridBagConstraints();
-                gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
-                gbc_sep2.insets = new Insets(0, 5, 5, 5);
-                gbc_sep2.gridwidth = 2;
-                gbc_sep2.gridx = 0;
-                gbc_sep2.gridy = 5;
-                formPanel.add(sep2, gbc_sep2);
-
-                edtCompletion = new CompletionEditor();
-
-                omgCompletion = new DomainObjectManager<>(
-                        "Is complete", edtCompletion,
-
-                        // Create a new one each time the checkbox is re-ticked
-                        () -> new Completion(
-                                null, // No ID
-                                active.getAllocation(),
-                                active.getPeriod().start(),
-                                LocalDateTime.now(),
-                                TaskCompletionQuality.GOOD,
-                                "" // No notes
-                        )
-                );
-
-                GridBagConstraints gbc_compPanel = new GridBagConstraints();
-                gbc_compPanel.insets = new Insets(5, 5, 5, 5);
-                gbc_compPanel.anchor = GridBagConstraints.WEST;
-                gbc_compPanel.gridwidth = 2;
-                gbc_compPanel.gridx = 0;
-                gbc_compPanel.gridy = 6;
-                formPanel.add(omgCompletion, gbc_compPanel);
 	}
 
 	@Override
@@ -199,7 +200,7 @@ public class TaskExecutionEditor
 		txteNotes.setObject(taskExec.getNotes());
 		lstePriority.setObject(taskExec.getPriority());
 		omgVerificationExec.getObjectManager().setObject(taskExec.getVerification());
-                omgCompletion.getObjectManager().setObject(taskExec.getCompletion());
+		omgCompletion.getObjectManager().setObject(taskExec.getCompletion());
 	}
 
 	/**
@@ -210,12 +211,37 @@ public class TaskExecutionEditor
 	@Override
 	public boolean validateFields() {
 		boolean valid = true;
-
+		
 		if (!txteNotes.validateFields()) valid = false;
 		if (!lstePriority.validateFields()) valid = false;
 		if (!omgVerificationExec.getObjectManager().validateFields()) valid = false;
 		if (!omgCompletion.getObjectManager().validateFields()) valid = false;
-                
+
+		VerificationExecution verifExec = omgVerificationExec.getObjectManager().getObject();
+		Completion compl = omgCompletion.getObjectManager().getObject();
+		Completion verifCompl = (verifExec == null ? null : verifExec.getCompletion());
+
+		// You cannot complete the verification of a task before completing the
+		// task.
+		if (verifCompl != null && compl == null) {
+			new ExceptionDialog("Cannot complete a verification without completing the task.");
+			valid = false;
+			
+		} else if (verifCompl != null && compl != null) {
+			// The same user cannot complete both a task execution and its
+			// verification execution.
+			if (compl.getStaff() == verifCompl.getStaff()) {
+				new ExceptionDialog("Task and verification cannot be completed by the same person.");
+				valid = false;
+			}
+			
+			// You cannot start a verification before completing the task.
+			if (verifCompl.getStartTime().isBefore(compl.getCompletionTime())) {
+				new ExceptionDialog("You cannot have started a verification before completing the task.");
+				valid = false;
+			}
+		}
+		
 		return valid;
 	}
 
@@ -230,13 +256,13 @@ public class TaskExecutionEditor
 		active.setNotes(txteNotes.getObject());
 		active.setPriority(lstePriority.getObject());
 		active.setVerification(omgVerificationExec.getObjectManager().getObject());
-                active.setCompletion(omgCompletion.getObjectManager().getObject());
+		active.setCompletion(omgCompletion.getObjectManager().getObject());
 		
 		return active;
 	}
-        
-        
-        /* Allocation combo box management
+	
+	
+	/* Allocation combo box management
 	 * -------------------------------------------------- */
 	// Loading of users for various components
 	private boolean usersLoaded = false;
@@ -279,7 +305,7 @@ public class TaskExecutionEditor
 	public void loadUsers() {
 		loadUsers(false);
 	}
-        
+	
 	private static <T> List<T> nullable(List<T> list) {
 		List<T> fullList = list;
 		fullList.add(null);

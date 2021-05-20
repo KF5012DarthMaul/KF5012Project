@@ -58,6 +58,28 @@ public class Verification implements EventDescriptor {
 	}
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * The task may have already been copied, so this does not copy it again -
+	 * pass in the new task object to set up the bidirectional link.
+	 * 
+	 * @param v The verification to copy.
+	 * @param t The task the new verification should be linked to (possibly a
+	 * copy of this verification's linked task).
+	 */
+	public Verification(Verification v, Task t) {
+		this(
+			v.id,
+			t, // the new task
+			
+			v.notes,
+			v.standardPriority,
+			v.standardDeadline,
+			v.allocationConstraint
+		);
+	}
+	
+	/**
 	 * Create a new verification with sensible default values.
 	 */
 	public Verification(Task task) {

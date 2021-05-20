@@ -18,16 +18,22 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("serial")
 public class ManageTasks extends JPanel {
 	private Map<String, Action> views = new HashMap<>();
 
+	private DBAbstraction db;
+	
 	private JPanel buttonPanel;
 	private JPanel mainPanel;
 	
 	// Main Panel
+	private List<Task> allTasks;
+	private List<TaskExecution> allTaskExecs;
+	
 	private ViewTasks viewTasksComponent;
 	private TaskEditor edtTask;
 	private TaskExecutionEditor edtTaskExecution;
@@ -53,6 +59,7 @@ public class ManageTasks extends JPanel {
 				layout = (CardLayout) buttonPanel.getLayout();
 				layout.show(buttonPanel, "viewTasksButtons");
 
+				reload();
 				layout = (CardLayout) mainPanel.getLayout();
 				layout.show(mainPanel, "viewTasks");
 			}
@@ -148,23 +155,39 @@ public class ManageTasks extends JPanel {
 		/* Initialise the data model
 		 * -------------------------------------------------- */
 
-		reload();
+		views.get("viewTasks").run();
 	}
-	
-	private void reload() {
-		viewTasksComponent.reload();
+
+	public void reload() {
+		// Try to connect to the DB each time you refresh - if one fails, you
+		// can try again.
+		try {
+			db = DBAbstraction.getInstance();
+		} catch (FailedToConnectException e) {
+			new ExceptionDialog(
+				"Could not connect to database. Click 'Refresh' to retry loading tasks.", e);
+			return;
+		}
+
+		allTasks = db.getTaskList();
+		allTaskExecs = db.getTaskExecutionList();
+		viewTasksComponent.refresh(allTasks, allTaskExecs);
 	}
 	
 	private void removeTask() {
+		if (db == null) return;
+		
 		Object obj = viewTasksComponent.getSelectedObject();
 		if (obj == null) {
 			new ExceptionDialog("You must select a task or instance to remove.");
 			
 		} else if (obj instanceof Task) {
-			// TODO: remove how?
+			db.deleteTask((Task) obj);
+			reload();
 			
 		} else if (obj instanceof TaskExecution) {
-			// TODO: remove how?
+			db.deleteTaskExecution((TaskExecution) obj);
+			reload();
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -173,7 +196,7 @@ public class ManageTasks extends JPanel {
 
 	private void addTask() {
 		Task newTask = new Task(); // Make a new task (null ID / not in DB)
-		active = newTask; // Keep a reference to it (the task being edited)
+		active = newTask; // Keep a reference to it (the real task being edited)
 		views.get("editTask").run(); // Show the edit view
 		edtTask.setObject(newTask); // Set up the edit view to edit that task
 	}
@@ -186,12 +209,17 @@ public class ManageTasks extends JPanel {
 		} else if (obj instanceof Task) {
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
-			edtTask.setObject((Task) obj); // Set up the edit view to edit that task
+
+			// Copy task and edit the copy
+			Task taskCopy = new Task((Task) obj);
+			edtTask.setObject(taskCopy); // Set up the edit view to edit that task
 			
 		} else if (obj instanceof TaskExecution) {
 			active = obj; // Keep a reference to it (the task execution being edited)
 			views.get("editTaskInstance").run(); // Show the edit view
-			edtTaskExecution.setObject((TaskExecution) obj);
+			
+			TaskExecution taskExecCopy = new TaskExecution((TaskExecution) obj);
+			edtTaskExecution.setObject(taskExecCopy);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();
@@ -220,8 +248,10 @@ public class ManageTasks extends JPanel {
 				return;
 			}
 			
-			Task task = edtTask.getObject();
-			//db.submitTask(task); // TODO
+			// Get the new copy, overwrite the 'real' one, then flush to DB
+			Task task = (Task) active;
+			task.copyFrom(edtTask.getObject());
+			db.submitTask(task);
 			
 		} else if (active instanceof TaskExecution) {
 			boolean valid = edtTaskExecution.validateFields();
@@ -229,9 +259,10 @@ public class ManageTasks extends JPanel {
 				new ExceptionDialog("Invalid inputs found. Please correct the marked values.");
 				return;
 			}
-			
-			TaskExecution taskExec = edtTaskExecution.getObject();
-			//db.submitTaskExecution(taskExec); // TODO
+
+			TaskExecution taskExec = (TaskExecution) active;
+			taskExec.copyFrom(edtTaskExecution.getObject());
+			db.submitTaskExecution(taskExec);
 			
 		} else {
 			throw new TaskManagerExceptions.InvalidTaskTypeException();

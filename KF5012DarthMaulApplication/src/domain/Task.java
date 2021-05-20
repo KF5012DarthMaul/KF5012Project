@@ -75,6 +75,44 @@ public class Task implements EventDescriptor {
 		this.verification = verification;
 	}
 	
+	/**
+	 * Copy constructor. See copyFrom().
+	 * @param t The task to be copied.
+	 */
+	public Task(Task t) {
+		this.copyFrom(t);
+	}
+	
+	/**
+	 * Copy method.
+	 * 
+	 * WARNING: Do not submit copied tasks to the DB, as all objects that
+	 * reference the old task will *not* be moved to the new task. Instead, copy
+	 * back the changes into the old task and flush that to the DB.
+	 * 
+	 * @param task The task to copy.
+	 */
+	public void copyFrom(Task t) {
+		this.id = t.id;
+		this.name = t.name;
+		this.notes = t.notes;
+
+		// TODO: Copy these
+		this.preferences = t.preferences;
+		this.efficiency = t.efficiency;
+		this.effectiveness = t.effectiveness;
+		
+		this.standardPriority = t.standardPriority;
+		this.schedule = t.schedule;
+		this.allocationConstraint = t.allocationConstraint;
+
+		if (t.verification == null) {
+			this.verification = null;
+		} else {
+			this.verification = new Verification(t.verification, this);
+		}
+	}
+	
 	// Used when creating a task, just before its details are filled in by the
 	// user.
 	/**

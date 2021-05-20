@@ -2,7 +2,12 @@ package guicomponents.formatters;
 
 import domain.Task;
 
-public class TaskFormatter implements DomainObjectFormatter<Task> {
+/**
+ * Formats a task.
+ * 
+ * @author William Taylor
+ */
+public class TaskFormatter implements Formatter<Task> {
 	@Override
 	public String apply(Task task) {
 		String name = task.getName();

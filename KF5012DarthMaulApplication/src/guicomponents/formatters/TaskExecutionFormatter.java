@@ -2,19 +2,29 @@ package guicomponents.formatters;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import domain.Completion;
 import domain.TaskExecution;
 import domain.VerificationExecution;
 import temporal.Period;
 
-public class TaskExecutionFormatter implements DomainObjectFormatter<TaskExecution> {
-	private static final DateTimeFormatter dateTimeFormatter =
-			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
+/**
+ * Formats a task execution, including all linked verification execution and
+ * completion objects.
+ * 
+ * @author William Taylor
+ */
+public class TaskExecutionFormatter implements Formatter<TaskExecution> {
+	// Formatters for java standard library objects
+	private static final Formatter<LocalDateTime> dtFormatter =
+			new LocalDateTimeFormatter("h:mma d/M/yyyy");
+	private static final Formatter<Duration> durFormatter = new DurationFormatter();
 	
-	// Based on https://www.logicbig.com/tutorials/java-swing/jtree-renderer.html
-	private static final String SPAN_FORMAT = "<span style='color:%s;'>%s</span>";
+	// Standard formatters for task statuses
+	private static final Formatter<String> taskStatusNormal = new IdentityFormatter();
+	private static final Formatter<String> taskStatusNotice = new ColorFormatter("blue");
+	private static final Formatter<String> taskStatusDone = new ColorFormatter("green");
+	private static final Formatter<String> taskStatusOverdue = new ColorFormatter("red");
 	
 	@Override
 	public String apply(TaskExecution taskExec) {
@@ -25,10 +35,10 @@ public class TaskExecutionFormatter implements DomainObjectFormatter<TaskExecuti
 		VerificationExecution verification = taskExec.getVerification();
 
 		// Times
-		String start = period.start().format(dateTimeFormatter);
-		String durationStr = "continuous";
+		String start = dtFormatter.apply(period.start());
+		String durationStr = "no deadline";
 		if (duration != null) {
-			durationStr = formatDuration(duration);
+			durationStr = durFormatter.apply(duration);
 		}
 		
 		// Priority
@@ -46,7 +56,10 @@ public class TaskExecutionFormatter implements DomainObjectFormatter<TaskExecuti
 			Completion verCompletion = taskExec.getCompletion();
 
 			// Times
-			String verDurationStr = formatDuration(verDuration);
+			String verDurationStr = "no deadline";
+			if (verDuration != null) {
+				verDurationStr = durFormatter.apply(verDuration);
+			}
 			
 			// Completion / Overdue
 			String verCompletionStatus = formatCompletionStatus(
@@ -58,15 +71,17 @@ public class TaskExecutionFormatter implements DomainObjectFormatter<TaskExecuti
 				verDurationStr, verCompletionStatus
 			);
 		}
-		
+
 		// Glue together
 		return String.format(
-			"<html>%s (%s | priority: %s) - %s%s</html>",
+			"%s (%s | priority: %s) - %s%s",
 			start, durationStr, priority, completionStatus,
 			verificationStr
 		);
 	}
 
+	// Keep this in TaskExecutionFormatter to reduce the number of classes, and
+	// there is no other reason to separate it.
 	private String formatCompletionStatus(
 			Period period, Completion completion
 	) {
@@ -74,27 +89,14 @@ public class TaskExecutionFormatter implements DomainObjectFormatter<TaskExecuti
 		
 		if (completion == null) {
 			if (now.isAfter(period.end())) {
-				return String.format(SPAN_FORMAT, "red", "overdue!");
+				return taskStatusOverdue.apply("overdue!");
 			} else if (now.isAfter(period.start())) {
-				return String.format(SPAN_FORMAT, "blue", "in progress");
+				return taskStatusNotice.apply("in progress");
 			} else {
-				return "upcoming";
+				return taskStatusNormal.apply("upcoming");
 			}
 		} else {
-			return String.format(SPAN_FORMAT, "green", "done ✔️");
-		}
-	}
-	
-	// Based on https://stackoverflow.com/a/266970
-	private String formatDuration(Duration duration) {
-		long totalM = duration.toMinutes();
-		long h = (totalM / 60);
-		long m = (totalM % 60);
-		
-		if (h == 0) {
-			return String.format("%02dm", m);
-		} else {
-			return String.format("%dh, %02dm", h, m);
+			return taskStatusDone.apply("done ✔️");
 		}
 	}
 }
