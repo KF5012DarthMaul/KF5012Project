@@ -27,6 +27,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JList;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
@@ -113,6 +114,15 @@ public class ManageAllocation extends JPanel {
 		gbc_separator.gridy = 1;
 		generationPanel.add(separator, gbc_separator);
 		
+		JScrollPane listScrollPane = new JScrollPane();
+		GridBagConstraints gbc_listScrollPane = new GridBagConstraints();
+		gbc_listScrollPane.gridwidth = 3;
+		gbc_listScrollPane.insets = new Insets(5, 5, 5, 0);
+		gbc_listScrollPane.fill = GridBagConstraints.BOTH;
+		gbc_listScrollPane.gridx = 0;
+		gbc_listScrollPane.gridy = 2;
+		generationPanel.add(listScrollPane, gbc_listScrollPane);
+		
 		previewList = new JList<>(new DefaultListModel<>());
 		previewList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
@@ -128,13 +138,7 @@ public class ManageAllocation extends JPanel {
 				return this;
 			}
 		});
-		GridBagConstraints gbc_previewList = new GridBagConstraints();
-		gbc_previewList.gridwidth = 3;
-		gbc_previewList.insets = new Insets(5, 5, 5, 0);
-		gbc_previewList.fill = GridBagConstraints.BOTH;
-		gbc_previewList.gridx = 0;
-		gbc_previewList.gridy = 2;
-		generationPanel.add(previewList, gbc_previewList);
+		listScrollPane.setViewportView(previewList);
 		
 		JPanel panel_1 = new JPanel();
 		FlowLayout flowLayout = (FlowLayout) panel_1.getLayout();
