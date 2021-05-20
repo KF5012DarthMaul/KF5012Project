@@ -216,15 +216,30 @@ public class TaskExecutionEditor
 		if (!lstePriority.validateFields()) valid = false;
 		if (!omgVerificationExec.getObjectManager().validateFields()) valid = false;
 		if (!omgCompletion.getObjectManager().validateFields()) valid = false;
-		
-		// The same user cannot complete both a task execution and its
-		// verification execution.
+
 		VerificationExecution verifExec = omgVerificationExec.getObjectManager().getObject();
 		Completion compl = omgCompletion.getObjectManager().getObject();
-		Completion verifCompl = verifExec.getCompletion();
-		if (compl.getStaff() == verifCompl.getStaff()) {
-			new ExceptionDialog("Task and verification cannot be completed by the same person.");
+		Completion verifCompl = (verifExec == null ? null : verifExec.getCompletion());
+
+		// You cannot complete the verification of a task before completing the
+		// task.
+		if (verifCompl != null && compl == null) {
+			new ExceptionDialog("Cannot complete a verification without completing the task.");
 			valid = false;
+			
+		} else if (verifCompl != null && compl != null) {
+			// The same user cannot complete both a task execution and its
+			// verification execution.
+			if (compl.getStaff() == verifCompl.getStaff()) {
+				new ExceptionDialog("Task and verification cannot be completed by the same person.");
+				valid = false;
+			}
+			
+			// You cannot start a verification before completing the task.
+			if (verifCompl.getStartTime().isBefore(compl.getCompletionTime())) {
+				new ExceptionDialog("You cannot have started a verification before completing the task.");
+				valid = false;
+			}
 		}
 		
 		return valid;
