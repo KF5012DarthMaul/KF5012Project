@@ -207,24 +207,21 @@ public class ManageAccount extends JPanel {
 		});
 		panel_password.add(btn_changePassword, "cell 3 5,alignx right");
 		
-		JTabbedPane tabbedPane_changeDisplayName = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.addTab("Change Display name", null, tabbedPane_changeDisplayName, null);
-		
-		JPanel panel = new JPanel();
-		tabbedPane_changeDisplayName.addTab("New tab", null, panel, null);
-		GridBagLayout gbl_panel = new GridBagLayout();
-		gbl_panel.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_panel.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_panel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
-		gbl_panel.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
-		panel.setLayout(gbl_panel);
+		JPanel panel_ChangeDisplayName = new JPanel();
+		tabbedPane.addTab("Change Display Name", null, panel_ChangeDisplayName, null);
+		GridBagLayout gbl_panel_ChangeDisplayName = new GridBagLayout();
+		gbl_panel_ChangeDisplayName.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel_ChangeDisplayName.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_panel_ChangeDisplayName.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_panel_ChangeDisplayName.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		panel_ChangeDisplayName.setLayout(gbl_panel_ChangeDisplayName);
 		
 		JLabel lbl_newDisplayName = new JLabel("New Display Name");
 		GridBagConstraints gbc_lbl_newDisplayName = new GridBagConstraints();
 		gbc_lbl_newDisplayName.insets = new Insets(0, 0, 5, 5);
 		gbc_lbl_newDisplayName.gridx = 2;
 		gbc_lbl_newDisplayName.gridy = 1;
-		panel.add(lbl_newDisplayName, gbc_lbl_newDisplayName);
+		panel_ChangeDisplayName.add(lbl_newDisplayName, gbc_lbl_newDisplayName);
 		
 		txt_newDisplayName = new JTextField();
 		GridBagConstraints gbc_txt_newDisplayName = new GridBagConstraints();
@@ -232,7 +229,7 @@ public class ManageAccount extends JPanel {
 		gbc_txt_newDisplayName.fill = GridBagConstraints.HORIZONTAL;
 		gbc_txt_newDisplayName.gridx = 4;
 		gbc_txt_newDisplayName.gridy = 1;
-		panel.add(txt_newDisplayName, gbc_txt_newDisplayName);
+		panel_ChangeDisplayName.add(txt_newDisplayName, gbc_txt_newDisplayName);
 		txt_newDisplayName.setColumns(10);
 		
 		JButton btn_applyNewDisplayName = new JButton("Apply");
@@ -254,7 +251,7 @@ public class ManageAccount extends JPanel {
 		gbc_btn_applyNewDisplayName.insets = new Insets(0, 0, 5, 5);
 		gbc_btn_applyNewDisplayName.gridx = 4;
 		gbc_btn_applyNewDisplayName.gridy = 3;
-		panel.add(btn_applyNewDisplayName, gbc_btn_applyNewDisplayName);
+		panel_ChangeDisplayName.add(btn_applyNewDisplayName, gbc_btn_applyNewDisplayName);
 
 	}
 
