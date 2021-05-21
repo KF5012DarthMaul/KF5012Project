@@ -22,9 +22,9 @@ public class Task implements EventDescriptor {
 	private String name;
 	private String notes;
 	
-	private Map<User, Integer> preferences;
-	private Map<User, Duration> efficiency;
-	private Map<User, Integer> effectiveness;
+	private Map<User, Integer> preferenceMap;
+	private Map<User, Duration> efficiencyMap;
+	private Map<User, Integer> effectivenessMap;
 
 	private TaskPriority standardPriority;
 	private ConstrainedIntervaledPeriodSet schedule;
@@ -54,9 +54,9 @@ public class Task implements EventDescriptor {
 			String name,
 			String notes,
 			
-			Map<User, Integer> preferences,
-			Map<User, Duration> efficiency,
-			Map<User, Integer> effectiveness,
+			Map<User, Integer> preferenceMap,
+			Map<User, Duration> efficiencyMap,
+			Map<User, Integer> effectivenessMap,
 			
 			TaskPriority standardPriority,
 			ConstrainedIntervaledPeriodSet schedule,
@@ -66,9 +66,9 @@ public class Task implements EventDescriptor {
 		this.id = id;
 		this.name = name;
 		this.notes = notes;
-		this.preferences = preferences;
-		this.efficiency = efficiency;
-		this.effectiveness = effectiveness;
+		this.preferenceMap = preferenceMap;
+		this.efficiencyMap = efficiencyMap;
+		this.effectivenessMap = effectivenessMap;
 		this.standardPriority = standardPriority;
 		this.schedule = schedule;
 		this.allocationConstraint = allocationConstraint;
@@ -97,10 +97,9 @@ public class Task implements EventDescriptor {
 		this.name = t.name;
 		this.notes = t.notes;
 
-		// TODO: Copy these
-		this.preferences = t.preferences;
-		this.efficiency = t.efficiency;
-		this.effectiveness = t.effectiveness;
+		this.preferenceMap = new HashMap<>(t.preferenceMap);
+		this.efficiencyMap = new HashMap<>(t.efficiencyMap);
+		this.effectivenessMap = new HashMap<>(t.effectivenessMap);
 		
 		this.standardPriority = t.standardPriority;
 		this.schedule = t.schedule;
@@ -180,14 +179,14 @@ public class Task implements EventDescriptor {
 		return this.notes;
 	}
 	
-	public Map<User, Integer> getPreferences() {
-		return this.preferences;
+	public Map<User, Integer> getPreferenceMap() {
+		return this.preferenceMap;
 	}
-	public Map<User, Duration> getEfficiency() {
-		return this.efficiency;
+	public Map<User, Duration> getEfficiencyMap() {
+		return this.efficiencyMap;
 	}
-	public Map<User, Integer> getEffectiveness() {
-		return this.effectiveness;
+	public Map<User, Integer> getEffectivenessMap() {
+		return this.effectivenessMap;
 	}
 
 	/**
@@ -239,7 +238,15 @@ public class Task implements EventDescriptor {
 		this.notes = notes;
 	}
 	
-	// TODO: make methods for preferences, efficiency, and effectiveness
+	public void setPreference(User user, int value) {
+		this.preferenceMap.put(user, value);
+	}
+	public void setEfficiency(User user, Duration value) {
+		this.efficiencyMap.put(user, value);
+	}
+	public void setEffectiveness(User user, int value) {
+		this.effectivenessMap.put(user, value);
+	}
 
 	/**
 	 * Set the standard priority for this task.

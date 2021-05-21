@@ -23,6 +23,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 
 import dbmgr.DBAbstraction;
+import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
@@ -139,8 +140,62 @@ public class AllocateTasks extends JPanel {
 		unallocatedScrollPane.setViewportView(unallocatedList);
 	}
 	
+	/**
+	 * Mutate all Task objects linked to all task executions given based on the
+	 * task executions given.
+	 * 
+	 * It would be reasonable to give task executions that have been
+	 */
+	private void updateUserEfficiencies(List<TaskExecution> taskExecs) {
+		// taskExecs = db.getTaskExecutionList();
+
+		// Get all task executions by task
+		Map<Task, List<TaskExecution>> taskExecsByTask = new HashMap<>();
+		for (TaskExecution taskExec : taskExecs) {
+			if (taskExec.getCompletion() != null) {
+				// Include deleted tasks as well - makes no difference here
+				Task task = taskExec.getTask();
+				
+				if (!taskExecsByTask.containsKey(task)) {
+					taskExecsByTask.put(task, new ArrayList<>());
+				}
+				taskExecsByTask.get(task).add(taskExec);
+			}
+		}
+
+		for (Task task : taskExecsByTask.keySet()) {
+			// Get sums of time taken for each user
+			Map<User, Duration> sum = new HashMap<>();
+			Map<User, Integer> count = new HashMap<>();
+			for (TaskExecution taskExec : taskExecsByTask.get(task)) {
+				Completion compl = taskExec.getCompletion();
+				User completedBy = compl.getStaff();
+				Duration taskDur = Duration.between(compl.getStartTime(), compl.getCompletionTime());
+				
+				// Init / add sum
+				Duration curSum = sum.get(completedBy);
+				if (curSum == null) {
+					curSum = Duration.ofMinutes(0);
+				}
+				sum.put(completedBy, curSum.plus(taskDur));
+				
+				// Init / increment count
+				Integer curCount = count.get(completedBy);
+				if (curCount == null) {
+					curCount = Integer.valueOf(0);
+				}
+				count.put(completedBy, count.get(completedBy) + 1);
+			}
+			
+			// Set the efficiency hints for each user
+			for (User user : sum.keySet()) {
+				task.setEfficiency(user, sum.get(user).dividedBy(count.get(user)));
+			}
+		}
+	}
+	
 	private void previewAllocations() {
-		/* Get from DB & GUI, and split (immutable)
+		/* Get data from DB & GUI
 		 * -------------------------------------------------- */
 		
 		// Get all users
@@ -152,6 +207,16 @@ public class AllocateTasks extends JPanel {
 		// Get all task executions split by allocation
 		List<TaskExecution> allTaskExecutions = db.getTaskExecutionList();
 
+		// The start and end times for the allocation
+		LocalDateTime allocStartTime = LocalDateTime.now();
+		LocalDateTime allocEndTime = lsteEndTime.getObject();
+
+		/* Split into task exec lists based on current status
+		 * -------------------------------------------------- */
+		
+		// All allocated + complete tasks
+		// All unallocated + incomplete tasks
+		
 		List<TaskExecution> allocList = new ArrayList<>();
 		List<TaskExecution> unallocList = new ArrayList<>();
 		for (TaskExecution taskExec : allTaskExecutions) {
@@ -168,9 +233,17 @@ public class AllocateTasks extends JPanel {
 				}
 			}
 		}
+
+		/* Update user efficiencies using tasks
+		 * -------------------------------------------------- */
 		
-		LocalDateTime allocStartTime = LocalDateTime.now();
-		LocalDateTime allocEndTime = lsteEndTime.getObject();
+		// TODO: Might want to do this separately to allocation, as it's an
+		//       intensive process? Or at least have a progress indicator for
+		//       the user.
+		
+		// Do this before the filter to the specified range, as this must be
+		// based on historical data.
+		this.updateUserEfficiencies(allocList);
 
 		/* Initialise key variables (mutated over time)
 		 * -------------------------------------------------- */
