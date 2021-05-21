@@ -32,6 +32,7 @@ import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
+import guicomponents.formatters.ColorFormatter;
 import guicomponents.formatters.Formatter;
 import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.NamedTaskExecutionFormatter;
@@ -44,8 +45,13 @@ import temporal.TemporalList;
 
 @SuppressWarnings("serial")
 public class AllocateTasks extends JPanel {
+	private static final Formatter<TaskExecution> REAL_TASK_EXEC_FORMATTER =
+			new NamedTaskExecutionFormatter();
+	
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
-			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
+			new HTMLFormatter<>(REAL_TASK_EXEC_FORMATTER);
+	private static final Formatter<Candidate> CANDIDATE_FORMATTER =
+			new HTMLFormatter<>(new CandidateFormatter(REAL_TASK_EXEC_FORMATTER));
 
 	private LocalDateTimeEditor lsteEndTime;
 	private JList<Object> allocatedList;
@@ -59,6 +65,9 @@ public class AllocateTasks extends JPanel {
 	private List<TaskExecution> complAllocList = new ArrayList<>();
 	private List<TaskExecution> uncomplAllocList = new ArrayList<>();
 	private List<TaskExecution> uncomplUnallocList = new ArrayList<>();
+	
+	// State for allocation
+	private List<Candidate> allAllocCandidates = new ArrayList<>();
 	
 	// DB
 	private DBAbstraction db;
@@ -97,7 +106,7 @@ public class AllocateTasks extends JPanel {
 		add(btnPreviewAllocations, gbc_btnPreviewAllocations);
 
 		JButton btnConfirmAllocations = new JButton("Confirm");
-		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
+		btnPreviewAllocations.addActionListener((e) -> this.confirmAllocations());
 		GridBagConstraints gbc_btnConfirmAllocations = new GridBagConstraints();
 		gbc_btnConfirmAllocations.anchor = GridBagConstraints.WEST;
 		gbc_btnConfirmAllocations.insets = new Insets(5, 5, 5, 5);
@@ -148,7 +157,11 @@ public class AllocateTasks extends JPanel {
 				super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				
-				setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
+				if (value instanceof TaskExecution) {
+					setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
+				} else if (value instanceof Candidate) {
+					setText(CANDIDATE_FORMATTER.apply((Candidate) value));
+				}
 				return this;
 			}
 		});
@@ -193,12 +206,12 @@ public class AllocateTasks extends JPanel {
 
 	private void fetch() {
 		if (db == null) {
-		    try{
-		        db = DBAbstraction.getInstance();
-		    } catch (DBExceptions.FailedToConnectException ex) {
-		        Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
-		        return;
-		    }
+			try{
+				db = DBAbstraction.getInstance();
+			} catch (DBExceptions.FailedToConnectException ex) {
+				Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
+				return;
+			}
 		}
 
 		/* Get data from DB & GUI
@@ -244,6 +257,7 @@ public class AllocateTasks extends JPanel {
 		model = (DefaultListModel<Object>) (allocatedList.getModel());
 		model.removeAllElements();
 		model.addAll(uncomplAllocList);
+		model.addAll(allAllocCandidates);
 
 		model = (DefaultListModel<Object>) (unallocatedList.getModel());
 		model.removeAllElements();
@@ -260,44 +274,54 @@ public class AllocateTasks extends JPanel {
 		// Get all task executions by task
 		Map<Task, List<TaskExecution>> taskExecsByTask = new HashMap<>();
 		for (TaskExecution taskExec : taskExecs) {
-			if (taskExec.getCompletion() != null) {
-				// Include deleted tasks as well - makes no difference here
-				Task task = taskExec.getTask();
-				
-				if (!taskExecsByTask.containsKey(task)) {
-					taskExecsByTask.put(task, new ArrayList<>());
-				}
-				taskExecsByTask.get(task).add(taskExec);
+			// Include deleted tasks as well - makes no difference here
+			Task task = taskExec.getTask();
+			
+			if (!taskExecsByTask.containsKey(task)) {
+				taskExecsByTask.put(task, new ArrayList<>());
 			}
+			taskExecsByTask.get(task).add(taskExec);
 		}
 
 		for (Task task : taskExecsByTask.keySet()) {
-			// Get sums of time taken for each user
+			// Get sums of time taken for completed execs of this task for each
+			// user.
 			Map<User, Duration> sum = new HashMap<>();
 			Map<User, Integer> count = new HashMap<>();
 			for (TaskExecution taskExec : taskExecsByTask.get(task)) {
-				Completion compl = taskExec.getCompletion();
-				User completedBy = compl.getStaff();
-				Duration taskDur = Duration.between(compl.getStartTime(), compl.getCompletionTime());
-				
-				// Init / add sum
-				Duration curSum = sum.get(completedBy);
-				if (curSum == null) {
-					curSum = Duration.ofMinutes(0);
+				if (taskExec.getCompletion() != null) {
+					Completion compl = taskExec.getCompletion();
+					User completedBy = compl.getStaff();
+					Duration taskDur = Duration.between(compl.getStartTime(), compl.getCompletionTime());
+					
+					// Init / add sum
+					Duration curSum = sum.get(completedBy);
+					if (curSum == null) {
+						curSum = Duration.ofMinutes(0);
+					}
+					sum.put(completedBy, curSum.plus(taskDur));
+					
+					// Init / increment count
+					Integer curCount = count.get(completedBy);
+					if (curCount == null) {
+						curCount = Integer.valueOf(0);
+					}
+					count.put(completedBy, curCount + 1);
 				}
-				sum.put(completedBy, curSum.plus(taskDur));
-				
-				// Init / increment count
-				Integer curCount = count.get(completedBy);
-				if (curCount == null) {
-					curCount = Integer.valueOf(0);
-				}
-				count.put(completedBy, count.get(completedBy) + 1);
 			}
 			
-			// Set the efficiency hints for each user
-			for (User user : sum.keySet()) {
-				task.setEfficiency(user, sum.get(user).dividedBy(count.get(user)));
+			// Set the efficiency values for each user (average time taken)
+			for (User user : allCaretakers) {
+				if (sum.containsKey(user)) {
+					task.setEfficiency(user, sum.get(user).dividedBy(count.get(user)));
+				} else {
+					Duration dur = task.getSchedule().periodSet().referencePeriod().duration();
+					if (dur != null) {
+						task.setEfficiency(user, dur);
+					} else {
+						task.setEfficiency(user, Duration.ofMinutes(0));
+					}
+				}
 			}
 		}
 	}
@@ -319,9 +343,9 @@ public class AllocateTasks extends JPanel {
 		
 		// Do this before the filter to the specified range, as this must be
 		// based on historical data.
-		this.updateUserEfficiencies(complAllocList);
+		this.updateUserEfficiencies(allTaskExecutions);
 
-		/* Initialise key variables (mutated over time)
+		/* Initialise key variables (mutated over the algorithm)
 		 * -------------------------------------------------- */
 		
 		// Split allocated task executions by caretaker
@@ -340,27 +364,27 @@ public class AllocateTasks extends JPanel {
 		}
 
 		// Build the list of tasks to allocate (then allocate them at the end)
-		List<TaskExecution> allNewAllocs = new ArrayList<>();
+		allAllocCandidates = new ArrayList<>();
 		
 		/* Define allocator
 		 * -------------------------------------------------- */
 		
 		// Define the allocation function (encloses variables above)
-		Consumer<List<TaskExecution>> allocateTasks = (unallocTaskExecs) -> {
+		Consumer<List<TaskExecution>> findAllocCandidates = (unallocUncomplTaskExecs) -> {
 			// Filter the list of uncompleted/unallocated task executions to
 			// only those in the current range.
-			TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocTaskExecs);
-			List<TaskExecution> unallocTaskExecsBefore = taskExecListTmprl.getBefore(
+			TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocUncomplTaskExecs);
+			List<TaskExecution> unallocUncomplTaskExecsBefore = taskExecListTmprl.getBefore(
 				allocEndTime, Event.byStartTime, true
 			);
 
 			// Try allocating each task execution
-			for (TaskExecution unallocTaskExec : unallocTaskExecsBefore) {
+			for (TaskExecution unallocUncomplTaskExec : unallocUncomplTaskExecsBefore) {
 				/* Check constraints
 				 * -------------------- */
 				
 				// If there is a constraint, use it, otherwise check all caretakers
-				User allocConst = unallocTaskExec.getTask().getAllocationConstraint();
+				User allocConst = unallocUncomplTaskExec.getTask().getAllocationConstraint();
 				List<User> candidates;
 				if (allocConst != null) {
 					candidates = listOfSingleItem(allocConst);
@@ -383,7 +407,7 @@ public class AllocateTasks extends JPanel {
 				Function<Candidate, Candidate> getIfBestCandidate = (c) -> {
 					Duration gapLen = Duration.between(c.startTime(), c.endTime());
 					Duration taskExecLength =
-						c.taskExecution().getTask().getEfficiencyMap().get(c.user());
+						c.taskExecution().getTask().getEfficiencyMap().get(c.caretaker());
 					if (
 							// Is the gap big enough?
 							gapLen.compareTo(taskExecLength) >= 0 &&
@@ -396,7 +420,7 @@ public class AllocateTasks extends JPanel {
 					) {
 						return new Candidate(
 							c.taskExecution(),
-							c.user(),
+							c.caretaker(),
 							c.startTime(),
 							c.startTime().plus(taskExecLength)
 						);
@@ -435,7 +459,7 @@ public class AllocateTasks extends JPanel {
 						// If this user has nothing to do, how about now?
 						possiblyBestCandidate = getIfBestCandidate.apply(
 							new Candidate(
-								unallocTaskExec,
+								unallocUncomplTaskExec,
 								candidateUser,
 								allocStartTime, allocEndTime
 							)
@@ -457,7 +481,7 @@ public class AllocateTasks extends JPanel {
 					// first event found (by end time).
 					possiblyBestCandidate = getIfBestCandidate.apply(
 						new Candidate(
-							unallocTaskExec,
+							unallocUncomplTaskExec,
 							candidateUser,
 							allocStartTime,
 							allocToUserBetween.get(i).getPeriod().start()
@@ -479,7 +503,7 @@ public class AllocateTasks extends JPanel {
 						// FIXME[?]: prevEnd shouldn't be null for allocated tasks
 						possiblyBestCandidate = getIfBestCandidate.apply(
 							new Candidate(
-								unallocTaskExec,
+								unallocUncomplTaskExec,
 								candidateUser,
 								allocToUserBetween.get(i-1).getPeriod().end(),
 								allocToUserBetween.get(i).getPeriod().start()
@@ -496,7 +520,7 @@ public class AllocateTasks extends JPanel {
 					// FIXME[?]: prevEnd shouldn't be null for allocated tasks
 					possiblyBestCandidate = getIfBestCandidate.apply(
 						new Candidate(
-							unallocTaskExec,
+							unallocUncomplTaskExec,
 							candidateUser,
 							allocToUserBetween.get(i).getPeriod().end(),
 							allocEndTime
@@ -512,40 +536,54 @@ public class AllocateTasks extends JPanel {
 				
 				Candidate candidate = bestCandidate.candidate;
 				if (candidate != Candidate.NO_CANDIDATE) {
-					// If we've found a best candidate, then allocate it to that
-					// user and set its period.
-					// NOTE: MUTABLE OPERATION.
-					unallocTaskExec.setAllocation(bestCandidate.candidate.user());
-					unallocTaskExec.setPeriod(
-						new Period(candidate.startTime(), candidate.endTime())
-					);
-
-					// Add to the list of task execs to flush to DB
-	        		allNewAllocs.add(unallocTaskExec);
+					allAllocCandidates.add(candidate);
+					
+					// Add it to the list of allocated tasks to use it as a time
+					// constraint. ENSURE it maintains start time sort order,
+					// because this is the list underlying the TemporalList.
+					List<TaskExecution> allocTasks = allocCaretakerTasks.get(candidate.caretaker());
+					allocTasks.add(unallocUncomplTaskExec);
+					allocTasks.sort(Event.byStartTime);
 				}
 				// else, the task can't be allocated (using this algo)
 			}
-        };
+		};
 
 		/* Split by priority and do allocation
 		 * -------------------------------------------------- */
 
 		// Split unallocated tasks by priority
-        Map<TaskPriority, List<TaskExecution>> unallocPriorityTasks = new HashMap<>();
-        for (TaskPriority tp : TaskPriority.values()) {
-            unallocPriorityTasks.put(tp, new ArrayList<>());
-        }
-        for(TaskExecution taskExec : uncomplUnallocList) {
-    		unallocPriorityTasks.get(taskExec.getPriority()).add(taskExec);
-        }
+		Map<TaskPriority, List<TaskExecution>> unallocPriorityTasks = new HashMap<>();
+		for (TaskPriority tp : TaskPriority.values()) {
+			unallocPriorityTasks.put(tp, new ArrayList<>());
+		}
+		for(TaskExecution taskExec : uncomplUnallocList) {
+			unallocPriorityTasks.get(taskExec.getPriority()).add(taskExec);
+		}
 
-        // Allocate for each task priority, in order
-        allocateTasks.accept(unallocPriorityTasks.get(TaskPriority.HIGH));
-        allocateTasks.accept(unallocPriorityTasks.get(TaskPriority.NORMAL));
-        allocateTasks.accept(unallocPriorityTasks.get(TaskPriority.LOW));
+		// Allocate for each task priority, in order
+		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.HIGH));
+		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.NORMAL));
+		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.LOW));
+		
+		this.refresh();
+	}
+	
+	private void confirmAllocations() {
+		List<TaskExecution> allAllocTasks = new ArrayList<>();
+
+		for (Candidate candidate : allAllocCandidates) {
+			TaskExecution taskExec = candidate.taskExecution();
+			
+			taskExec.setAllocation(candidate.caretaker());
+			taskExec.setPeriod(new Period(candidate.startTime(), candidate.endTime()));
+			
+			allAllocTasks.add(taskExec);
+		}
 
 		// Flush to DB
-		db.submitTaskExecutions(allNewAllocs);
+		db.submitTaskExecutions(allAllocTasks);
+
 	}
 	
 	/**
@@ -587,9 +625,24 @@ public class AllocateTasks extends JPanel {
 		}
 
 		public TaskExecution taskExecution() { return taskExec; }
-		public User user() { return user; }
+		public User caretaker() { return user; }
 		public LocalDateTime startTime() { return startTime; }
 		public LocalDateTime endTime() { return endTime; }
+	}
+	
+	private static class CandidateFormatter implements Formatter<Candidate> {
+		private static final ColorFormatter FORMATTER = new ColorFormatter("green");
+		
+		private Formatter<TaskExecution> taskExecFormatter;
+		
+		public CandidateFormatter(Formatter<TaskExecution> taskExecFormatter) {
+			this.taskExecFormatter = taskExecFormatter;
+		}
+		
+		@Override
+		public String apply(Candidate t) {
+			return FORMATTER.apply(taskExecFormatter.apply(t.taskExecution()));
+		}
 	}
 
 	/**
