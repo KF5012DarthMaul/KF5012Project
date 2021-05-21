@@ -150,7 +150,7 @@ public class ViewReports extends JPanel {
                             	}
                             }
                             else {
-                            	data2[i][6] = "No Verification";
+                            	data2[i][5] = "No Verification";
                             }
                     }
                     table = new JTable(data2, columns2){
@@ -257,7 +257,7 @@ public class ViewReports extends JPanel {
                                     	}
                                     }
                                     else {
-                                    	data2[i][6] = "No Verification";
+                                    	data2[i][5] = "No Verification";
                                     }
                             }
 
