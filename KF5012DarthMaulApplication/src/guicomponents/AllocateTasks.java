@@ -123,10 +123,10 @@ public class AllocateTasks extends JPanel {
 		gbc_listsPanel.gridy = 2;
 		add(listsPanel, gbc_listsPanel);
 		GridBagLayout gbl_listsPanel = new GridBagLayout();
-		gbl_listsPanel.columnWidths = new int[] {0, 0, 0, 0};
-		gbl_listsPanel.rowHeights = new int[] {0, 0};
-		gbl_listsPanel.columnWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
-		gbl_listsPanel.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_listsPanel.columnWidths = new int[] {0, 0};
+		gbl_listsPanel.rowHeights = new int[] {0, 0, 0, 0};
+		gbl_listsPanel.columnWeights = new double[]{1.0, Double.MIN_VALUE};
+		gbl_listsPanel.rowWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
 		listsPanel.setLayout(gbl_listsPanel);
 		
 		JScrollPane allocatedScrollPane = new JScrollPane();
@@ -156,18 +156,18 @@ public class AllocateTasks extends JPanel {
 		
 		JButton btnSwapAllocations = new JButton("Swap");
 		GridBagConstraints gbc_btnSwapAllocations = new GridBagConstraints();
-		gbc_btnSwapAllocations.anchor = GridBagConstraints.WEST;
+		gbc_btnSwapAllocations.anchor = GridBagConstraints.CENTER;
 		gbc_btnSwapAllocations.insets = new Insets(5, 5, 5, 5);
-		gbc_btnSwapAllocations.gridx = 1;
-		gbc_btnSwapAllocations.gridy = 0;
+		gbc_btnSwapAllocations.gridx = 0;
+		gbc_btnSwapAllocations.gridy = 1;
 		listsPanel.add(btnSwapAllocations, gbc_btnSwapAllocations);
 		
 		JScrollPane unallocatedScrollPane = new JScrollPane();
 		GridBagConstraints gbc_unallocatedScrollPane = new GridBagConstraints();
 		gbc_unallocatedScrollPane.fill = GridBagConstraints.BOTH;
 		gbc_unallocatedScrollPane.insets = new Insets(5, 5, 5, 5);
-		gbc_unallocatedScrollPane.gridx = 2;
-		gbc_unallocatedScrollPane.gridy = 0;
+		gbc_unallocatedScrollPane.gridx = 0;
+		gbc_unallocatedScrollPane.gridy = 2;
 		listsPanel.add(unallocatedScrollPane, gbc_unallocatedScrollPane);
 		
 		unallocatedList = new JList<>(new DefaultListModel<>());
