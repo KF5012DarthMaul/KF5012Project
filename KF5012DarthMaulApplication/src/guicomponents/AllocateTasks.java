@@ -74,15 +74,15 @@ public class AllocateTasks extends JPanel {
 	
 	public AllocateTasks() {
 		GridBagLayout gbl_allocateTasks = new GridBagLayout();
-		gbl_allocateTasks.columnWidths = new int[]{0, 0, 0, 0};
-		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0};
-		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
-		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_allocateTasks.columnWidths = new int[]{0, 0};
+		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0, 0};
+		gbl_allocateTasks.columnWeights = new double[]{1.0, 1.0};
+		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		setLayout(gbl_allocateTasks);
 
 		JLabel lblGenUntil = new JLabel("Allocate from now until:");
 		GridBagConstraints gbc_lblGenUntil = new GridBagConstraints();
-		gbc_lblGenUntil.anchor = GridBagConstraints.WEST;
+		gbc_lblGenUntil.anchor = GridBagConstraints.EAST;
 		gbc_lblGenUntil.insets = new Insets(5, 5, 5, 5);
 		gbc_lblGenUntil.gridx = 0;
 		gbc_lblGenUntil.gridy = 0;
@@ -91,45 +91,52 @@ public class AllocateTasks extends JPanel {
 		lsteEndTime = new LocalDateTimeEditor();
 		GridBagConstraints gbc_lsteEndTime = new GridBagConstraints();
 		gbc_lsteEndTime.anchor = GridBagConstraints.WEST;
-		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 5);
+		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 0);
 		gbc_lsteEndTime.gridx = 1;
 		gbc_lsteEndTime.gridy = 0;
 		add(lsteEndTime, gbc_lsteEndTime);
 		
+		JPanel panel = new JPanel();
+		GridBagConstraints gbc_panel = new GridBagConstraints();
+		gbc_panel.gridwidth = 2;
+		gbc_panel.insets = new Insets(0, 0, 5, 0);
+		gbc_panel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panel.gridx = 0;
+		gbc_panel.gridy = 1;
+		add(panel, gbc_panel);
+		
 		JButton btnPreviewAllocations = new JButton("Preview Allocations");
 		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
-		GridBagConstraints gbc_btnPreviewAllocations = new GridBagConstraints();
-		gbc_btnPreviewAllocations.anchor = GridBagConstraints.WEST;
-		gbc_btnPreviewAllocations.insets = new Insets(5, 5, 5, 5);
-		gbc_btnPreviewAllocations.gridx = 2;
-		gbc_btnPreviewAllocations.gridy = 0;
-		add(btnPreviewAllocations, gbc_btnPreviewAllocations);
-
+		panel.add(btnPreviewAllocations);
+		
 		JButton btnConfirmAllocations = new JButton("Confirm");
-		btnPreviewAllocations.addActionListener((e) -> this.confirmAllocations());
-		GridBagConstraints gbc_btnConfirmAllocations = new GridBagConstraints();
-		gbc_btnConfirmAllocations.anchor = GridBagConstraints.WEST;
-		gbc_btnConfirmAllocations.insets = new Insets(5, 5, 5, 5);
-		gbc_btnConfirmAllocations.gridx = 3;
-		gbc_btnConfirmAllocations.gridy = 0;
-		add(btnConfirmAllocations, gbc_btnConfirmAllocations);
+		btnConfirmAllocations.addActionListener((e) -> this.confirmAllocations());
+		panel.add(btnConfirmAllocations);
+		
+		JButton btnRemoveAllocations = new JButton("Remove All");
+		btnRemoveAllocations.addActionListener((e) -> this.removeAllAllocations());
+		panel.add(btnRemoveAllocations);
+		
+		JButton btnRemoveSelected = new JButton("Remove Selected");
+		btnRemoveSelected.addActionListener((e) -> this.reomveSelectedAllocations());
+		panel.add(btnRemoveSelected);
 
 		JSeparator sep1 = new JSeparator();
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
 		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
-		gbc_sep1.insets = new Insets(5, 5, 5, 5);
-		gbc_sep1.gridwidth = 4;
+		gbc_sep1.insets = new Insets(5, 5, 5, 0);
+		gbc_sep1.gridwidth = 2;
 		gbc_sep1.gridx = 0;
-		gbc_sep1.gridy = 1;
+		gbc_sep1.gridy = 2;
 		add(sep1, gbc_sep1);
 		
 		JPanel listsPanel = new JPanel();
 		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
 		gbc_listsPanel.fill = GridBagConstraints.BOTH;
-		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
-		gbc_listsPanel.gridwidth = 4;
+		gbc_listsPanel.insets = new Insets(5, 5, 0, 0);
+		gbc_listsPanel.gridwidth = 2;
 		gbc_listsPanel.gridx = 0;
-		gbc_listsPanel.gridy = 2;
+		gbc_listsPanel.gridy = 3;
 		add(listsPanel, gbc_listsPanel);
 		GridBagLayout gbl_listsPanel = new GridBagLayout();
 		gbl_listsPanel.columnWidths = new int[] {0, 0};
@@ -522,7 +529,7 @@ public class AllocateTasks extends JPanel {
 						new Candidate(
 							unallocUncomplTaskExec,
 							candidateUser,
-							allocToUserBetween.get(i).getPeriod().end(),
+							allocToUserBetween.get(i-1).getPeriod().end(),
 							allocEndTime
 						)
 					);
@@ -568,11 +575,42 @@ public class AllocateTasks extends JPanel {
 		
 		this.refresh();
 	}
-	
-	private void confirmAllocations() {
-		List<TaskExecution> allAllocTasks = new ArrayList<>();
 
-		for (Candidate candidate : allAllocCandidates) {
+	private void reomveSelectedAllocations() {
+		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
+		int[] selectedIndexes = allocatedList.getSelectedIndices();
+		for (int i = selectedIndexes.length - 1; i >= 0; i--) {
+			if (model.get(selectedIndexes[i]) instanceof Candidate) { // Can only remove candidates
+				model.remove(selectedIndexes[i]);
+			}
+		}
+	}
+
+	private void removeAllAllocations() {
+		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
+		for (int i = model.getSize() - 1; i >= 0; i--) {
+			if (model.get(i) instanceof Candidate) { // Can only remove candidates
+				model.remove(i);
+			}
+		}
+	}
+
+	private void confirmAllocations() {
+		// Get List from JList
+		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
+		List<Candidate> newAllAllocCandidates = new ArrayList<>();
+		for (int i = 0; i < model.getSize(); i++) {
+			if (model.get(i) instanceof Candidate) {
+				newAllAllocCandidates.add((Candidate) model.get(i));
+			}
+		}
+
+		// Wipe the alloc candidates
+		allAllocCandidates = new ArrayList<>();
+
+		// Update all task executions of these candidate allocations
+		List<TaskExecution> allAllocTasks = new ArrayList<>();
+		for (Candidate candidate : newAllAllocCandidates) {
 			TaskExecution taskExec = candidate.taskExecution();
 			
 			taskExec.setAllocation(candidate.caretaker());
@@ -584,6 +622,9 @@ public class AllocateTasks extends JPanel {
 		// Flush to DB
 		db.submitTaskExecutions(allAllocTasks);
 
+		// Re-fetch/refresh
+		this.fetch();
+		this.refresh();
 	}
 	
 	/**
