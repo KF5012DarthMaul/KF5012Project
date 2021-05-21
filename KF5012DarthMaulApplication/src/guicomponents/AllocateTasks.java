@@ -292,16 +292,6 @@ public class AllocateTasks extends JPanel {
 					candidates = allCaretakers;
 				}
 
-				// Get the duration of this task exec; constant for all users
-				// for now ...
-				// TODO: The task exec length should be determined by the
-				//       duration it would take a particular caretaker - not the
-				//       time allocation constraint of the task. Anywhere this
-				//       variable is used may need fixing if this todo is ever
-				//       done.
-				// WARNING: MAY BE NULL
-				Duration unallocTaskExecLength = unallocTaskExec.getPeriod().duration();
-
 				/* Define what the 'best' candidate means
 				 * -------------------- */
 				
@@ -316,9 +306,11 @@ public class AllocateTasks extends JPanel {
 				 */
 				Function<Candidate, Candidate> getIfBestCandidate = (c) -> {
 					Duration gapLen = Duration.between(c.startTime(), c.endTime());
+					Duration taskExecLength =
+						c.taskExecution().getTask().getEfficiencyMap().get(c.user());
 					if (
 							// Is the gap big enough?
-							gapLen.compareTo(unallocTaskExecLength) >= 0 &&
+							gapLen.compareTo(taskExecLength) >= 0 &&
 							
 							// Found a slot! Is it the best slot so far?
 							(
@@ -327,9 +319,10 @@ public class AllocateTasks extends JPanel {
 							)
 					) {
 						return new Candidate(
+							c.taskExecution(),
 							c.user(),
 							c.startTime(),
-							c.startTime().plus(unallocTaskExecLength)
+							c.startTime().plus(taskExecLength)
 						);
 					}
 					return Candidate.NO_CANDIDATE;
@@ -365,7 +358,11 @@ public class AllocateTasks extends JPanel {
 					if (allocToUserBetween.size() == 0) {
 						// If this user has nothing to do, how about now?
 						possiblyBestCandidate = getIfBestCandidate.apply(
-							new Candidate(candidateUser, allocStartTime, allocEndTime)
+							new Candidate(
+								unallocTaskExec,
+								candidateUser,
+								allocStartTime, allocEndTime
+							)
 						);
 						if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
 							bestCandidate.candidate = possiblyBestCandidate;
@@ -384,6 +381,7 @@ public class AllocateTasks extends JPanel {
 					// first event found (by end time).
 					possiblyBestCandidate = getIfBestCandidate.apply(
 						new Candidate(
+							unallocTaskExec,
 							candidateUser,
 							allocStartTime,
 							allocToUserBetween.get(i).getPeriod().start()
@@ -405,6 +403,7 @@ public class AllocateTasks extends JPanel {
 						// FIXME[?]: prevEnd shouldn't be null for allocated tasks
 						possiblyBestCandidate = getIfBestCandidate.apply(
 							new Candidate(
+								unallocTaskExec,
 								candidateUser,
 								allocToUserBetween.get(i-1).getPeriod().end(),
 								allocToUserBetween.get(i).getPeriod().start()
@@ -421,6 +420,7 @@ public class AllocateTasks extends JPanel {
 					// FIXME[?]: prevEnd shouldn't be null for allocated tasks
 					possiblyBestCandidate = getIfBestCandidate.apply(
 						new Candidate(
+							unallocTaskExec,
 							candidateUser,
 							allocToUserBetween.get(i).getPeriod().end(),
 							allocEndTime
@@ -434,13 +434,14 @@ public class AllocateTasks extends JPanel {
 				/* If there is a best candidate, allocate it
 				 * -------------------- */
 				
-				if (bestCandidate.candidate != Candidate.NO_CANDIDATE) {
+				Candidate candidate = bestCandidate.candidate;
+				if (candidate != Candidate.NO_CANDIDATE) {
 					// If we've found a best candidate, then allocate it to that
 					// user and set its period.
 					// NOTE: MUTABLE OPERATION.
 					unallocTaskExec.setAllocation(bestCandidate.candidate.user());
 					unallocTaskExec.setPeriod(
-						new Period(bestCandidate.candidate.startTime(), unallocTaskExecLength)
+						new Period(candidate.startTime(), candidate.endTime())
 					);
 
 					// Add to the list of task execs to flush to DB
@@ -477,8 +478,9 @@ public class AllocateTasks extends JPanel {
 	 * @author William Taylor
 	 */
 	private static class Candidate {
-		public static final Candidate NO_CANDIDATE = new Candidate(null, null, null);
+		public static final Candidate NO_CANDIDATE = new Candidate(null, null, null, null);
 		
+		private TaskExecution taskExec;
 		private User user;
 		private LocalDateTime startTime;
 		private LocalDateTime endTime;
@@ -492,19 +494,23 @@ public class AllocateTasks extends JPanel {
 		 * @param endTime The end time for allocation.
 		 */
 		public Candidate(
+				TaskExecution taskExec,
 				User user,
 				LocalDateTime startTime,
 				LocalDateTime endTime
 		) {
+			assert taskExec != null;
 			assert user != null;
 			assert startTime != null;
 			assert endTime != null;
-			
+
+			this.taskExec = taskExec;
 			this.user = user;
 			this.startTime = startTime;
 			this.endTime = endTime;
 		}
-		
+
+		public TaskExecution taskExecution() { return taskExec; }
 		public User user() { return user; }
 		public LocalDateTime startTime() { return startTime; }
 		public LocalDateTime endTime() { return endTime; }
