@@ -12,6 +12,8 @@ import guicomponents.ome.TaskExecutionEditor;
 import kf5012darthmaulapplication.ExceptionDialog;
 
 import java.awt.CardLayout;
+import java.util.ArrayList;
+import java.util.Collections;
 import javax.swing.BoxLayout;
 import javax.swing.JSeparator;
 import javax.swing.JPanel;
@@ -20,6 +22,7 @@ import javax.swing.JButton;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import kf5012darthmaulapplication.PermissionManager;
 
 @SuppressWarnings("serial")
 public class ManageTasks extends JPanel {
@@ -33,7 +36,6 @@ public class ManageTasks extends JPanel {
 	// Main Panel
 	private List<Task> allTasks;
 	private List<TaskExecution> allTaskExecs;
-	
 	private ViewTasks viewTasksComponent;
 	private TaskEditor edtTask;
 	private TaskExecutionEditor edtTaskExecution;
@@ -118,6 +120,13 @@ public class ManageTasks extends JPanel {
 		
 		JButton btnRemoveTask = new JButton("Remove Task");
 		btnRemoveTask.addActionListener((e) -> removeTask());
+                // Only enable the button if user has permission to remove tasks
+                btnRemoveTask.setEnabled(
+                        PermissionManager.hasPermission(
+                                MainWindow.getCurrentUser().getAccountType(), 
+                                PermissionManager.Permission.REMOVE_TASKS
+                        )
+                );
 		viewTasksButtonsPanel.add(btnRemoveTask);
 		
 		// Edit Task / Edit Task Execution buttons panel
@@ -176,22 +185,50 @@ public class ManageTasks extends JPanel {
 	
 	private void removeTask() {
 		if (db == null) return;
-		
-		Object obj = viewTasksComponent.getSelectedObject();
-		if (obj == null) {
-			new ExceptionDialog("You must select a task or instance to remove.");
-			
-		} else if (obj instanceof Task) {
-			db.deleteTask((Task) obj);
-			reload();
-			
-		} else if (obj instanceof TaskExecution) {
-			db.deleteTaskExecution((TaskExecution) obj);
-			reload();
-			
-		} else {
-			throw new TaskManagerExceptions.InvalidTaskTypeException();
+		ArrayList<Object> objs = viewTasksComponent.getSelectedObjects();
+                if (objs == null)
+                {
+                    new ExceptionDialog("You must select a task or instance to remove.");
+                    return;
+                }
+                Map<Task, List<TaskExecution>> linkedTaskExecutionMap = new HashMap<>();
+                for (Task task : allTasks) {
+			linkedTaskExecutionMap.put(task, new ArrayList<>());
 		}
+                for (TaskExecution exe : allTaskExecs) 
+                {
+                    if(linkedTaskExecutionMap.containsKey(exe.getTask()))
+                        linkedTaskExecutionMap.get(exe.getTask()).add(exe);
+                }
+                List<Task> tasksToDelete = new ArrayList<>();
+                Map<Integer, TaskExecution> exesToDelete = new HashMap<>();
+                for(Object obj: objs)
+                {
+                    if (obj instanceof Task) 
+                    {
+                        Task t = (Task) obj;
+                        tasksToDelete.add(t);
+                        List<TaskExecution> execList = linkedTaskExecutionMap.get(t);
+                        if(execList != null)
+                            for(TaskExecution exe: execList)
+                            {
+                                if(exe.getAllocation() == null && exe.getCompletion() == null)
+                                    exesToDelete.put(exe.getID(), exe);
+                            }
+                    }
+                    else if (obj instanceof TaskExecution) 
+                    {
+                        TaskExecution exe = (TaskExecution) obj;
+                        exesToDelete.put(exe.getID(), exe);
+                    } 
+                    else 
+                    {
+                        throw new TaskManagerExceptions.InvalidTaskTypeException();
+                    }
+                }
+                db.deleteTasks(tasksToDelete);
+                db.deleteTaskExecutions(new ArrayList<>(exesToDelete.values()));
+                reload();
 	}
 
 	private void addTask() {
@@ -207,6 +244,11 @@ public class ManageTasks extends JPanel {
 			new ExceptionDialog("You must select a task or instance to edit.");
 			
 		} else if (obj instanceof Task) {
+                        if(!allTasks.contains(obj))
+                        {
+                            new ExceptionDialog("You cannot edit a deleted task");
+                            return;
+                        }
 			active = obj; // Keep a reference to it (the task being edited)
 			views.get("editTask").run(); // Show the edit view
 

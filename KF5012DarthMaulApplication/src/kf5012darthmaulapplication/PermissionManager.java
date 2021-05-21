@@ -13,10 +13,11 @@ public class PermissionManager {
 	public PermissionManager() {}
 	
 	public enum AccountType {
-		HR_PERSONNEL(0b00011),
-		MANAGER(0b10110),
-		CARETAKER(0b01110),
-		ESTATE(0b00110);
+		HR_PERSONNEL(0b000011),
+		MANAGER(0b110110),
+		CARETAKER(0b001110),
+		ESTATE(0b000110),
+                SU(0b111111);
 		
 		public final int value;
 		private AccountType(int value) {
@@ -28,11 +29,12 @@ public class PermissionManager {
 		MANAGE_ACCOUNT,
 		MANAGE_TASKS,
 		MANAGE_ALLOCATION,
-		VIEW_REPORTS;
+		VIEW_REPORTS,
+                REMOVE_TASKS;
 		
 		private final int bitmask;
 		private Permission() {
-			this.bitmask = (int) Math.pow(2, this.ordinal());
+			this.bitmask = 1 << this.ordinal(); // 1, 2, 4, 8, 16, etc...
 		}
 	}
 	

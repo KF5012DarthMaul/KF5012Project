@@ -6,7 +6,7 @@ import java.sql.SQLException;
  *
  * @author Emanuel Oliveira W19029581
  */
-public class DBExceptions {
+public final class DBExceptions {
     public static class FailedToConnectException extends Exception {
 
         public FailedToConnectException(SQLException ex) {
@@ -28,5 +28,5 @@ public class DBExceptions {
         public UserDoesNotExistException() {
         }
     }
-    
+    private DBExceptions(){}
 }
