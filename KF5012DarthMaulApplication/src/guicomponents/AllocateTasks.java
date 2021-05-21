@@ -1,7 +1,5 @@
 package guicomponents;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
@@ -23,8 +20,10 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 
 import dbmgr.DBAbstraction;
+import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
 import guicomponents.ome.LocalDateTimeEditor;
@@ -45,10 +44,10 @@ public class AllocateTasks extends JPanel {
 	
 	public AllocateTasks() {
 		GridBagLayout gbl_allocateTasks = new GridBagLayout();
-		gbl_allocateTasks.columnWidths = new int[]{0, 0, 0, 0, 0};
-		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0};
-		gbl_allocateTasks.columnWeights = new double[]{1.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
-		gbl_allocateTasks.rowWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gbl_allocateTasks.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0};
+		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
 		setLayout(gbl_allocateTasks);
 
 		JLabel lblGenUntil = new JLabel("Allocate from now until:");
@@ -67,46 +66,80 @@ public class AllocateTasks extends JPanel {
 		gbc_lsteEndTime.gridy = 0;
 		add(lsteEndTime, gbc_lsteEndTime);
 		
-		JButton btnShowExecutions = new JButton("Load Tasks");
-		GridBagConstraints gbc_btnShowExecutions = new GridBagConstraints();
-		gbc_btnShowExecutions.anchor = GridBagConstraints.WEST;
-		gbc_btnShowExecutions.insets = new Insets(5, 5, 5, 5);
-		gbc_btnShowExecutions.gridx = 2;
-		gbc_btnShowExecutions.gridy = 0;
-		add(btnShowExecutions, gbc_btnShowExecutions);
+		JButton btnPreviewAllocations = new JButton("Preview Allocations");
+		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
+		GridBagConstraints gbc_btnPreviewAllocations = new GridBagConstraints();
+		gbc_btnPreviewAllocations.anchor = GridBagConstraints.WEST;
+		gbc_btnPreviewAllocations.insets = new Insets(5, 5, 5, 5);
+		gbc_btnPreviewAllocations.gridx = 2;
+		gbc_btnPreviewAllocations.gridy = 0;
+		add(btnPreviewAllocations, gbc_btnPreviewAllocations);
+
+		JButton btnConfirmAllocations = new JButton("Confirm");
+		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
+		GridBagConstraints gbc_btnConfirmAllocations = new GridBagConstraints();
+		gbc_btnConfirmAllocations.anchor = GridBagConstraints.WEST;
+		gbc_btnConfirmAllocations.insets = new Insets(5, 5, 5, 5);
+		gbc_btnConfirmAllocations.gridx = 3;
+		gbc_btnConfirmAllocations.gridy = 0;
+		add(btnConfirmAllocations, gbc_btnConfirmAllocations);
+
+		JSeparator sep1 = new JSeparator();
+		GridBagConstraints gbc_sep1 = new GridBagConstraints();
+		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep1.insets = new Insets(5, 5, 5, 5);
+		gbc_sep1.gridwidth = 4;
+		gbc_sep1.gridx = 0;
+		gbc_sep1.gridy = 1;
+		add(sep1, gbc_sep1);
+		
+		JPanel listsPanel = new JPanel();
+		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
+		gbc_listsPanel.fill = GridBagConstraints.BOTH;
+		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
+		gbc_listsPanel.gridwidth = 4;
+		gbc_listsPanel.gridx = 0;
+		gbc_listsPanel.gridy = 2;
+		add(listsPanel, gbc_listsPanel);
+		GridBagLayout gbl_listsPanel = new GridBagLayout();
+		gbl_listsPanel.columnWidths = new int[] {0, 0, 0, 0};
+		gbl_listsPanel.rowHeights = new int[] {0, 0};
+		gbl_listsPanel.columnWeights = new double[]{1.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_listsPanel.rowWeights = new double[]{1.0, Double.MIN_VALUE};
+		listsPanel.setLayout(gbl_listsPanel);
+		
+		JScrollPane allocatedScrollPane = new JScrollPane();
+		GridBagConstraints gbc_allocatedScrollPane = new GridBagConstraints();
+		gbc_allocatedScrollPane.fill = GridBagConstraints.BOTH;
+		gbc_allocatedScrollPane.insets = new Insets(5, 5, 5, 5);
+		gbc_allocatedScrollPane.gridx = 0;
+		gbc_allocatedScrollPane.gridy = 0;
+		listsPanel.add(allocatedScrollPane, gbc_allocatedScrollPane);
+		
+		allocatedList = new JList<>();
+		allocatedScrollPane.setViewportView(allocatedList);
 		
 		JButton btnSwapAllocations = new JButton("Swap");
 		GridBagConstraints gbc_btnSwapAllocations = new GridBagConstraints();
 		gbc_btnSwapAllocations.anchor = GridBagConstraints.WEST;
 		gbc_btnSwapAllocations.insets = new Insets(5, 5, 5, 5);
-		gbc_btnSwapAllocations.gridx = 3;
+		gbc_btnSwapAllocations.gridx = 1;
 		gbc_btnSwapAllocations.gridy = 0;
-		add(btnSwapAllocations, gbc_btnSwapAllocations);
-		
-		JPanel listsPanel = new JPanel();
-		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
-		gbc_listsPanel.anchor = GridBagConstraints.WEST;
-		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
-		gbc_listsPanel.gridwidth = 4;
-		gbc_listsPanel.gridx = 0;
-		gbc_listsPanel.gridy = 1;
-		add(listsPanel, gbc_listsPanel);
-		listsPanel.setLayout(new BoxLayout(listsPanel, BoxLayout.X_AXIS));
-		
-		JScrollPane allocatedScrollPane = new JScrollPane();
-		listsPanel.add(allocatedScrollPane);
-		
-		allocatedList = new JList<>();
-		allocatedScrollPane.setViewportView(allocatedList);
+		listsPanel.add(btnSwapAllocations, gbc_btnSwapAllocations);
 		
 		JScrollPane unallocatedScrollPane = new JScrollPane();
-		listsPanel.add(unallocatedScrollPane);
+		GridBagConstraints gbc_unallocatedScrollPane = new GridBagConstraints();
+		gbc_unallocatedScrollPane.fill = GridBagConstraints.BOTH;
+		gbc_unallocatedScrollPane.insets = new Insets(5, 5, 5, 5);
+		gbc_unallocatedScrollPane.gridx = 2;
+		gbc_unallocatedScrollPane.gridy = 0;
+		listsPanel.add(unallocatedScrollPane, gbc_unallocatedScrollPane);
 		
 		unallocatedList = new JList<>();
 		unallocatedScrollPane.setViewportView(unallocatedList);
 	}
 	
-	private void allocateAll() {
+	private void previewAllocations() {
 		/* Get from DB & GUI, and split (immutable)
 		 * -------------------------------------------------- */
 		
