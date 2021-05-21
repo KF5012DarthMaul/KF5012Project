@@ -1,5 +1,6 @@
 package guicomponents;
 
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -12,9 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -23,10 +27,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 
 import dbmgr.DBAbstraction;
+import dbmgr.DBExceptions;
 import domain.Completion;
 import domain.Task;
 import domain.TaskExecution;
 import domain.TaskPriority;
+import guicomponents.formatters.Formatter;
+import guicomponents.formatters.HTMLFormatter;
+import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
@@ -36,10 +44,22 @@ import temporal.TemporalList;
 
 @SuppressWarnings("serial")
 public class AllocateTasks extends JPanel {
+	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
+			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
+
 	private LocalDateTimeEditor lsteEndTime;
 	private JList<Object> allocatedList;
 	private JList<Object> unallocatedList;
 
+	// Retained data
+	private List<User> allUsers;
+	private List<User> allCaretakers;
+	
+	private List<TaskExecution> allTaskExecutions;
+	private List<TaskExecution> complAllocList = new ArrayList<>();
+	private List<TaskExecution> uncomplAllocList = new ArrayList<>();
+	private List<TaskExecution> uncomplUnallocList = new ArrayList<>();
+	
 	// DB
 	private DBAbstraction db;
 	
@@ -117,7 +137,21 @@ public class AllocateTasks extends JPanel {
 		gbc_allocatedScrollPane.gridy = 0;
 		listsPanel.add(allocatedScrollPane, gbc_allocatedScrollPane);
 		
-		allocatedList = new JList<>();
+		allocatedList = new JList<>(new DefaultListModel<>());
+		allocatedList.setCellRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(
+					JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus
+			) {
+				// Set stuff related to isSelected and cellHasFocus
+				super.getListCellRendererComponent(
+					list, value, index, isSelected, cellHasFocus);
+				
+				setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
+				return this;
+			}
+		});
 		allocatedScrollPane.setViewportView(allocatedList);
 		
 		JButton btnSwapAllocations = new JButton("Swap");
@@ -136,8 +170,84 @@ public class AllocateTasks extends JPanel {
 		gbc_unallocatedScrollPane.gridy = 0;
 		listsPanel.add(unallocatedScrollPane, gbc_unallocatedScrollPane);
 		
-		unallocatedList = new JList<>();
+		unallocatedList = new JList<>(new DefaultListModel<>());
+		unallocatedList.setCellRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(
+					JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus
+			) {
+				// Set stuff related to isSelected and cellHasFocus
+				super.getListCellRendererComponent(
+					list, value, index, isSelected, cellHasFocus);
+				
+				setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
+				return this;
+			}
+		});
 		unallocatedScrollPane.setViewportView(unallocatedList);
+		
+		this.fetch();
+		this.refresh();
+	}
+
+	private void fetch() {
+		if (db == null) {
+		    try{
+		        db = DBAbstraction.getInstance();
+		    } catch (DBExceptions.FailedToConnectException ex) {
+		        Logger.getLogger(ManageAllocation.class.getName()).log(Level.SEVERE, null, ex);
+		        return;
+		    }
+		}
+
+		/* Get data from DB & GUI
+		 * -------------------------------------------------- */
+		
+		// Get all users
+		allUsers = db.getAllUsers();
+		allCaretakers = allUsers.stream()
+			.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
+			.collect(Collectors.toList());
+		
+		// Get all task executions split by allocation
+		allTaskExecutions = db.getTaskExecutionList();
+
+		/* Split into task exec lists based on current status
+		 * -------------------------------------------------- */
+		
+		// All allocated + complete tasks
+		// All unallocated + incomplete tasks
+		
+		complAllocList = new ArrayList<>();
+		uncomplAllocList = new ArrayList<>();
+		uncomplUnallocList = new ArrayList<>();
+		for (TaskExecution taskExec : allTaskExecutions) {
+			if (taskExec.getAllocation() != null) {
+				if (taskExec.getCompletion() != null) {
+					complAllocList.add(taskExec);
+				} else {
+					uncomplAllocList.add(taskExec);
+				}
+			} else {
+				if (taskExec.getCompletion() == null) {
+					uncomplUnallocList.add(taskExec);
+				}
+			}
+		}
+	}
+
+	private void refresh() {
+		DefaultListModel<Object> model;
+
+		// Update the models
+		model = (DefaultListModel<Object>) (allocatedList.getModel());
+		model.removeAllElements();
+		model.addAll(uncomplAllocList);
+
+		model = (DefaultListModel<Object>) (unallocatedList.getModel());
+		model.removeAllElements();
+		model.addAll(uncomplUnallocList);
 	}
 	
 	/**
@@ -147,8 +257,6 @@ public class AllocateTasks extends JPanel {
 	 * It would be reasonable to give task executions that have been
 	 */
 	private void updateUserEfficiencies(List<TaskExecution> taskExecs) {
-		// taskExecs = db.getTaskExecutionList();
-
 		// Get all task executions by task
 		Map<Task, List<TaskExecution>> taskExecsByTask = new HashMap<>();
 		for (TaskExecution taskExec : taskExecs) {
@@ -195,46 +303,14 @@ public class AllocateTasks extends JPanel {
 	}
 	
 	private void previewAllocations() {
-		/* Get data from DB & GUI
-		 * -------------------------------------------------- */
-		
-		// Get all users
-		List<User> allUsers = db.getAllUsers();
-		List<User> allCaretakers = allUsers.stream()
-			.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
-			.collect(Collectors.toList());
-		
-		// Get all task executions split by allocation
-		List<TaskExecution> allTaskExecutions = db.getTaskExecutionList();
+		// Fetch data
+		this.fetch();
 
 		// The start and end times for the allocation
 		LocalDateTime allocStartTime = LocalDateTime.now();
 		LocalDateTime allocEndTime = lsteEndTime.getObject();
 
-		/* Split into task exec lists based on current status
-		 * -------------------------------------------------- */
-		
-		// All allocated + complete tasks
-		// All unallocated + incomplete tasks
-		
-		List<TaskExecution> allocList = new ArrayList<>();
-		List<TaskExecution> unallocList = new ArrayList<>();
-		for (TaskExecution taskExec : allTaskExecutions) {
-			if (taskExec.getAllocation() != null) {
-				// If it's already been completed, we don't need to avoid it
-				// when allocating
-				if (taskExec.getCompletion() != null) {
-					allocList.add(taskExec);
-				}
-			} else {
-				// If it's already been completed, we don't need to allocate it
-				if (taskExec.getCompletion() == null) {
-					unallocList.add(taskExec);
-				}
-			}
-		}
-
-		/* Update user efficiencies using tasks
+		/* Update calculated fields of tasks
 		 * -------------------------------------------------- */
 		
 		// TODO: Might want to do this separately to allocation, as it's an
@@ -243,7 +319,7 @@ public class AllocateTasks extends JPanel {
 		
 		// Do this before the filter to the specified range, as this must be
 		// based on historical data.
-		this.updateUserEfficiencies(allocList);
+		this.updateUserEfficiencies(complAllocList);
 
 		/* Initialise key variables (mutated over time)
 		 * -------------------------------------------------- */
@@ -253,7 +329,7 @@ public class AllocateTasks extends JPanel {
 		for (User user : allCaretakers) {
 			allocCaretakerTasks.put(user, new ArrayList<>());
 		}
-		for (TaskExecution taskExec : allocList) {
+		for (TaskExecution taskExec : complAllocList) {
 			allocCaretakerTasks.get(taskExec.getAllocation()).add(taskExec);
 		}
 
@@ -459,7 +535,7 @@ public class AllocateTasks extends JPanel {
         for (TaskPriority tp : TaskPriority.values()) {
             unallocPriorityTasks.put(tp, new ArrayList<>());
         }
-        for(TaskExecution taskExec : unallocList) {
+        for(TaskExecution taskExec : uncomplUnallocList) {
     		unallocPriorityTasks.get(taskExec.getPriority()).add(taskExec);
         }
 
