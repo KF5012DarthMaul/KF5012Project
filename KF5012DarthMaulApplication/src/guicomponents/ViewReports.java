@@ -140,16 +140,23 @@ public class ViewReports extends JPanel {
                             }
                             data2[i][4] = tasks2.get(i).getCompletion().getWorkQuality().toString();
                             VerificationExecution verification = tasks2.get(i).getVerification();
+                            //Get the verification if a task has been completed or not
                             if (verification != null) {
+                            	//If there is a verification for the task
                             	Completion completion = verification.getCompletion();
+                            	//Print it out
                             	if (completion != null) {
+                            		//If there is a managers verification for the task
                             		data2[i][5] = completion.getWorkQuality().toString();
+                            		//Print it out
                             	}
                             	else {
+                            		//If there is no verification, print out so
                             		data2[i][5] = "No Verification";
                             	}
                             }
                             else {
+                            	//If there is no verification, print out so
                             	data2[i][5] = "No Verification";
                             }
                     }
@@ -247,16 +254,23 @@ public class ViewReports extends JPanel {
                                     }
                                     data2[i][4] = completedByUserTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
                                     VerificationExecution verification = completedByUserTaskExecsList.get(i).getVerification();
+                                    //Get the verification if a task has been completed or not
                                     if (verification != null) {
+                                    	//If this task has a verification
                                     	Completion completion = verification.getCompletion();
+                                    	//Print out the caretakers rating of their work quality
                                     	if (completion != null) {
+                                    		//If there is a managers verfication
                                     		data2[i][5] = completion.getWorkQuality().toString();
+                                    		//print out the managers review of the work
                                     	}
                                     	else {
+                                    		//if there is no verification print out so
                                     		data2[i][5] = "No Verification";
                                     	}
                                     }
                                     else {
+                                    	//if there is no verification print out so
                                     	data2[i][5] = "No Verification";
                                     }
                             }
@@ -314,16 +328,23 @@ public class ViewReports extends JPanel {
                                     }
                                     data3[i][5] = allCompletedTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
                                     VerificationExecution verification = allCompletedTaskExecsList.get(i).getVerification();
+                                    //Get the verification if a task has been completed or not
                                     if (verification != null) {
+                                    	//If this task has a verification
                                     	Completion completion = verification.getCompletion();
+                                    	//Print out the caretakers rating of their work quality
                                     	if (completion != null) {
+                                    		//If there is a managers verfication
                                     		data3[i][6] = completion.getWorkQuality().toString();
+                                    		//print out the managers review of the work
                                     	}
                                     	else {
+                                    		//if there is no verification print out so
                                     		data3[i][6] = "No Verification";
                                     	}
                                     }
                                     else {
+                                    	//if there is no verification print out so
                                     	data3[i][6] = "No Verification";
                                     }
 
