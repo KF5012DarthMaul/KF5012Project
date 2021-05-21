@@ -625,6 +625,9 @@ public final class DBAbstraction
     {
         if(!execsCached)
         {
+        	if(!tasksCached)
+                getTaskList();
+        	
             fillCompletionCache();
             Map<Integer, Task> allTasks = new HashMap<>(taskCache);
             allTasks.putAll(deletedTaskCache); // Allow referencing of deleted tasks
