@@ -45,6 +45,15 @@ public class ViewReports extends JPanel {
 	 * Create the panel.
 	 */
 	public ViewReports() {
+		DBAbstraction db;
+		try {
+			db = DBAbstraction.getInstance();
+		}
+		catch (DBExceptions.FailedToConnectException ex) {
+			new ExceptionDialog("An error has occured with the database", ex);
+			return;
+		}
+		//connection to the database, or list that a database could not be connected to	
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 0, 0};
@@ -75,30 +84,21 @@ public class ViewReports extends JPanel {
 					
 		JPanel report2 = new JPanel();
 		tabbedPane.addTab("Caretaker Performance", report2);
+		report2.setLayout(new BoxLayout(report2, BoxLayout.Y_AXIS));
 		//New tab for showing a single caretakers task performance history
-		//lsteCaretaker = new ListSelectionEditor<>(
-			//(user) -> user.getDisplayName() 
+		lsteCaretaker = new ListSelectionEditor<>(
+			(user) -> user.getDisplayName() 
 			//Drop down list to dynamically get the list of all caretakers on the system
-		//);
+		);
 		report2.add(lsteCaretaker);
 			//adds this to the new tab and is used to show a list of options to the user to select
 		loadUsers (true);
-		report2.setLayout(new BorderLayout(0, 0));
 		//Set box format to make the UI look nicer with the drop down menu
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
 		
 		JPanel panel = new JPanel();
-		report2.add(panel, BorderLayout.SOUTH);
-		
-		JButton btn_More_Information = new JButton("More Information");
-		btn_More_Information.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int test = 1;
-				JOptionPane.showMessageDialog(null, test, "pog", 1);
-			}
-		});
-		panel.add(btn_More_Information);
+		report2.add(panel);
 		//New scroll pane to allow for longer list of queried results to be displayed
 		
 		JPanel report3 = new JPanel();
@@ -109,17 +109,8 @@ public class ViewReports extends JPanel {
 		JScrollPane scrollPane_Task_Performance = new JScrollPane();
 		report3.add(scrollPane_Task_Performance);
 		//Scroll pane as this could be a long list, need to be dynamically able to handle large lists 
-		DBAbstraction db;
-		try {
-			db = DBAbstraction.getInstance();
-		}
-		catch (DBExceptions.FailedToConnectException ex) {
-			new ExceptionDialog("An error has occured with the database", ex);
-			return;
-		}
-		//connection to the database, or list that a database could not be connected to	
 		lsteCaretaker.addItemListener((e) -> {
-                    Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality", "Average"};
+                    Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                     //Columns to display data in a tidy format
                     List<TaskExecution> tasks2 = db.getTaskExecutionList().stream()
                                     .filter(task -> task.getCompletion() != null && 
@@ -128,10 +119,8 @@ public class ViewReports extends JPanel {
                     //Query to get the list of caretakers and the tasks they have finished 
                     Object[][] data2 = new Object[tasks2.size()][columns2.length];
                     //Allows for the dynamic printing of the database content no matter the size
+                    int count = 0;
                     for (int i = 0; i<tasks2.size(); i++) {
-                		int r = 0;
-                		r++;
-                		int counting = 0;
                     	//For loop to loop through the queried results no matter the size
                             LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
                             //Gets the expected due date for the task in a vairable 
@@ -152,7 +141,6 @@ public class ViewReports extends JPanel {
                             if (dueDate == null || !completionTime.isAfter(dueDate)) {
                             	//If the due date is null or if the completion time is NOT after the expected due date
                                     data2[i][3] = "Completed on-time";
-                                    counting ++;
                                     //Print saying the task was done on time
                             }
                             else {
@@ -179,14 +167,6 @@ public class ViewReports extends JPanel {
                             else {
                             	//If there is no verification, print out so
                             	data2[i][5] = "No Verification";
-                            }
-                            if (counting == 0) {
-                            	data2[i][6] = "";
-                            }
-                            else {
-                            int completedOnTime = counting;
-                            double average = (counting/r)*100;
-                            data2[i][6] = average + "%";
                             }
                     }
                     table = new JTable(data2, columns2){
@@ -254,7 +234,7 @@ public class ViewReports extends JPanel {
 
                         case 1:
                         	//Case one shows a selected users history of completed tasks and performance
-                            Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality", "Average Submission on Time"};
+                            Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                             //Columns showing related information for this task, in an easy to read format
                             List<TaskExecution> completedByUserTaskExecsList = tasks.stream()
                                     .filter(task -> task.getCompletion() != null 
@@ -263,11 +243,9 @@ public class ViewReports extends JPanel {
                             //Query database based upon the selected caretaker from the drop down menu
                             Object[][] data2 = new Object[completedByUserTaskExecsList.size()][columns2.length];
                             //Get all related tasks and find out the size
+                            int count = 0;
                             for (int i = 0; i<completedByUserTaskExecsList.size(); i++) {
                             	//Form a loop based upon the size of the query
-                            		int r = 0;
-                            		r++;
-                            		int counting = 0;
                                     LocalDateTime dueDate = completedByUserTaskExecsList.get(i).getPeriod().end();
                                     //Get the expected due date for the task currently selected
                                     LocalDateTime completionTime = completedByUserTaskExecsList.get(i).getCompletion().getCompletionTime();	    
@@ -288,7 +266,6 @@ public class ViewReports extends JPanel {
                                     if (dueDate == null || !completionTime.isAfter(dueDate)) {
                                     	//If the due date is null OR if the completion time is NOT after the due date
                                             data2[i][3] = "Completed on-time";
-                                            counting ++;
                                             //Task was done on time, print that it was done on time
                                     }
                                     else {
@@ -312,18 +289,6 @@ public class ViewReports extends JPanel {
                                     		//if there is no verification print out so
                                     		data2[i][5] = "No Verification";
                                     	}
-                                    }
-                                    else {
-                                    	//if there is no verification print out so
-                                    	data2[i][5] = "No Verification";
-                                    }
-                                    if (counting == 0) {
-                                    	data2[i][6] = "";
-                                    }
-                                    else {
-                                    int completedOnTime = counting;
-                                    double average = (counting/r)*100;
-                                    data2[i][6] = average + "%";
                                     }
                             }
                            table = new JTable(data2, columns2){
