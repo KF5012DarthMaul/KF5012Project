@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;
 
@@ -28,6 +29,8 @@ import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JTextPane;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 //All imports of packages and other functions from outside of this file
 
 public class ViewReports extends JPanel {
@@ -80,10 +83,22 @@ public class ViewReports extends JPanel {
 		report2.add(lsteCaretaker);
 			//adds this to the new tab and is used to show a list of options to the user to select
 		loadUsers (true);
-		report2.setLayout(new BoxLayout(report2, BoxLayout.Y_AXIS));
+		report2.setLayout(new BorderLayout(0, 0));
 		//Set box format to make the UI look nicer with the drop down menu
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
+		
+		JPanel panel = new JPanel();
+		report2.add(panel, BorderLayout.SOUTH);
+		
+		JButton btn_More_Information = new JButton("More Information");
+		btn_More_Information.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int test = 1;
+				JOptionPane.showMessageDialog(null, test, "pog", 1);
+			}
+		});
+		panel.add(btn_More_Information);
 		//New scroll pane to allow for longer list of queried results to be displayed
 		
 		JPanel report3 = new JPanel();
