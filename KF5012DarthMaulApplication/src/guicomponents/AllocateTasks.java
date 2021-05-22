@@ -79,7 +79,7 @@ public class AllocateTasks extends JPanel {
 		GridBagLayout gbl_allocateTasks = new GridBagLayout();
 		gbl_allocateTasks.columnWidths = new int[]{0, 0};
 		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0, 0};
-		gbl_allocateTasks.columnWeights = new double[]{1.0, 1.0};
+		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0};
 		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		setLayout(gbl_allocateTasks);
 
@@ -93,17 +93,17 @@ public class AllocateTasks extends JPanel {
 		
 		lsteEndTime = new LocalDateTimeEditor();
 		GridBagConstraints gbc_lsteEndTime = new GridBagConstraints();
-		gbc_lsteEndTime.anchor = GridBagConstraints.WEST;
-		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 0);
+		gbc_lsteEndTime.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 5);
 		gbc_lsteEndTime.gridx = 1;
 		gbc_lsteEndTime.gridy = 0;
 		add(lsteEndTime, gbc_lsteEndTime);
 		
 		JPanel panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
-		gbc_panel.gridwidth = 2;
-		gbc_panel.insets = new Insets(0, 0, 5, 0);
 		gbc_panel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panel.insets = new Insets(5, 5, 5, 5);
+		gbc_panel.gridwidth = 2;
 		gbc_panel.gridx = 0;
 		gbc_panel.gridy = 1;
 		add(panel, gbc_panel);
@@ -127,7 +127,7 @@ public class AllocateTasks extends JPanel {
 		JSeparator sep1 = new JSeparator();
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
 		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
-		gbc_sep1.insets = new Insets(5, 5, 5, 0);
+		gbc_sep1.insets = new Insets(5, 5, 5, 5);
 		gbc_sep1.gridwidth = 2;
 		gbc_sep1.gridx = 0;
 		gbc_sep1.gridy = 2;
@@ -136,7 +136,7 @@ public class AllocateTasks extends JPanel {
 		JPanel listsPanel = new JPanel();
 		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
 		gbc_listsPanel.fill = GridBagConstraints.BOTH;
-		gbc_listsPanel.insets = new Insets(5, 5, 0, 0);
+		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
 		gbc_listsPanel.gridwidth = 2;
 		gbc_listsPanel.gridx = 0;
 		gbc_listsPanel.gridy = 3;
