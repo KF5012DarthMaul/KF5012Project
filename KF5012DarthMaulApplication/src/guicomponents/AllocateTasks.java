@@ -121,7 +121,7 @@ public class AllocateTasks extends JPanel {
 		panel.add(btnRemoveAllocations);
 		
 		JButton btnRemoveSelected = new JButton("Remove Selected");
-		btnRemoveSelected.addActionListener((e) -> this.reomveSelectedAllocations());
+		btnRemoveSelected.addActionListener((e) -> this.removeSelectedAllocations());
 		panel.add(btnRemoveSelected);
 
 		JSeparator sep1 = new JSeparator();
@@ -581,7 +581,7 @@ public class AllocateTasks extends JPanel {
 		this.refresh();
 	}
 
-	private void reomveSelectedAllocations() {
+	private void removeSelectedAllocations() {
 		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
 		int[] selectedIndexes = allocatedList.getSelectedIndices();
 		for (int i = selectedIndexes.length - 1; i >= 0; i--) {
@@ -703,7 +703,7 @@ public class AllocateTasks extends JPanel {
 	 * 
 	 * @author William Taylor
 	 */
-	public static class CandidateContainer {
+	private static class CandidateContainer {
 		public Candidate candidate = Candidate.NO_CANDIDATE;
 	}
 	
