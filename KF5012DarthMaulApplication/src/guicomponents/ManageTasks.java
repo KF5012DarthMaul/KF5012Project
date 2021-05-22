@@ -20,8 +20,10 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import kf5012darthmaulapplication.PermissionManager;
 
 @SuppressWarnings("serial")
@@ -201,7 +203,7 @@ public class ManageTasks extends JPanel {
                         linkedTaskExecutionMap.get(exe.getTask()).add(exe);
                 }
                 List<Task> tasksToDelete = new ArrayList<>();
-                Map<Integer, TaskExecution> exesToDelete = new HashMap<>();
+                Set<TaskExecution> exesToDelete = new HashSet<>();
                 for(Object obj: objs)
                 {
                     if (obj instanceof Task) 
@@ -213,13 +215,13 @@ public class ManageTasks extends JPanel {
                             for(TaskExecution exe: execList)
                             {
                                 if(exe.getAllocation() == null && exe.getCompletion() == null)
-                                    exesToDelete.put(exe.getID(), exe);
+                                    exesToDelete.add(exe);
                             }
                     }
                     else if (obj instanceof TaskExecution) 
                     {
                         TaskExecution exe = (TaskExecution) obj;
-                        exesToDelete.put(exe.getID(), exe);
+                        exesToDelete.add(exe);
                     } 
                     else 
                     {
@@ -227,7 +229,7 @@ public class ManageTasks extends JPanel {
                     }
                 }
                 db.deleteTasks(tasksToDelete);
-                db.deleteTaskExecutions(new ArrayList<>(exesToDelete.values()));
+                db.deleteTaskExecutions(new ArrayList<>(exesToDelete));
                 reload();
 	}
 
