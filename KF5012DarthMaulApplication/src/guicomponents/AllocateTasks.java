@@ -1,6 +1,7 @@
 package guicomponents;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -45,6 +46,8 @@ import temporal.TemporalList;
 
 @SuppressWarnings("serial")
 public class AllocateTasks extends JPanel {
+	private static final Font LIST_FONT = new Font("Arial", Font.PLAIN, 12);
+	
 	private static final Formatter<TaskExecution> REAL_TASK_EXEC_FORMATTER =
 			new NamedTaskExecutionFormatter();
 	
@@ -164,6 +167,7 @@ public class AllocateTasks extends JPanel {
 				super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				
+				this.setFont(LIST_FONT);
 				if (value instanceof TaskExecution) {
 					setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
 				} else if (value instanceof Candidate) {
@@ -200,7 +204,8 @@ public class AllocateTasks extends JPanel {
 				// Set stuff related to isSelected and cellHasFocus
 				super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
-				
+
+				this.setFont(LIST_FONT);
 				setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
 				return this;
 			}
@@ -681,8 +686,15 @@ public class AllocateTasks extends JPanel {
 		}
 		
 		@Override
-		public String apply(Candidate t) {
-			return FORMATTER.apply(taskExecFormatter.apply(t.taskExecution()));
+		public String apply(Candidate c) {
+			TaskExecution t = c.taskExecution();
+			TaskExecution displayTaskExec = new TaskExecution(
+					t.getID(), t.getTask(),
+					t.getNotes(), t.getPriority(),
+					new Period(c.startTime(), c.endTime()),
+					t.getAllocation(), t.getCompletion(), t.getVerification()
+			);
+			return FORMATTER.apply(taskExecFormatter.apply(displayTaskExec));
 		}
 	}
 

@@ -2,6 +2,7 @@ package guicomponents;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -38,6 +39,8 @@ import temporal.Timeline;
 
 @SuppressWarnings("serial")
 public class GenerateTasks extends JPanel {
+	private static final Font LIST_FONT = new Font("Arial", Font.PLAIN, 12);
+	
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 			new HTMLFormatter<>(new NamedTaskExecutionFormatter());
 
@@ -117,7 +120,8 @@ public class GenerateTasks extends JPanel {
 				// Set stuff related to isSelected and cellHasFocus
 				super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
-				
+
+				this.setFont(LIST_FONT);
 				setText(TASK_EXEC_FORMATTER.apply((TaskExecution) value));
 				return this;
 			}
