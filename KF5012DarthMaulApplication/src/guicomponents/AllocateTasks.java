@@ -361,18 +361,18 @@ public class AllocateTasks extends JPanel {
 		 * -------------------------------------------------- */
 		
 		// Split allocated task executions by caretaker
-		Map<User, List<TaskExecution>> allocCaretakerTasks = new HashMap<>();
+		Map<User, List<Event>> allCaretakerAllocs = new HashMap<>();
 		for (User user : allCaretakers) {
-			allocCaretakerTasks.put(user, new ArrayList<>());
+			allCaretakerAllocs.put(user, new ArrayList<>());
 		}
-		for (TaskExecution taskExec : complAllocList) {
-			allocCaretakerTasks.get(taskExec.getAllocation()).add(taskExec);
+		for (TaskExecution taskExec : uncomplAllocList) {
+			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
 		}
 
 		// Make temporal lists from these (will sort them by start date)
-		Map<User, TemporalList<TaskExecution>> allocCaretakerTasksTmprl = new HashMap<>();
+		Map<User, TemporalList<Event>> allCareTakerAllocsTmprl = new HashMap<>();
 		for (User user : allCaretakers) {
-			allocCaretakerTasksTmprl.put(user, new TemporalList<>(allocCaretakerTasks.get(user)));
+			allCareTakerAllocsTmprl.put(user, new TemporalList<>(allCaretakerAllocs.get(user)));
 		}
 
 		// Build the list of tasks to allocate (then allocate them at the end)
@@ -450,8 +450,8 @@ public class AllocateTasks extends JPanel {
 					// Filter the list to get all allocations between the
 					// allocation start and end times (ie. now and the time the
 					// user selected).
-					List<TaskExecution> allocToUserBetween =
-						allocCaretakerTasksTmprl.get(candidateUser).getBetween(
+					List<Event> allocToUserBetween =
+						allCareTakerAllocsTmprl.get(candidateUser).getBetween(
 							allocStartTime, allocEndTime,
 							
 							// Include any that start before now but continue to
@@ -553,8 +553,8 @@ public class AllocateTasks extends JPanel {
 					// Add it to the list of allocated tasks to use it as a time
 					// constraint. ENSURE it maintains start time sort order,
 					// because this is the list underlying the TemporalList.
-					List<TaskExecution> allocTasks = allocCaretakerTasks.get(candidate.caretaker());
-					allocTasks.add(unallocUncomplTaskExec);
+					List<Event> allocTasks = allCaretakerAllocs.get(candidate.caretaker());
+					allocTasks.add(candidate); // Add the candidate, not the task exec
 					allocTasks.sort(Event.byStartTime);
 				}
 				// else, the task can't be allocated (using this algo)
@@ -637,13 +637,15 @@ public class AllocateTasks extends JPanel {
 	 * 
 	 * @author William Taylor
 	 */
-	private static class Candidate {
+	private static class Candidate implements Event {
 		public static final Candidate NO_CANDIDATE = new Candidate(null, null, null, null);
 		
 		private TaskExecution taskExec;
 		private User user;
 		private LocalDateTime startTime;
 		private LocalDateTime endTime;
+
+		private Period period;
 		
 		/**
 		 * Create a candidate
@@ -668,12 +670,19 @@ public class AllocateTasks extends JPanel {
 			this.user = user;
 			this.startTime = startTime;
 			this.endTime = endTime;
+			
+			this.period = new Period(startTime, endTime);
 		}
 
 		public TaskExecution taskExecution() { return taskExec; }
 		public User caretaker() { return user; }
 		public LocalDateTime startTime() { return startTime; }
 		public LocalDateTime endTime() { return endTime; }
+
+		@Override
+		public Period getPeriod() {
+			return this.period;
+		}
 	}
 	
 	private static class CandidateFormatter implements Formatter<Candidate> {
