@@ -19,6 +19,7 @@ public class TaskExecution implements ChartableEvent {
 	
 	private String notes;
 	private TaskPriority priority;
+	private Period periodConstraint;
 	private Period period;
 	private User allocation; // Nullable
 	private Completion completion; // Nullable
@@ -50,6 +51,7 @@ public class TaskExecution implements ChartableEvent {
 			
 			String notes,
 			TaskPriority priority,
+			Period periodConstraint,
 			Period period,
 			User allocation,
 			Completion completion,
@@ -59,11 +61,12 @@ public class TaskExecution implements ChartableEvent {
 		this.task = task;
 		
 		this.notes = notes;
+		this.priority = priority;
+		this.periodConstraint = periodConstraint;
 		this.period = period;
 		this.allocation = allocation;
 		this.verification = verification;
 		this.completion = completion;
-		this.priority = priority;
 	}
 	
 	/**
@@ -89,9 +92,10 @@ public class TaskExecution implements ChartableEvent {
 		this.task = tex.task; // Backref the same task - that isn't being copied
 		
 		this.notes = tex.notes;
+		this.priority = tex.priority;
+		this.periodConstraint = tex.periodConstraint;
 		this.period = tex.period;
 		this.allocation = tex.allocation;
-		this.priority = tex.priority;
 		
 		if (tex.verification == null) {
 			this.verification = null;
@@ -152,6 +156,24 @@ public class TaskExecution implements ChartableEvent {
 	}
 
 	/**
+	 * Get the priority of this task execution. This may be different to the
+	 * standard priority of the task this is an execution of.
+	 * @return The priority of this task execution.
+	 */
+	public TaskPriority getPriority() {
+		return this.priority;
+	}
+
+	/**
+	 * Get the period over which this task execution runs (previously, now, or
+	 * in the future).
+	 * @return The period over which this task execution runs.
+	 */
+	public Period getPeriodConstraint() {
+		return this.periodConstraint;
+	}
+
+	/**
 	 * Get the period over which this task execution runs (previously, now, or
 	 * in the future).
 	 * @return The period over which this task execution runs.
@@ -161,15 +183,6 @@ public class TaskExecution implements ChartableEvent {
 		return this.period;
 	}
 
-	/**
-	 * Get the priority of this task execution. This may be different to the
-	 * standard priority of the task this is an execution of.
-	 * @return The priority of this task execution.
-	 */
-	public TaskPriority getPriority() {
-		return this.priority;
-	}
-	
 	/**
 	 * Get the user this task execution is allocated to. Null if is not
 	 * allocated.
@@ -217,6 +230,14 @@ public class TaskExecution implements ChartableEvent {
 	}
 
 	/**
+	 * Set the priority of this task execution.
+	 * @param priority The priority of this task execution.
+	 */
+	public void setPriority(TaskPriority priority) {
+		this.priority = priority;
+	}
+	
+	/**
 	 * Set the period that this task execution runs over (previously, now, or in
 	 * the future). This should be constrained by the schedule constraint of the
 	 * task this is an execution of.
@@ -227,13 +248,15 @@ public class TaskExecution implements ChartableEvent {
 	}
 
 	/**
-	 * Set the priority of this task execution.
-	 * @param priority The priority of this task execution.
+	 * Set the period that this task execution runs over (previously, now, or in
+	 * the future). This should be constrained by the schedule constraint of the
+	 * task this is an execution of.
+	 * @param period The period over which this task execution runs.
 	 */
-	public void setPriority(TaskPriority priority) {
-		this.priority = priority;
+	public void setPeriodConstraint(Period periodConstraint) {
+		this.periodConstraint = periodConstraint;
 	}
-	
+
 	/**
 	 * Allocate this task execution to the given caretaker. Pass null to
 	 * deallocate this task.

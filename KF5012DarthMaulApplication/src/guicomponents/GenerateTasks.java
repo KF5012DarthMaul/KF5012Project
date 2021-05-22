@@ -34,6 +34,7 @@ import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
 import temporal.Event;
 import temporal.GenerativeTemporalMap;
+import temporal.Period;
 import temporal.TemporalMap;
 import temporal.Timeline;
 
@@ -166,7 +167,9 @@ public class GenerateTasks extends JPanel {
 				task,
 				(p) -> {
 					TaskExecution taskExec = new TaskExecution(
-						null, task, "", TaskPriority.NORMAL, p, null, null, null
+						null, task, "", TaskPriority.NORMAL,
+						p, new Period(p.start(), p.start()),
+						null, null, null
 					);
 
 					Verification ver = task.getVerification();

@@ -301,36 +301,50 @@ public class InitialiseDB {
             allTasks.add(t_repeating);
             
             // Some on the 9th
+            LocalDateTime start;
+            
+            start = dt("9:45am 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+                new Period(start, dt("10:00am 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("11:45am 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
+                new Period(start, dt("12:00pm 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("1:45pm 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
+                new Period(start, dt("2:00pm 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
 
             // Some on the 10th
+            start = dt("9:45am 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
+                new Period(start, dt("10:00am 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("11:45am 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
+                new Period(start, dt("12:00pm 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("1:45pm 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+                new Period(start, dt("2:00pm 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -340,16 +354,19 @@ public class InitialiseDB {
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(10), startOfToday.plusHours(11)),
+                new Period(startOfToday.plusHours(10), Duration.ofMinutes(0)),
                 null, null, null
             ));
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(12), startOfToday.plusHours(13)),
+                new Period(startOfToday.plusHours(12), Duration.ofMinutes(0)),
                 null, null, null
             ));
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(14), startOfToday.plusHours(15)),
+                new Period(startOfToday.plusHours(14), Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -374,6 +391,7 @@ public class InitialiseDB {
             allTaskExecs.add(new TaskExecution(
                 null, t_noDeadline, "", TaskPriority.LOW,
                 new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
+                new Period(dt("1:00pm 9/5/2021"), Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -429,6 +447,7 @@ public class InitialiseDB {
             TaskExecution t3Exec = new TaskExecution(
                 null, t_requiresVerif, "", TaskPriority.HIGH,
                 new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                new Period(dt("3:30pm 9/5/2021"), Duration.ofMinutes(0)),
                 myUser,
                 null, null
             );
@@ -468,6 +487,7 @@ public class InitialiseDB {
             TaskExecution tCompleteExec = new TaskExecution(
                 null, t_complete, "", TaskPriority.HIGH,
                 new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                new Period(dt("3:30pm 9/5/2021"), Duration.ofMinutes(0)),
                 null,
                 new Completion(null, myUser, LocalDateTime.now(), LocalDateTime.now(), TaskCompletionQuality.ADEQUATE, "test completion"), 
                 null

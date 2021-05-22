@@ -703,7 +703,7 @@ public class AllocateTasks extends JPanel {
 			TaskExecution displayTaskExec = new TaskExecution(
 					t.getID(), t.getTask(),
 					t.getNotes(), t.getPriority(),
-					new Period(c.startTime(), c.endTime()),
+					t.getPeriodConstraint(), new Period(c.startTime(), c.endTime()),
 					c.caretaker(), t.getCompletion(), t.getVerification()
 			);
 			return FORMATTER.apply(taskExecFormatter.apply(displayTaskExec));
