@@ -331,6 +331,9 @@ public class AllocateTasks extends JPanel {
 					if (dur != null) {
 						task.setEfficiency(user, dur);
 					} else {
+						// FIXME: This is silly - you can't do a task in
+						//        literally no time. It also means it can be
+						//        allocated anywhere.
 						task.setEfficiency(user, Duration.ofMinutes(0));
 					}
 				}
