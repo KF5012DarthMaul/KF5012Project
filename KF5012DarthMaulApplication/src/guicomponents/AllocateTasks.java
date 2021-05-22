@@ -1,6 +1,8 @@
 package guicomponents;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -38,14 +40,19 @@ import guicomponents.formatters.Formatter;
 import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
+import guicomponents.utils.TimelinePanel;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
+import lib.ScrollablePanel;
+import temporal.ChartableEvent;
 import temporal.Event;
 import temporal.Period;
 import temporal.TemporalList;
+import temporal.TemporalMap;
+import temporal.Timeline;
 
 @SuppressWarnings("serial")
-public class AllocateTasks extends JPanel {
+public class AllocateTasks extends JScrollPane {
 	private static final Font LIST_FONT = new Font("Arial", Font.PLAIN, 12);
 	
 	private static final Formatter<TaskExecution> REAL_TASK_EXEC_FORMATTER =
@@ -56,11 +63,12 @@ public class AllocateTasks extends JPanel {
 	private static final Formatter<Candidate> CANDIDATE_FORMATTER =
 			new HTMLFormatter<>(new CandidateFormatter(REAL_TASK_EXEC_FORMATTER));
 
+	// GUI components
 	private LocalDateTimeEditor lsteEndTime;
 	private JList<Object> allocatedList;
 	private JList<Object> unallocatedList;
 
-	// Retained data
+	// Retained and split data
 	private List<User> allUsers;
 	private List<User> allCaretakers;
 	
@@ -69,6 +77,12 @@ public class AllocateTasks extends JPanel {
 	private List<TaskExecution> uncomplAllocList = new ArrayList<>();
 	private List<TaskExecution> uncomplUnallocList = new ArrayList<>();
 	
+	private Map<User, List<ChartableEvent>> allCaretakerAllocs;
+	private Map<User, TemporalList<ChartableEvent>> allCareTakerAllocsTmprl;
+	
+	// Timeline
+	private TimelinePanel timelinePanel;
+	
 	// State for allocation
 	private List<Candidate> allAllocCandidates = new ArrayList<>();
 	
@@ -76,12 +90,15 @@ public class AllocateTasks extends JPanel {
 	private DBAbstraction db;
 	
 	public AllocateTasks() {
+		ScrollablePanel content = new ScrollablePanel();
+		content.setScrollableWidth(ScrollablePanel.ScrollableSizeHint.FIT);
+		setViewportView(content);
 		GridBagLayout gbl_allocateTasks = new GridBagLayout();
 		gbl_allocateTasks.columnWidths = new int[]{0, 0};
-		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0, 0};
+		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
 		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0};
-		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
-		setLayout(gbl_allocateTasks);
+		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		content.setLayout(gbl_allocateTasks);
 
 		JLabel lblGenUntil = new JLabel("Allocate from now until:");
 		GridBagConstraints gbc_lblGenUntil = new GridBagConstraints();
@@ -89,15 +106,16 @@ public class AllocateTasks extends JPanel {
 		gbc_lblGenUntil.insets = new Insets(5, 5, 5, 5);
 		gbc_lblGenUntil.gridx = 0;
 		gbc_lblGenUntil.gridy = 0;
-		add(lblGenUntil, gbc_lblGenUntil);
+		content.add(lblGenUntil, gbc_lblGenUntil);
 		
 		lsteEndTime = new LocalDateTimeEditor();
+		lsteEndTime.addChangeListener((e) -> this.refreshTimeline());
 		GridBagConstraints gbc_lsteEndTime = new GridBagConstraints();
 		gbc_lsteEndTime.fill = GridBagConstraints.HORIZONTAL;
 		gbc_lsteEndTime.insets = new Insets(5, 5, 5, 5);
 		gbc_lsteEndTime.gridx = 1;
 		gbc_lsteEndTime.gridy = 0;
-		add(lsteEndTime, gbc_lsteEndTime);
+		content.add(lsteEndTime, gbc_lsteEndTime);
 		
 		JPanel panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
@@ -106,7 +124,7 @@ public class AllocateTasks extends JPanel {
 		gbc_panel.gridwidth = 2;
 		gbc_panel.gridx = 0;
 		gbc_panel.gridy = 1;
-		add(panel, gbc_panel);
+		content.add(panel, gbc_panel);
 		
 		JButton btnPreviewAllocations = new JButton("Preview Allocations");
 		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
@@ -131,16 +149,34 @@ public class AllocateTasks extends JPanel {
 		gbc_sep1.gridwidth = 2;
 		gbc_sep1.gridx = 0;
 		gbc_sep1.gridy = 2;
-		add(sep1, gbc_sep1);
-		
+		content.add(sep1, gbc_sep1);
+
+		timelinePanel = new TimelinePanel();
+		GridBagConstraints gbc_timelinePanel = new GridBagConstraints();
+		gbc_timelinePanel.fill = GridBagConstraints.HORIZONTAL;
+		gbc_timelinePanel.insets = new Insets(0, 5, 5, 0);
+		gbc_timelinePanel.gridwidth = 2;
+		gbc_timelinePanel.gridx = 0;
+		gbc_timelinePanel.gridy = 3;
+		content.add(timelinePanel, gbc_timelinePanel);
+
+		JSeparator sep2 = new JSeparator();
+		GridBagConstraints gbc_sep2 = new GridBagConstraints();
+		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
+		gbc_sep2.insets = new Insets(5, 5, 5, 5);
+		gbc_sep2.gridwidth = 2;
+		gbc_sep2.gridx = 0;
+		gbc_sep2.gridy = 4;
+		content.add(sep2, gbc_sep2);
+
 		JPanel listsPanel = new JPanel();
 		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
 		gbc_listsPanel.fill = GridBagConstraints.BOTH;
 		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
 		gbc_listsPanel.gridwidth = 2;
 		gbc_listsPanel.gridx = 0;
-		gbc_listsPanel.gridy = 3;
-		add(listsPanel, gbc_listsPanel);
+		gbc_listsPanel.gridy = 5;
+		content.add(listsPanel, gbc_listsPanel);
 		GridBagLayout gbl_listsPanel = new GridBagLayout();
 		gbl_listsPanel.columnWidths = new int[] {0, 0};
 		gbl_listsPanel.rowHeights = new int[] {0, 0, 0, 0};
@@ -231,6 +267,7 @@ public class AllocateTasks extends JPanel {
 		
 		// Get all users
 		allUsers = db.getAllUsers();
+		allUsers.sort((u1, u2) -> u1.getDisplayName().compareTo(u2.getDisplayName()));
 		allCaretakers = allUsers.stream()
 			.filter(u -> u.getAccountType() == PermissionManager.AccountType.CARETAKER)
 			.collect(Collectors.toList());
@@ -260,6 +297,24 @@ public class AllocateTasks extends JPanel {
 				}
 			}
 		}
+
+		/* Split (mutated by the allocation algorithm)
+		 * -------------------------------------------------- */
+		
+		// Split allocated task executions by caretaker
+		allCaretakerAllocs = new HashMap<>();
+		for (User user : allCaretakers) {
+			allCaretakerAllocs.put(user, new ArrayList<>());
+		}
+		for (TaskExecution taskExec : uncomplAllocList) {
+			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
+		}
+
+		// Make temporal lists from these (will sort them by start date)
+		allCareTakerAllocsTmprl = new HashMap<>();
+		for (User user : allCaretakers) {
+			allCareTakerAllocsTmprl.put(user, new TemporalList<ChartableEvent>(allCaretakerAllocs.get(user)));
+		}
 	}
 
 	private void refresh() {
@@ -274,6 +329,27 @@ public class AllocateTasks extends JPanel {
 		model = (DefaultListModel<Object>) (unallocatedList.getModel());
 		model.removeAllElements();
 		model.addAll(uncomplUnallocList);
+
+		// Update the timeline - set both preferred and min to ensure it
+		// displays the right size
+		Dimension dim = new Dimension(
+			this.getPreferredSize().width,
+			80 + allCaretakers.size() * 20
+		);
+		timelinePanel.setMinimumSize(dim);
+		timelinePanel.setPreferredSize(dim);
+		
+		this.refreshTimeline();
+	}
+	
+	private void refreshTimeline() {
+		// Make a list of maps in order of display name
+		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
+		for (User caretaker : allCaretakers) {
+			maps.add(allCareTakerAllocsTmprl.get(caretaker));
+		}
+		timelinePanel.setTimeline(new Timeline<>(maps));
+		timelinePanel.showBetween(LocalDateTime.now(), lsteEndTime.getObject());
 	}
 	
 	/**
@@ -349,6 +425,9 @@ public class AllocateTasks extends JPanel {
 		LocalDateTime allocStartTime = LocalDateTime.now();
 		LocalDateTime allocEndTime = lsteEndTime.getObject();
 
+		// Build the list of tasks to allocate (then allocate them at the end)
+		allAllocCandidates = new ArrayList<>();
+
 		/* Update calculated fields of tasks
 		 * -------------------------------------------------- */
 		
@@ -360,27 +439,6 @@ public class AllocateTasks extends JPanel {
 		// based on historical data.
 		this.updateUserEfficiencies(allTaskExecutions);
 
-		/* Initialise key variables (mutated over the algorithm)
-		 * -------------------------------------------------- */
-		
-		// Split allocated task executions by caretaker
-		Map<User, List<Event>> allCaretakerAllocs = new HashMap<>();
-		for (User user : allCaretakers) {
-			allCaretakerAllocs.put(user, new ArrayList<>());
-		}
-		for (TaskExecution taskExec : uncomplAllocList) {
-			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
-		}
-
-		// Make temporal lists from these (will sort them by start date)
-		Map<User, TemporalList<Event>> allCareTakerAllocsTmprl = new HashMap<>();
-		for (User user : allCaretakers) {
-			allCareTakerAllocsTmprl.put(user, new TemporalList<>(allCaretakerAllocs.get(user)));
-		}
-
-		// Build the list of tasks to allocate (then allocate them at the end)
-		allAllocCandidates = new ArrayList<>();
-		
 		/* Define allocator
 		 * -------------------------------------------------- */
 		
@@ -465,7 +523,7 @@ public class AllocateTasks extends JPanel {
 					// Filter the list to get all allocations between the
 					// allocation start and end times (ie. now and the time the
 					// user selected).
-					List<Event> allocToUserBetween =
+					List<? extends Event> allocToUserBetween =
 						allCareTakerAllocsTmprl.get(candidateUser).getBetween(
 							thisAllocStartTime, thisAllocEndTime,
 							
@@ -568,7 +626,7 @@ public class AllocateTasks extends JPanel {
 					// Add it to the list of allocated tasks to use it as a time
 					// constraint. ENSURE it maintains start time sort order,
 					// because this is the list underlying the TemporalList.
-					List<Event> allocTasks = allCaretakerAllocs.get(candidate.caretaker());
+					List<ChartableEvent> allocTasks = allCaretakerAllocs.get(candidate.caretaker());
 					allocTasks.add(candidate); // Add the candidate, not the task exec
 					allocTasks.sort(Event.byStartTime);
 				}
@@ -652,7 +710,8 @@ public class AllocateTasks extends JPanel {
 	 * 
 	 * @author William Taylor
 	 */
-	private static class Candidate implements Event {
+	private static class Candidate implements ChartableEvent {
+		private static final Color COLOR = Color.CYAN;
 		public static final Candidate NO_CANDIDATE = new Candidate(null, null, null, null);
 		
 		private TaskExecution taskExec;
@@ -697,6 +756,16 @@ public class AllocateTasks extends JPanel {
 		@Override
 		public Period getPeriod() {
 			return this.period;
+		}
+
+		@Override
+		public String getName() {
+			return this.taskExecution().getName();
+		}
+
+		@Override
+		public Color getColor() {
+			return COLOR;
 		}
 	}
 	
