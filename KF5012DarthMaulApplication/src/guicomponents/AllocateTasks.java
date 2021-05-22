@@ -450,12 +450,24 @@ public class AllocateTasks extends JPanel {
 					// Just declare this here
 					Candidate possiblyBestCandidate;
 					
+					// Find bounds for this task exec's allocation
+					LocalDateTime thisAllocStartTime = allocStartTime;
+					LocalDateTime thisAllocEndTime = allocEndTime;
+
+					Period pc = unallocUncomplTaskExec.getPeriodConstraint();
+					if (pc.start().isAfter(thisAllocStartTime)) {
+						thisAllocStartTime = pc.start();
+					}
+					if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
+						thisAllocStartTime = pc.end();
+					}
+					
 					// Filter the list to get all allocations between the
 					// allocation start and end times (ie. now and the time the
 					// user selected).
 					List<Event> allocToUserBetween =
 						allCareTakerAllocsTmprl.get(candidateUser).getBetween(
-							allocStartTime, allocEndTime,
+							thisAllocStartTime, thisAllocEndTime,
 							
 							// Include any that start before now but continue to
 							// at least now, and any that end after the date
