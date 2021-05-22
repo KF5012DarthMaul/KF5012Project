@@ -162,6 +162,8 @@ public class InitialiseDB {
                         task_id INTEGER NOT NULL,
                         exe_notes TEXT,
                         exe_prio INTEGER NOT NULL,
+                        period_constraint_start INTEGER NOT NULL,
+                        period_constraint_end INTEGER,
                         start_datetime INTEGER NOT NULL,
                         end_datetime INTEGER,
                         caretaker TEXT,

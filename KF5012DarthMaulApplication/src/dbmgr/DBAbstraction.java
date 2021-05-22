@@ -634,7 +634,7 @@ public final class DBAbstraction
             Map<Integer, VerificationExecution> verificationExes = getVerificationExecutionList();
             try 
             {
-                DBPreparedStatement stmt = db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id"
+                DBPreparedStatement stmt = db.prepareStatement("SELECT exe_id, task_id, exe_notes, exe_prio, period_constraint_start, period_constraint_end, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id"
                         + " FROM tblTaskExecutions");
                 ResultSet res = stmt.executePreparedQuery();
                 if(!res.isClosed())
@@ -646,13 +646,14 @@ public final class DBAbstraction
                         Task task = allTasks.get(taskID);
                         String notes = res.getString(3);
                         TaskPriority prio = TaskPriority.values()[res.getInt(4)];
-                        Period taskP = periodFromEpoch(res.getLong(5), res.getLong(6));
-                        String caretaker = res.getString(7);
+                        Period taskPConstraint = periodFromEpoch(res.getLong(5), res.getLong(6));
+                        Period taskP = periodFromEpoch(res.getLong(7), res.getLong(8));
+                        String caretaker = res.getString(9);
                         User u = res.wasNull() ? null : getUser(caretaker);
-                        int compID = res.getInt(8);
+                        int compID = res.getInt(10);
                         Completion c = completionCache.get(compID);
-                        int verfExeID = res.getInt(9);
-                        TaskExecution exe = new TaskExecution(id, task, notes, prio, taskP, u, c, null);
+                        int verfExeID = res.getInt(11);
+                        TaskExecution exe = new TaskExecution(id, task, notes, prio, taskPConstraint, taskP, u, c, null);
                         if(!res.wasNull())
                         {
                             VerificationExecution verfExe = verificationExes.get(verfExeID);
@@ -800,9 +801,9 @@ public final class DBAbstraction
         {
             if(tasks == null || tasks.isEmpty())
                 return false;
-            DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
-                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            DBPreparedStatement updateStatement = db.prepareStatement("UPDATE tblTaskExecutions SET task_id = ?, exe_notes = ?, exe_prio = ?, start_datetime = ?, end_datetime = ?, caretaker = ?, compl_id = ?, verf_exe_id = ?"
+            DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, period_constraint_start, period_constraint_end, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
+                    + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            DBPreparedStatement updateStatement = db.prepareStatement("UPDATE tblTaskExecutions SET task_id = ?, exe_notes = ?, exe_prio = ?, period_constraint_start = ?, period_constraint_end = ?, start_datetime = ?, end_datetime = ?, caretaker = ?, compl_id = ?, verf_exe_id = ?"
                     + " WHERE exe_id = ?");
             int taskExeID = getLastTaskExecutionID()+1;
             int verfExeID = getLastVerificationExecutionID()+1;
@@ -815,9 +816,15 @@ public final class DBAbstraction
                 stmt.add(exe.getTask().getID());
                 stmt.add(exe.getNotes());
                 stmt.add(exe.getPriority().ordinal());
-                PeriodUnwrapper pw = new PeriodUnwrapper(exe.getPeriod());
+                
+                PeriodUnwrapper pw = new PeriodUnwrapper(exe.getPeriodConstraint());
                 stmt.add(pw.start);
                 stmt.add(pw.end);
+                
+                pw = new PeriodUnwrapper(exe.getPeriod());
+                stmt.add(pw.start);
+                stmt.add(pw.end);
+                
                 User u = exe.getAllocation();
                 if(u != null)
                     stmt.add(u.getUsername());
