@@ -297,8 +297,8 @@ public class AllocateTasks extends JScrollPane {
 		allTaskExecutions = db.getTaskExecutionList();
 
 		// The start and end times for the allocation
-		LocalDateTime allocStartTime = LocalDateTime.now();
-		LocalDateTime allocEndTime = lsteEndTime.getObject();
+		allocStartTime = LocalDateTime.now();
+		allocEndTime = lsteEndTime.getObject();
 
 		/* Split into task exec lists based on current status
 		 * -------------------------------------------------- */
@@ -725,7 +725,7 @@ public class AllocateTasks extends JScrollPane {
 					thisAllocStartTime = pc.start();
 				}
 				if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
-					thisAllocStartTime = pc.end();
+					thisAllocEndTime = pc.end();
 				}
 				
 				// Filter the list to get all allocations between the
