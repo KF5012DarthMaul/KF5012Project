@@ -1,4 +1,5 @@
 package dbmgr;
+
 import dbmgr.DBConnection.DBPreparedStatement;
 import dbmgr.DBExceptions.*;
 import domain.*;

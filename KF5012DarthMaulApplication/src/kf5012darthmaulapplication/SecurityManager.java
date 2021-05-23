@@ -1,17 +1,11 @@
 package kf5012darthmaulapplication;
 
-import org.bouncycastle.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import javax.swing.JOptionPane;
 
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Random;
-
-import org.bouncycastle.*;
-import org.bouncycastle.jce.provider.*;
-
 
 public class SecurityManager {
 	private static final int ITERATION_COUNT = 10000;

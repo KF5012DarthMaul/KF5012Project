@@ -1,4 +1,5 @@
 package guicomponents;
+
 import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -14,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;
 
@@ -27,12 +27,9 @@ import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JTextPane;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 //All imports of packages and other functions from outside of this file
 
+@SuppressWarnings("serial")
 public class ViewReports extends JPanel {
 	private static final DateTimeFormatter formatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");

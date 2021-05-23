@@ -1,7 +1,5 @@
 package guicomponents.ome;
 
-import dbmgr.DBAbstraction;
-import dbmgr.DBExceptions;
 import domain.Completion;
 import domain.TaskCompletionQuality;
 import java.awt.GridBagConstraints;
@@ -17,10 +15,7 @@ import javax.swing.JPanel;
 import domain.VerificationExecution;
 import guicomponents.utils.ObjectEditor;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 import javax.swing.JSeparator;
-import kf5012darthmaulapplication.ExceptionDialog;
-import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 
 @SuppressWarnings("serial")
