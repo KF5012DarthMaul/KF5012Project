@@ -16,6 +16,10 @@ import java.sql.Types;
  */
 public final class DBConnection 
 {
+    /**
+     * Wrapper class for {@link java.sql.PreparedStatement}<p>
+     * Uses a cursor to add fields and supports batching.
+     */
     public class DBPreparedStatement
     {
         private int cursor;
@@ -174,7 +178,8 @@ public final class DBConnection
        /**
         * Executes the prepared statement.<p>
         * If prepareStatement() was not called before this method, a NullPointerException will be thrown.<p>
-        * If the prepared statement's ? fields were not fully populated via add(), this method will fail.
+        * If the prepared statement's ? fields were not fully populated via add(), this method will fail.<p>
+        * The ResultSet will automatically close if it contains no results. Call isClosed() to verify if this has happened.
         * @return If successful, a ResultSet containing all queried columns. NULL if an error occured.
         * @throws NullPointerException 
         */
@@ -240,6 +245,10 @@ public final class DBConnection
         return instance;
     }
     
+    /**
+     * Creates an instance and connects the database to a file.
+     * @throws dbmgr.DBExceptions.FailedToConnectException 
+     */
     private DBConnection() throws FailedToConnectException
     {
         try {
@@ -249,6 +258,12 @@ public final class DBConnection
         }
     }
     
+    /**
+     * Connects the database driver to a database file.
+     * @param filename The location of the database file.
+     * @return Success
+     * @throws SQLException 
+     */
     private boolean connect(String filename) throws SQLException
     {
         String url = "jdbc:sqlite:"+filename;
@@ -257,6 +272,11 @@ public final class DBConnection
         return conn != null;
     }
     
+    /**
+     * Execute sql code with no protection.
+     * @param sql
+     * @return Suceess
+     */
     public boolean execute(String sql)
     {
         if(conn == null)
@@ -278,6 +298,11 @@ public final class DBConnection
         }
     }
     
+    /**
+     * Execute sql code with no protection.
+     * @param sql
+     * @return A {@link java.sql.ResultSet} with the results from the query.
+     */
     public ResultSet executeQuery(String sql)
     {
         if(conn == null)
