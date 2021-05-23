@@ -167,7 +167,7 @@ public class GenerateTasks extends JPanel {
 				task,
 				(p) -> {
 					TaskExecution taskExec = new TaskExecution(
-						null, task, "", TaskPriority.NORMAL,
+						null, task, "", task.getStandardPriority(),
 						p, new Period(p.start(), p.start()),
 						null, null, null
 					);
