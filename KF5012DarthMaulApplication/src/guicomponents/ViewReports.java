@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;
 
@@ -26,7 +27,12 @@ import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JTextPane;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 //All imports of packages and other functions from outside of this file
+
 public class ViewReports extends JPanel {
 	private static final DateTimeFormatter formatter =
 			DateTimeFormatter.ofPattern("h:mma d/M/yyyy");
@@ -35,11 +41,19 @@ public class ViewReports extends JPanel {
 	private ListSelectionEditor<User> lsteCaretaker;
 	//Used later to print a drop down menu of all caretakers
 	private boolean usersLoaded;
-	
 	/**
 	 * Create the panel.
 	 */
 	public ViewReports() {
+		DBAbstraction db;
+		try {
+			db = DBAbstraction.getInstance();
+		}
+		catch (DBExceptions.FailedToConnectException ex) {
+			new ExceptionDialog("An error has occured with the database", ex);
+			return;
+		}
+		//connection to the database, or list that a database could not be connected to	
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 0, 0};
@@ -70,18 +84,21 @@ public class ViewReports extends JPanel {
 					
 		JPanel report2 = new JPanel();
 		tabbedPane.addTab("Caretaker Performance", report2);
+		report2.setLayout(new BoxLayout(report2, BoxLayout.Y_AXIS));
 		//New tab for showing a single caretakers task performance history
 		lsteCaretaker = new ListSelectionEditor<>(
-			(user) -> user.getDisplayName()
-			//Drop down list to dynamically get the list of all caretakers on the system
+			(user) -> user.getDisplayName() 
+//			//Drop down list to dynamically get the list of all caretakers on the system
 		);
 		report2.add(lsteCaretaker);
 			//adds this to the new tab and is used to show a list of options to the user to select
 		loadUsers (true);
-		report2.setLayout(new BoxLayout(report2, BoxLayout.Y_AXIS));
 		//Set box format to make the UI look nicer with the drop down menu
 		JScrollPane scrollPane_Caretaker_Performance = new JScrollPane();
 		report2.add(scrollPane_Caretaker_Performance);
+		
+		JPanel panel = new JPanel();
+		report2.add(panel);
 		//New scroll pane to allow for longer list of queried results to be displayed
 		
 		JPanel report3 = new JPanel();
@@ -92,15 +109,6 @@ public class ViewReports extends JPanel {
 		JScrollPane scrollPane_Task_Performance = new JScrollPane();
 		report3.add(scrollPane_Task_Performance);
 		//Scroll pane as this could be a long list, need to be dynamically able to handle large lists 
-		DBAbstraction db;
-		try {
-			db = DBAbstraction.getInstance();
-		}
-		catch (DBExceptions.FailedToConnectException ex) {
-			new ExceptionDialog("An error has occured with the database", ex);
-			return;
-		}
-		//connection to the database, or list that a database could not be connected to	
 		lsteCaretaker.addItemListener((e) -> {
                     Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
                     //Columns to display data in a tidy format
@@ -111,6 +119,7 @@ public class ViewReports extends JPanel {
                     //Query to get the list of caretakers and the tasks they have finished 
                     Object[][] data2 = new Object[tasks2.size()][columns2.length];
                     //Allows for the dynamic printing of the database content no matter the size
+                    int count = 0;
                     for (int i = 0; i<tasks2.size(); i++) {
                     	//For loop to loop through the queried results no matter the size
                             LocalDateTime dueDate = tasks2.get(i).getPeriod().end();
@@ -140,17 +149,24 @@ public class ViewReports extends JPanel {
                             }
                             data2[i][4] = tasks2.get(i).getCompletion().getWorkQuality().toString();
                             VerificationExecution verification = tasks2.get(i).getVerification();
+                            //Get the verification if a task has been completed or not
                             if (verification != null) {
+                            	//If there is a verification for the task
                             	Completion completion = verification.getCompletion();
+                            	//Print it out
                             	if (completion != null) {
+                            		//If there is a managers verification for the task
                             		data2[i][5] = completion.getWorkQuality().toString();
+                            		//Print it out
                             	}
                             	else {
+                            		//If there is no verification, print out so
                             		data2[i][5] = "No Verification";
                             	}
                             }
                             else {
-                            	data2[i][6] = "No Verification";
+                            	//If there is no verification, print out so
+                            	data2[i][5] = "No Verification";
                             }
                     }
                     table = new JTable(data2, columns2){
@@ -169,7 +185,7 @@ public class ViewReports extends JPanel {
                         switch (tabIndex) {
                         case 0:
                         	//Case 0 is to find tasks that are not done along with their related information
-                            Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date"};
+                            Object[] columns = {"Task Name", "Allocated Caretaker", "Due Date", "Overdue?"};
                             //Easy to read and nicely formatted columns for a easy to read UI
                             List<TaskExecution> incompleteTaskExecsList = tasks.stream()
                                     .filter(task -> task.getCompletion() == null 
@@ -194,8 +210,21 @@ public class ViewReports extends JPanel {
                                         data[i][2] = taskDeadline.format(formatter);
                                         //Otherwise, print it and format it in the format set at the top of the file
                                 }
-                            }
-
+                                LocalDateTime currentTime = LocalDateTime.now();
+                                //Storage of the current time in a local variable
+                                LocalDateTime taskDeadline2 = incompleteTaskExecsList.get(i).getPeriod().end();
+                                //Storage of the expected due date in a local variable
+                                if (currentTime.isAfter(taskDeadline2)) {
+                                	//Compare the current time to the expected time, if the due date has passed
+                                	data[i][3] = "Task is overdue!";
+                                	//Print this task is overdue
+                                }
+                                else {
+                                	data[i][3] = "Task is not overdue";
+                                	//Else print it isn't 
+                                }
+                                
+                            } 
                             table = new JTable(data, columns){
                         		public boolean editCellAt(int row, int column, java.util.EventObject e) {
                         			return false;
@@ -246,22 +275,25 @@ public class ViewReports extends JPanel {
                                             //Print that it was not done on time
                                     }
                                     data2[i][4] = completedByUserTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                    //Get the work quality rating given to the tasks completion
                                     VerificationExecution verification = completedByUserTaskExecsList.get(i).getVerification();
+                                    //Get the verification if a task has been completed or not
                                     if (verification != null) {
+                                    	//If this task has a verification
                                     	Completion completion = verification.getCompletion();
+                                    	//Print out the caretakers rating of their work quality
                                     	if (completion != null) {
+                                    		//If there is a managers verfication
                                     		data2[i][5] = completion.getWorkQuality().toString();
+                                    		//print out the managers review of the work
                                     	}
                                     	else {
+                                    		//if there is no verification print out so
                                     		data2[i][5] = "No Verification";
                                     	}
                                     }
-                                    else {
-                                    	data2[i][6] = "No Verification";
-                                    }
                             }
-
-                            table = new JTable(data2, columns2){
+                           table = new JTable(data2, columns2){
                         		public boolean editCellAt(int row, int column, java.util.EventObject e) {
                         			return false;
                         			//Prevent edits being made 
@@ -313,17 +345,25 @@ public class ViewReports extends JPanel {
                                             //Print that it was over due
                                     }
                                     data3[i][5] = allCompletedTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                  //Get the work quality rating given to the tasks completion
                                     VerificationExecution verification = allCompletedTaskExecsList.get(i).getVerification();
+                                    //Get the verification if a task has been completed or not
                                     if (verification != null) {
+                                    	//If this task has a verification
                                     	Completion completion = verification.getCompletion();
+                                    	//Print out the caretakers rating of their work quality
                                     	if (completion != null) {
+                                    		//If there is a managers verfication
                                     		data3[i][6] = completion.getWorkQuality().toString();
+                                    		//print out the managers review of the work
                                     	}
                                     	else {
+                                    		//if there is no verification print out so
                                     		data3[i][6] = "No Verification";
                                     	}
                                     }
                                     else {
+                                    	//if there is no verification print out so
                                     	data3[i][6] = "No Verification";
                                     }
 
@@ -363,7 +403,6 @@ public class ViewReports extends JPanel {
 				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
 				return;
 			}
-
 			// Get the users
 			List<User> allUsers = db.getAllUsers();
 			List<User> caretakersAndNull = 

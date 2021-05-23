@@ -280,6 +280,9 @@ public class InitialiseDB {
             List<Task> allTasks = new ArrayList<>();
             List<TaskExecution> allTaskExecs = new ArrayList<>();
             
+            User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
+            //User myUser = new User("myuser", AccountType.CARETAKER);
+            
             Task t_repeating = new Task(
                 null,
                 "Check toilets", "",
@@ -308,14 +311,14 @@ public class InitialiseDB {
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(start, dt("10:00am 9/5/2021")),
                 new Period(start, Duration.ofMinutes(0)),
-                null, null, null
+                myUser, null, null
             ));
             start = dt("11:45am 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(start, dt("12:00pm 9/5/2021")),
                 new Period(start, Duration.ofMinutes(0)),
-                null, null, null
+                myUser, null, null
             ));
             start = dt("1:45pm 9/5/2021");
             allTaskExecs.add(new TaskExecution(
@@ -420,10 +423,6 @@ public class InitialiseDB {
             
             allTasks.add(t_noExecs);
 
-            // A high-priority one-off task with deadline and verification.
-            User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
-            //User myUser = new User("myuser", AccountType.CARETAKER);
-            
             Task t_requiresVerif = new Task(
                 null,
                 "Fix Broken Pipe",

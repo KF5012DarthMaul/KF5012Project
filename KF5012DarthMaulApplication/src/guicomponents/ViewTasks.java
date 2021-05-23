@@ -30,6 +30,7 @@ import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.TaskExecutionFormatter;
 import guicomponents.formatters.TaskFormatter;
 import guicomponents.utils.DateRangePicker;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import temporal.Event;
 import temporal.TemporalList;
@@ -152,7 +153,6 @@ public class ViewTasks extends JPanel {
 	public void refresh(List<Task> allTasks, List<TaskExecution> allTaskExecs) {
 		this.allTasks = allTasks;
 		this.allTaskExecs = allTaskExecs;
-		
 		/* Filter list to relevant task executions
 		 * -------------------- */
 		
@@ -222,24 +222,29 @@ public class ViewTasks extends JPanel {
 		Formatter<Task> nonDeletedFormatter = new HTMLFormatter<>(new TaskFormatter());
 		Formatter<Task> deletedFormatter = new HTMLFormatter<>(new DeletionFormatter<>(new TaskFormatter()));
 		
-		// Insert all visible non-deleted tasks
-		for (Map.Entry<Task, List<TaskExecution>> entry : this.taskTree.entrySet()) {
-			DefaultMutableTreeNode taskNode = makeTreeNode(entry.getKey(), nonDeletedFormatter);
-			for (TaskExecution taskExec : entry.getValue()) {
-				taskNode.add(makeTreeNode(taskExec, TASK_EXEC_FORMATTER));
-			}
-			this.taskJTreeRoot.add(taskNode);
-		}
+		Comparator<Task> taskComp = (c, t) -> c.getName().compareTo(t.getName());
+                
+                // Insert all visible non-deleted tasks
+                List<Task> insertTasks = new ArrayList<>(this.taskTree.keySet());
+                insertTasks.sort(taskComp);
+                for (Task task : insertTasks) {
+                    DefaultMutableTreeNode taskNode = makeTreeNode(task, nonDeletedFormatter);
+                    for (TaskExecution taskExec : this.taskTree.get(task)) {
+                        taskNode.add(makeTreeNode(taskExec, TASK_EXEC_FORMATTER));
+                    }
+                    this.taskJTreeRoot.add(taskNode);
+                }
+                // Insert all deleted tasks
+                List<Task> insertDelTasks = new ArrayList<>(this.deletedTaskTree.keySet());
+                insertDelTasks.sort(taskComp);
+                for (Task task : insertDelTasks) {
+                    DefaultMutableTreeNode taskNode = makeTreeNode(task, deletedFormatter);
+                    for (TaskExecution taskExec : this.deletedTaskTree.get(task)) {
+                        taskNode.add(makeTreeNode(taskExec, TASK_EXEC_FORMATTER));
+                    }
+                    this.taskJTreeRoot.add(taskNode);
+                }
 
-		// Insert all deleted tasks
-		for (Map.Entry<Task, List<TaskExecution>> entry : this.deletedTaskTree.entrySet()) {
-			DefaultMutableTreeNode taskNode = makeTreeNode(entry.getKey(), deletedFormatter);
-			for (TaskExecution taskExec : entry.getValue()) {
-				taskNode.add(makeTreeNode(taskExec, TASK_EXEC_FORMATTER));
-			}
-			this.taskJTreeRoot.add(taskNode);
-		}
-		
 		// Update the GUI
 		this.taskJTreeModel.nodeStructureChanged(this.taskJTreeRoot);
 	}
@@ -267,5 +272,25 @@ public class ViewTasks extends JPanel {
 			Map<String, Object> map = (Map<String, Object>) nodeObj;
 			return map.get("obj");
 		}
+	}
+        
+        @SuppressWarnings("unchecked")
+	public ArrayList<Object> getSelectedObjects() 
+        {
+            TreePath[] paths = this.taskJTree.getSelectionPaths();
+            if(paths == null)
+                return null;
+            ArrayList<Object>  objects = new ArrayList(paths.length);
+            for(TreePath path: paths)
+            {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                Object nodeObj = node.getUserObject();
+                if (nodeObj == null) {
+                        return null; // Root node selected, I suppose? Not sure how ...
+                }
+                Map<String, Object> map = (Map<String, Object>) nodeObj;
+                objects.add(map.get("obj"));
+            }
+            return objects;
 	}
 }

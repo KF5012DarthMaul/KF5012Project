@@ -201,6 +201,7 @@ public class TaskExecutionEditor
 		lstePriority.setObject(taskExec.getPriority());
 		omgVerificationExec.getObjectManager().setObject(taskExec.getVerification());
 		omgCompletion.getObjectManager().setObject(taskExec.getCompletion());
+                this.validateFields();
 	}
 
 	/**
