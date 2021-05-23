@@ -400,7 +400,7 @@ public class AllocateTasks extends JScrollPane {
 			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
 		}
 		for (Candidate candidate : allAllocCandidates) {
-			allCaretakerAllocs.get(candidate.taskExecution().getAllocation()).add(candidate);
+			allCaretakerAllocs.get(candidate.caretaker()).add(candidate);
 		}
 
 		// Make temporal lists from these (will sort them by start date)
@@ -526,6 +526,8 @@ public class AllocateTasks extends JScrollPane {
 	 * date range (now to when the user selects).
 	 */
 	private void previewAllocations() {
+		fetchGUI();
+		
 		/* Update calculated fields of tasks
 		 * -------------------- */
 		
@@ -813,28 +815,30 @@ public class AllocateTasks extends JScrollPane {
 				return Candidate.NO_CANDIDATE;
 			};
 
+			/* Find bounds for this task exec's allocation
+			 * -------------------- */
+			 
+			LocalDateTime thisAllocStartTime = allocStartTime;
+			LocalDateTime thisAllocEndTime = allocEndTime;
+
+			Period pc = unallocUncomplTaskExec.getPeriodConstraint();
+			if (pc.start().isAfter(thisAllocStartTime)) {
+				thisAllocStartTime = pc.start();
+			}
+			if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
+				thisAllocEndTime = pc.end();
+			}
+			if (thisAllocEndTime.isBefore(thisAllocStartTime)) {
+				// If it ends up before, then set the period to zero length
+				thisAllocEndTime = thisAllocStartTime;
+			}
+			
 			/* Find the best candidate user + period to allocate
 			 * -------------------- */
 
 			for (User candidateUser : candidates) {
 				// Just declare this here
 				Candidate possiblyBestCandidate;
-				
-				// Find bounds for this task exec's allocation
-				LocalDateTime thisAllocStartTime = allocStartTime;
-				LocalDateTime thisAllocEndTime = allocEndTime;
-
-				Period pc = unallocUncomplTaskExec.getPeriodConstraint();
-				if (pc.start().isAfter(thisAllocStartTime)) {
-					thisAllocStartTime = pc.start();
-				}
-				if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
-					thisAllocEndTime = pc.end();
-				}
-				if (thisAllocEndTime.isBefore(thisAllocStartTime)) {
-					// If it ends up before, then set the period to zero length
-					thisAllocEndTime = thisAllocStartTime;
-				}
 				
 				// Filter the list to get all allocations between the
 				// allocation start and end times (ie. now and the time the
@@ -862,7 +866,7 @@ public class AllocateTasks extends JScrollPane {
 						new Candidate(
 							unallocUncomplTaskExec,
 							candidateUser,
-							allocStartTime, allocEndTime
+							thisAllocStartTime, thisAllocEndTime
 						)
 					);
 					if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
