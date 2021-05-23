@@ -61,6 +61,12 @@ public class SecurityManager {
         }
         return bytes;
 	}
+	/**
+	 * 
+	 * @param password
+	 * @return String
+	 * @throws Exception
+	 */
 	public static String generatePassword(String password) throws Exception {
 		int iterations = ITERATION_COUNT;
 		char[] charArr = password.toCharArray();
@@ -72,6 +78,10 @@ public class SecurityManager {
 		
 		return iterations + ":" + toHex(salt) + ":" + toHex(hash);
 	}
+	/**
+	 * Generates a random secure string for password usage, meeting the minimum requirements of the system
+	 * @return String
+	 */
 	public static String generateRandomPasswordString() {
 		SecureRandom sr = new SecureRandom();
 		int passLength = 16;		
@@ -99,6 +109,12 @@ public class SecurityManager {
 	        }
 	    }
 	}
+	/**
+	 * validates a password based off its hashed counterpart, returns if they match
+	 * @param password
+	 * @param storedPassword
+	 * @return boolean
+	 */
 	public static boolean validatePassword(String password, String storedPassword) {
 		String[] passwordSegments = storedPassword.split(":");
 		int iterations = Integer.parseInt(passwordSegments[0]);
@@ -162,6 +178,11 @@ public class SecurityManager {
 			return false;
 		}
 	}
+	/**
+	 * Validate password strength before sending to database and updating password but with no dialog box popup if it fails
+	 * @param password
+	 * @return
+	 */
 	public static boolean passwordStrengthValidatorNoOutput(char[] password) {
 		if(password == null) return false;
 		boolean hasUpper = false;

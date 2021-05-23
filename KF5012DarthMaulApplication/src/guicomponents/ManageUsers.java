@@ -49,26 +49,33 @@ public class ManageUsers extends JPanel {
 	 * Create the panel.
 	 */
 	DBAbstraction db = null;
+	
+	// View all users table
 	JTable tbl_viewUsersTable = new JTable() {
 		public boolean editCellAt(int row, int column, java.util.EventObject e) {
 			return false;
 		}
      };
+    // Table for adding users
     JTable tbl_addUsersTable = new JTable() {
 		public boolean editCellAt(int row, int column, java.util.EventObject e) {
 			return false;
 		}
     };
+    //Table for removing users
     JTable tbl_removeUsersSelected = new JTable() {
 		public boolean editCellAt(int row, int column, java.util.EventObject e) {
 			return false;
 		}
     };
+    //Table for showing all users to be added to the removed user list
     JTable tbl_removeUsersAll = new JTable() {
 		public boolean editCellAt(int row, int column, java.util.EventObject e) {
 			return false;
 		}
     };
+    
+    //Table Models for modifying the data in the tables
 	Object[] tblUsers_columnNames = {"Username", "Roles"};
     DefaultTableModel userTableModel = new DefaultTableModel(
 				new Object[][] {}, tblUsers_columnNames
@@ -82,6 +89,7 @@ public class ManageUsers extends JPanel {
     DefaultTableModel removeUsersTableModelAll = new DefaultTableModel(
 				new Object[][] {}, tblUsers_columnNames
     		);
+    // All the users in the DB cache
 	ArrayList<User> allUsersList;
 	private JTextField txt_searchField;
 	private JTextField txt_newUserUsername;
@@ -455,7 +463,11 @@ public class ManageUsers extends JPanel {
 		scrollPane_removeUserRight.setViewportView(tbl_removeUsersSelected);
 		
 	}
-	
+	/**
+	 * Parses a combo boc into AccountType
+	 * @param combo
+	 * @return
+	 */
 	private PermissionManager.AccountType comboBoxParser(JComboBox<?> combo) {
 		String selected = combo.getItemAt(combo.getSelectedIndex()).toString().toLowerCase();
 		if(selected == "all") return null;
@@ -473,15 +485,32 @@ public class ManageUsers extends JPanel {
 		}
 		return null;
 	}
+	/**
+	 * Filters based on an AccountType for AccountType matching
+	 * @param fullList
+	 * @param filter
+	 * @return
+	 */
 	private ArrayList<User> filterListAccountType (ArrayList<User> fullList, PermissionManager.AccountType filter){
 		if(filter == null) return fullList;
 		return (ArrayList<User>) fullList.stream().filter(u -> u.getAccountType() == filter).collect(Collectors.toList());
 	}
+	/**
+	 * Filters based on a String for username matching
+	 * @param fullList
+	 * @param filter
+	 * @return
+	 */
 	private ArrayList<User> filterListUsername(ArrayList<User> fullList, String filter){
 		if(filter == "" || filter == null) return fullList;
 		return (ArrayList<User>) fullList.stream().filter(u -> u.getUsername().toLowerCase().contains(filter)).collect(Collectors.toList());
 	};
 	
+	/**
+	 * Updates a table with a list of users provided
+	 * @param userList
+	 * @param table
+	 */
 	private void updateTable(ArrayList<User> userList, JTable table) {
 		DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
 		AbstractTableModel aTableModel = (AbstractTableModel) table.getModel();
@@ -495,12 +524,24 @@ public class ManageUsers extends JPanel {
 			}
 		});
 	}
+	/**
+	 * Finds a username in a list and returns true if found
+	 * @param userList
+	 * @param username
+	 * @return
+	 */
 	private boolean findUsernameInTable(ArrayList<User> userList, String username) {
 		for(User c : userList) {
 			if(c.getUsername().equals(username)) return true;
 		}
 		return false;
 	}
+	/**
+	 * Provides a list without the current user in it if it is present.
+	 * @param userList
+	 * @param self
+	 * @return
+	 */
 	private ArrayList<User> listWithoutSelf(ArrayList<User> userList, User self){
 		ArrayList<User> newUserList = new ArrayList<User>();
 		for(User u : userList) {
@@ -510,16 +551,33 @@ public class ManageUsers extends JPanel {
 		return newUserList;
 	};
 }
-
+/**
+ * 
+ * @author Scotty
+ * Interface for extending actions such as undo actions.
+ */
 interface Action {
 	void run();
 }
 
+/**
+ * 
+ * @author Scotty
+ *
+ * UndoRemove undos a remove action for a user
+ */
 class UndoRemove implements Action {
 	User user;
 	ArrayList<User> list;
 	HashMap<User, String> passwordMap;
 	String hashedPassword;
+	/**
+	 * 
+	 * @param user
+	 * @param list
+	 * @param passwordMap
+	 * @param hashedPassword
+	 */
 	public UndoRemove(User user,ArrayList<User> list, HashMap<User, String> passwordMap, String hashedPassword) {
 		this.user = user;
 		this.list = list;
@@ -533,11 +591,24 @@ class UndoRemove implements Action {
 		this.passwordMap.put(user, hashedPassword);
 	}	
 }
+/**
+ * @author Scotty
+ * 
+ * UndoAdd undos an addition action for user
+ *
+ */
 class UndoAdd implements Action {
 	User user;
 	ArrayList<User> list;
 	HashMap<User, String> passwordMap;
 	String hashedPassword;
+	/**
+	 * 
+	 * @param user
+	 * @param list
+	 * @param passwordMap
+	 * @param hashedPassword
+	 */
 	public UndoAdd(User user, ArrayList<User> list, HashMap<User, String> passwordMap,String hashedPassword) {
 		this.user = user;
 		this.list = list;

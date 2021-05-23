@@ -7,23 +7,32 @@ public class PermissionManager {
 	ArrayList<Permission> Permissions = new ArrayList<>();
 	AccountType accountType;
 	
+	/**
+	 * PermissionManager Constructor for an account type
+	 * @param accountType
+	 */
 	public PermissionManager(PermissionManager.AccountType accountType) {
 		this.Permissions = this.generatePermissionsList(accountType);
 	}
 	public PermissionManager() {}
 	
+	//All types of users
 	public enum AccountType {
 		HR_PERSONNEL(0b000011),
 		MANAGER(0b110110),
 		CARETAKER(0b001110),
 		ESTATE(0b000110),
-                SU(0b111111);
+        SU(0b111111);
 		
+		/**
+		 * sets a value to the enum
+		 */
 		public final int value;
 		private AccountType(int value) {
 			this.value = value;
 		}
 	}
+	//All types of permissions
 	public enum Permission {
 		MANAGE_USERS,
 		MANAGE_ACCOUNT,
@@ -32,16 +41,28 @@ public class PermissionManager {
 		VIEW_REPORTS,
                 REMOVE_TASKS;
 		
+		/**
+		 * Sets a bitmask based on the ordinal 
+		 */
 		private final int bitmask;
 		private Permission() {
 			this.bitmask = 1 << this.ordinal(); // 1, 2, 4, 8, 16, etc...
 		}
 	}
 	
+	/**
+	 * gets an account type based off an integer responding to the ordinal
+	 * @param x
+	 * @return
+	 */
 	public static AccountType getAccountType(int x) {
 		if(x >= AccountType.values().length || x < 0) return null;
 		else return AccountType.values()[x];
 	}
+	/**
+	 * gets the permissions of the user the permissionmanager is a part of
+	 * @return ArrayList<Permission>
+	 */
 	public ArrayList<Permission> getPermissions(){
 		return Permissions;
 	}
