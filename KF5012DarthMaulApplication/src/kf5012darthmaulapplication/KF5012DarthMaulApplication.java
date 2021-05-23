@@ -6,8 +6,10 @@ import guicomponents.LoginForm;
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
 		try {
+			//Set the keysize to unlimited (MAXINT)
 			Security.setProperty("crypto.policy", "unlimited");
 			
+			//Generate a login form and set it to visible
 			LoginForm LoginForm = new LoginForm();
 			LoginForm.setVisible(true);
 			

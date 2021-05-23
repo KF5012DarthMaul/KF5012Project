@@ -2,7 +2,7 @@ package kf5012darthmaulapplication;
 
 /**
  * 
- * @author Scrub
+ * @author Scotty
  *
  */
 
