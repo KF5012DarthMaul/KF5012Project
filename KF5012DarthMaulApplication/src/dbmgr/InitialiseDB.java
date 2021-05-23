@@ -424,7 +424,6 @@ public class InitialiseDB {
             User myUser = db.getUser("caretaker_3");//new User("myuser", AccountType.CARETAKER);
             //User myUser = new User("myuser", AccountType.CARETAKER);
             
-            Verification verification = new Verification(null, null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
             Task t_requiresVerif = new Task(
                 null,
                 "Fix Broken Pipe",
@@ -438,8 +437,10 @@ public class InitialiseDB {
                     null
                 ),
                 null,
-                verification
+                null
             );
+            Verification verification = new Verification(null, null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+            t_requiresVerif.setVerification(verification);
 
             allTasks.add(t_requiresVerif);
             
@@ -494,7 +495,74 @@ public class InitialiseDB {
                 
             );
             allTaskExecs.add(tCompleteExec);
+
+            // Add some recurring tasks of different lengths (and a null length)
+            // with no execs.
+            Task t_onceAWeek = new Task(
+                null,
+                "Clean windowsills",
+                "Because completed 5 days a week this task is not.",
+                null, null, null,
+                TaskPriority.NORMAL,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("1:00pm 10/5/2021"), dt("5:00pm 10/5/2021")),
+                        Duration.ofHours(24)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("12:00pm 14/5/2021"), dt("12:00pm 15/5/2021")),
+                        Duration.ofHours(24*7)
+                    )
+                ),
+                null,
+                null
+            );
+            allTasks.add(t_onceAWeek);
+
+            Verification checkAntennaVer = new Verification(null, null, "", TaskPriority.NORMAL, Duration.ofHours(1), null);
+            Task t_onceADay = new Task(
+                null,
+                "Check antenna",
+                "Needs to be checked every day. Usually done in the early afternoon.",
+                null, null, null,
+                TaskPriority.NORMAL,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("1:00pm 12/5/2021"), dt("3:00pm 12/5/2021")),
+                        Duration.ofHours(24)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("12:00pm 10/5/2021"), dt("12:00pm 15/5/2021")),
+                        Duration.ofHours(24*7)
+                    )
+                ),
+                null,
+                checkAntennaVer
+            );
+            checkAntennaVer.setTask(t_onceADay);
+            allTasks.add(t_onceADay);
             
+            Task t_covidCleaning = new Task(
+                null,
+                "Wipe surfaces",
+                "Should wipe commonly touched surfaces regularly",
+                null, null, null,
+                TaskPriority.LOW, // Eh, meh.
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:00am 17/5/2021"), dt("9:30am 17/5/2021")),
+                        Duration.ofHours(3)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:00am 17/5/2021"), dt("5:00pm 17/5/2021")),
+                        Duration.ofHours(24)
+                    )
+                ),
+                null,
+                null
+            );
+            allTasks.add(t_covidCleaning);
+        
             /* Add Tasks and Task Executions
              * -------------------- */
             
