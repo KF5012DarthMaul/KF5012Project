@@ -88,7 +88,7 @@ public class ViewReports extends JPanel {
 		//New tab for showing a single caretakers task performance history
 		lsteCaretaker = new ListSelectionEditor<>(
 			(user) -> user.getDisplayName() 
-			//Drop down list to dynamically get the list of all caretakers on the system
+//			//Drop down list to dynamically get the list of all caretakers on the system
 		);
 		report2.add(lsteCaretaker);
 			//adds this to the new tab and is used to show a list of options to the user to select
@@ -211,7 +211,9 @@ public class ViewReports extends JPanel {
                                         //Otherwise, print it and format it in the format set at the top of the file
                                 }
                                 LocalDateTime currentTime = LocalDateTime.now();
+                                //Storage of the current time in a local variable
                                 LocalDateTime taskDeadline2 = incompleteTaskExecsList.get(i).getPeriod().end();
+                                //Storage of the expected due date in a local variable
                                 if (currentTime.isAfter(taskDeadline2)) {
                                 	//Compare the current time to the expected time, if the due date has passed
                                 	data[i][3] = "Task is overdue!";
@@ -243,7 +245,6 @@ public class ViewReports extends JPanel {
                             //Query database based upon the selected caretaker from the drop down menu
                             Object[][] data2 = new Object[completedByUserTaskExecsList.size()][columns2.length];
                             //Get all related tasks and find out the size
-                            int count = 0;
                             for (int i = 0; i<completedByUserTaskExecsList.size(); i++) {
                             	//Form a loop based upon the size of the query
                                     LocalDateTime dueDate = completedByUserTaskExecsList.get(i).getPeriod().end();
@@ -274,6 +275,7 @@ public class ViewReports extends JPanel {
                                             //Print that it was not done on time
                                     }
                                     data2[i][4] = completedByUserTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                    //Get the work quality rating given to the tasks completion
                                     VerificationExecution verification = completedByUserTaskExecsList.get(i).getVerification();
                                     //Get the verification if a task has been completed or not
                                     if (verification != null) {
@@ -343,6 +345,7 @@ public class ViewReports extends JPanel {
                                             //Print that it was over due
                                     }
                                     data3[i][5] = allCompletedTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                                  //Get the work quality rating given to the tasks completion
                                     VerificationExecution verification = allCompletedTaskExecsList.get(i).getVerification();
                                     //Get the verification if a task has been completed or not
                                     if (verification != null) {
@@ -400,7 +403,6 @@ public class ViewReports extends JPanel {
 				new ExceptionDialog("Could not connect to database. Please try again now or soon.", e);
 				return;
 			}
-
 			// Get the users
 			List<User> allUsers = db.getAllUsers();
 			List<User> caretakersAndNull = 
