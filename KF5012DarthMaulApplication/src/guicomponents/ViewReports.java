@@ -17,7 +17,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JScrollPane;
-
+import java.io.FileWriter;
+import java.io.IOException;
+import java.awt.print.*;
 import domain.Completion;
 import domain.TaskExecution;
 import domain.VerificationExecution;
@@ -26,11 +28,14 @@ import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 import java.awt.BorderLayout;
+
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JTextPane;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.Component;
 //All imports of packages and other functions from outside of this file
 
 public class ViewReports extends JPanel {
@@ -88,7 +93,7 @@ public class ViewReports extends JPanel {
 		//New tab for showing a single caretakers task performance history
 		lsteCaretaker = new ListSelectionEditor<>(
 			(user) -> user.getDisplayName() 
-//			//Drop down list to dynamically get the list of all caretakers on the system
+			//Drop down list to dynamically get the list of all caretakers on the system
 		);
 		report2.add(lsteCaretaker);
 			//adds this to the new tab and is used to show a list of options to the user to select
@@ -99,15 +104,199 @@ public class ViewReports extends JPanel {
 		
 		JPanel panel = new JPanel();
 		report2.add(panel);
+		JButton printButton = new JButton("Log Reports");
+		//Button to print off all information displayed on the screen regarding this user to a .txt file
+		printButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				List<TaskExecution> tasks = db.getTaskExecutionList();
+				Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
+                //Columns showing related information for this task, in an easy to read format
+                List<TaskExecution> completedByUserTaskExecsList = tasks.stream()
+                        .filter(task -> task.getCompletion() != null 
+                                && task.getCompletion().getStaff().equals(lsteCaretaker.getObject()))
+                        .collect(Collectors.toList());
+                //Query database based upon the selected caretaker from the drop down menu
+                Object[][] data2 = new Object[completedByUserTaskExecsList.size()][columns2.length];
+                //Get all related tasks and find out the size
+                for (int i = 0; i<completedByUserTaskExecsList.size(); i++) {
+                	//Form a loop based upon the size of the query
+                        LocalDateTime dueDate = completedByUserTaskExecsList.get(i).getPeriod().end();
+                        //Get the expected due date for the task currently selected
+                        LocalDateTime completionTime = completedByUserTaskExecsList.get(i).getCompletion().getCompletionTime();	    
+                        //Get the time the task was actually completed by
+                        data2[i][0] = completedByUserTaskExecsList.get(i).getName();
+                        //Print out the name of the task currently selected
+                        if (dueDate == null) {
+                        	//If there is no deadline set for the currently selected task
+                                data2[i][1] = "No Task Deadline Set";
+                                //print saying there is no deadline
+                        }
+                        else {
+                                data2[i][1] = dueDate.format(formatter);
+                                //Otherwise print the due date in the format set at the top of the file
+                        }
+                        data2[i][2] = completionTime.format(formatter);
+                        //Get the completion time, print it and format it in the style set at the top of the file
+                        if (dueDate == null || !completionTime.isAfter(dueDate)) {
+                        	//If the due date is null OR if the completion time is NOT after the due date
+                                data2[i][3] = "Completed on-time";
+                                //Task was done on time, print that it was done on time
+                        }
+                        else {
+                        	//Otherwise the task was not done on time
+                                data2[i][3] = "Over deadline";
+                                //Print that it was not done on time
+                        }
+                        data2[i][4] = completedByUserTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                        //Get the work quality rating given to the tasks completion
+                        VerificationExecution verification = completedByUserTaskExecsList.get(i).getVerification();
+                        //Get the verification if a task has been completed or not
+                        if (verification != null) {
+                        	//If this task has a verification
+                        	Completion completion = verification.getCompletion();
+                        	//Print out the caretakers rating of their work quality
+                        	if (completion != null) {
+                        		//If there is a managers verfication
+                        		data2[i][5] = completion.getWorkQuality().toString();
+                        		//print out the managers review of the work
+                        	}
+                        	else {
+                        		//if there is no verification print out so
+                        		data2[i][5] = "No Verification";
+                        	}
+                        }
+                        try {
+      				      FileWriter fwriter = new FileWriter("ViewReports.txt");
+      				      fwriter.write(lsteCaretaker.getObject().getDisplayName() + " || ");
+      				      //Prints off all table information to its own .txt file
+      				      fwriter.write((String) data2[i][0] + " || ");
+      				      fwriter.write((String) data2[i][1] + " || ");
+      				      fwriter.write((String) data2[i][2] + " || ");
+      				      fwriter.write((String) data2[i][3] + " || ");
+      				      fwriter.write((String) data2[i][4] + " || ");
+      				      if (data2[i][5] == null) {
+      				    	fwriter.write(" No Verification");
+      				      }
+      				      else {
+      				    	fwriter.write((String) data2[i][5]);
+      				      }
+      				      fwriter.write("\n");
+      				      //Starts a new row for each row of information
+      				      fwriter.close();
+      				      System.out.println("Printed");
+      				    } catch (IOException printError) {
+      				      System.out.println("Error printing.");
+      				      printError.printStackTrace();
+      				    }
+                }
+				
+			}
+		});
+		report2.add(printButton);
 		//New scroll pane to allow for longer list of queried results to be displayed
 		
 		JPanel report3 = new JPanel();
 		tabbedPane.addTab("Task Performance", report3);
-		report3.setLayout(new BorderLayout(0, 0));
+		report3.setLayout(new BoxLayout(report3, BoxLayout.Y_AXIS));
 		//Final new tab to show the history of all completed tasks
 		
 		JScrollPane scrollPane_Task_Performance = new JScrollPane();
 		report3.add(scrollPane_Task_Performance);
+		
+		
+		JButton btnNewButton = new JButton("Log Reports");
+		btnNewButton.addActionListener(new ActionListener() {
+			//Button to log all completed tasks stored on the database to a .txt file
+			public void actionPerformed(ActionEvent e) {
+				List<TaskExecution> tasks = db.getTaskExecutionList();
+				//Final case, shows the entire history of all completed tasks
+                Object[] columns3 = {"Caretaker", "Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
+                //Columns related to this task, makes reading the UI a lot nicer and simpler
+                List<TaskExecution> allCompletedTaskExecsList = tasks.stream()
+                                        .filter(task -> task.getCompletion() != null)
+                                        .collect(Collectors.toList());
+                //Get a list of all complete tasks, or where completion is NOT null
+                Object[][] data3 = new Object[allCompletedTaskExecsList.size()][columns3.length];
+                //Find out the size of this query and store it
+                for (int i = 0; i<allCompletedTaskExecsList.size(); i++) {
+                	//Form a loop based upon the size of this query
+                        LocalDateTime dueDate = allCompletedTaskExecsList.get(i).getPeriod().end();
+                        //Store the time in which the task was expected to be completed
+                        LocalDateTime completionTime = allCompletedTaskExecsList.get(i).getCompletion().getCompletionTime();
+                        //Store the time the task was actually completed
+                        data3[i][0] = allCompletedTaskExecsList.get(i).getCompletion().getStaff().getDisplayName();
+                        //Get the related staffs username for the query
+                        data3[i][1] = allCompletedTaskExecsList.get(i).getName();
+                        //Get the name of the task this query is selecting
+                        if (dueDate == null) {
+                        	//If this task has no set due date
+                                data3[i][2] = "No Task Deadline Set";
+                                //Print that there is no due date
+                        }
+                        else {
+                        	//Otherwise, it has a deadline
+                                data3[i][2] = dueDate.format(formatter);
+                                //Print the deadline and format it as seen at the top of this file
+                        }
+                        data3[i][3] = completionTime.format(formatter);
+                        //Print out the time at which the task was completed, and style it the same
+                        if (dueDate == null || !completionTime.isAfter(dueDate)) {
+                        	//If there is no due date, OR the completion time was NOT after the due date
+                                data3[i][4] = "Completed on-time";
+                                //Task was completed on time, print it
+                        }
+                        else {
+                        	//Otherwise it was not completed on time
+                                data3[i][4] = "Over deadline";	
+                                //Print that it was over due
+                        }
+                        data3[i][5] = allCompletedTaskExecsList.get(i).getCompletion().getWorkQuality().toString();
+                      //Get the work quality rating given to the tasks completion
+                        VerificationExecution verification = allCompletedTaskExecsList.get(i).getVerification();
+                        //Get the verification if a task has been completed or not
+                        if (verification != null) {
+                        	//If this task has a verification
+                        	Completion completion = verification.getCompletion();
+                        	//Print out the caretakers rating of their work quality
+                        	if (completion != null) {
+                        		//If there is a managers verfication
+                        		data3[i][6] = completion.getWorkQuality().toString();
+                        		//print out the managers review of the work
+                        	}
+                        	else {
+                        		//if there is no verification print out so
+                        		data3[i][6] = "No Verification";
+                        	}
+                        }
+                        else {
+                        	//if there is no verification print out so
+                        	data3[i][6] = "No Verification";
+                        }
+                        try {
+        				      FileWriter fwriter = new FileWriter("CaretakerPerformance.txt");
+        				      //Prints off all table information to a .txt file
+        				      fwriter.write((String) data3[i][0] + " || ");
+        				      fwriter.write((String) data3[i][1] + " || ");
+        				      fwriter.write((String) data3[i][2] + " || ");
+        				      fwriter.write((String) data3[i][3] + " || ");
+        				      fwriter.write((String) data3[i][4] + " || ");
+        				      if (data3[i][5] == null) {
+        				    	fwriter.write(" No Verification");
+        				      }
+        				      else {
+        				    	fwriter.write((String) data3[i][5]);
+        				      }
+        				      fwriter.write("\n");
+        				      //Starts new line for each row of information
+        				      fwriter.close();
+        				      System.out.println("Printed");
+        				    } catch (IOException printError) {
+        				      System.out.println("Error printing.");
+        				      printError.printStackTrace();
+        				    }
+			}
+		}});
+		report3.add(btnNewButton);
 		//Scroll pane as this could be a long list, need to be dynamically able to handle large lists 
 		lsteCaretaker.addItemListener((e) -> {
                     Object[] columns2 = {"Task Name", "Due Date", "Completion Time", "Overdue?", "Personal Review", "Verified Quality"};
