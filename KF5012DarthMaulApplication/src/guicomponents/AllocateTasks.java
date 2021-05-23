@@ -633,6 +633,8 @@ public class AllocateTasks extends JScrollPane {
 	 * selected task(s).
 	 */
 	private void allocateSelected() {
+		fetchGUI();
+		
 		List<TaskExecution> allocList = new ArrayList<>();
 		
 		DefaultListModel<Object> unallocModel = (DefaultListModel<Object>) unallocatedList.getModel();
@@ -651,6 +653,8 @@ public class AllocateTasks extends JScrollPane {
 	 * Deallocate selected allocated task(s).
 	 */
 	private void deallocateSelected() {
+		fetchGUI();
+		
 		List<Event> deallocList = new ArrayList<>();
 		
 		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
@@ -766,8 +770,19 @@ public class AllocateTasks extends JScrollPane {
 	 * -------------------------------------------------- */
 
 	private void genAllocCandidates(List<TaskExecution> unallocUncomplTaskExecs) {
-		// Filter the list of uncompleted/unallocated task executions to
-		// only those in the current range.
+		// Filter ...
+		
+		// ... to only those that do not already have allocation candidates
+		// (you would have to deallocate them first)
+		unallocUncomplTaskExecs = unallocUncomplTaskExecs.stream()
+			.filter((taskExec) -> (
+				allAllocCandidates.stream().allMatch((candidate) -> (
+					candidate.taskExecution() != taskExec
+				))
+			))
+			.collect(Collectors.toList());
+		
+		// ... to only those in the current date/time range
 		TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocUncomplTaskExecs);
 		List<TaskExecution> unallocUncomplTaskExecsBefore = taskExecListTmprl.getBefore(
 			allocEndTime, Event.byStartTime, true
@@ -962,7 +977,7 @@ public class AllocateTasks extends JScrollPane {
 			// else, the task can't be allocated (using this algo)
 		}
 
-		// ... then update the GUI
+		// Then update the GUI
 		refreshGUI();
 	}
 
