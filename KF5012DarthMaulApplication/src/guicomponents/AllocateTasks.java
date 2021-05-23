@@ -749,21 +749,20 @@ public class AllocateTasks extends JScrollPane {
 				}
 				
 				// If so, do swap
-				taskExec1.setAllocation(te2ToTe1Candidate.caretaker());
-				taskExec1.setPeriod(te2ToTe1Candidate.getPeriod());
+				taskExec1.setAllocation(te1ToTe2Candidate.caretaker());
+				taskExec1.setPeriod(te1ToTe2Candidate.getPeriod());
 
-				taskExec2.setAllocation(te1ToTe2Candidate.caretaker());
-				taskExec2.setPeriod(te1ToTe2Candidate.getPeriod());
+				taskExec2.setAllocation(te2ToTe1Candidate.caretaker());
+				taskExec2.setPeriod(te2ToTe1Candidate.getPeriod());
 				
 				// Flush both to DB
 				db.submitTaskExecution(taskExec1);
 				db.submitTaskExecution(taskExec2);
 			}
-
-		// Swap an allocated and unallocated task
-		} else if (allocSelIndexes.length == 1 && unallocSelIndexes.length == 1) {
-			//
 		}
+
+		initAllCaretakerAllocs();
+		refreshGUI();
 	}
 	
 	/* Allocation Algorithm
