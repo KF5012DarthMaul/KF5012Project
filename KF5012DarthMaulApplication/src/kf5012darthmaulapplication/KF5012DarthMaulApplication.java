@@ -9,7 +9,6 @@ import guicomponents.LoginForm;
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
 		try {
-			Security.addProvider(new BouncyCastleProvider());
 			Security.setProperty("crypto.policy", "unlimited");
 			
 			LoginForm LoginForm = new LoginForm();
