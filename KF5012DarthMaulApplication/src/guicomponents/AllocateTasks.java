@@ -41,11 +41,13 @@ import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
 import guicomponents.utils.TimelinePanel;
+import kf5012darthmaulapplication.ExceptionDialog;
 import kf5012darthmaulapplication.PermissionManager;
 import kf5012darthmaulapplication.User;
 import lib.ScrollablePanel;
 import temporal.ChartableEvent;
 import temporal.Event;
+import temporal.ExclusiveTemporalMap;
 import temporal.Period;
 import temporal.TemporalList;
 import temporal.TemporalMap;
@@ -215,6 +217,7 @@ public class AllocateTasks extends JScrollPane {
 		allocatedScrollPane.setViewportView(allocatedList);
 		
 		JButton btnSwapAllocations = new JButton("Swap");
+		btnSwapAllocations.addActionListener((e) -> this.trySwap());
 		GridBagConstraints gbc_btnSwapAllocations = new GridBagConstraints();
 		gbc_btnSwapAllocations.anchor = GridBagConstraints.CENTER;
 		gbc_btnSwapAllocations.insets = new Insets(5, 5, 5, 5);
@@ -704,7 +707,103 @@ public class AllocateTasks extends JScrollPane {
 		this.fetch();
 		this.refresh();
 	}
-	
+
+	private void trySwap() {
+		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
+		DefaultListModel<Object> unallocModel = (DefaultListModel<Object>) unallocatedList.getModel();
+		int[] allocSelIndexes = allocatedList.getSelectedIndices();
+		int[] unallocSelIndexes = unallocatedList.getSelectedIndices();
+		
+		// Swap two allocated tasks
+		if (allocSelIndexes.length == 2 && unallocSelIndexes.length == 0) {
+			Event event1 = (Event) allocModel.get(allocSelIndexes[0]);
+			Event event2 = (Event) allocModel.get(allocSelIndexes[1]);
+			
+			if (event1 instanceof TaskExecution && event2 instanceof TaskExecution) {
+				// Get some values
+				TaskExecution taskExec1 = (TaskExecution) event1;
+				TaskExecution taskExec2 = (TaskExecution) event2;
+
+				LocalDateTime taskExec1Start = taskExec1.getPeriod().start();
+				LocalDateTime taskExec2Start = taskExec2.getPeriod().start();
+				
+				User taskExec1Alloc = taskExec1.getAllocation();
+				User taskExec2Alloc = taskExec2.getAllocation();
+				
+				Duration taskExec1DurWith2Alloc = taskExec1.getTask().getEfficiencyMap().get(taskExec2Alloc);
+				Duration taskExec2DurWith1Alloc = taskExec2.getTask().getEfficiencyMap().get(taskExec1Alloc);
+
+				// Make the exclusive temporal maps
+				List<Event> te1UncomplAllocTasks =
+					new ArrayList<>(allCaretakerAllocs.get(taskExec1Alloc));
+				te1UncomplAllocTasks.remove(taskExec1);
+				ExclusiveTemporalMap<Integer, Event> te1UncomplAllocTasksExcl =
+					new ExclusiveTemporalMap<>(
+						new TemporalList<>(te1UncomplAllocTasks),
+						Event.byPeriodDefaultZero // Default shouldn't make a difference
+					);
+
+				List<Event> te2UncomplAllocTasks =
+					new ArrayList<>(allCaretakerAllocs.get(taskExec2Alloc));
+				te2UncomplAllocTasks.remove(taskExec2);
+				ExclusiveTemporalMap<Integer, Event> te2UncomplAllocTasksExcl =
+					new ExclusiveTemporalMap<>(
+						new TemporalList<>(te2UncomplAllocTasks),
+						Event.byPeriodDefaultZero // Default shouldn't make a difference
+					);
+
+				// Make the candidates for the swap
+				Candidate te1ToTe2Candidate = new Candidate(
+					// Task exec 1, but allocated to who + at when task exec 2 is allocated
+					taskExec1, taskExec2Alloc, taskExec2Start, taskExec2Start.plus(taskExec2DurWith1Alloc)
+				);
+				Candidate te2ToTe1Candidate = new Candidate(
+					// Task exec 2, but allocated to who + at when task exec 1 is allocated
+					taskExec2, taskExec1Alloc, taskExec1Start, taskExec1Start.plus(taskExec1DurWith2Alloc)
+				);
+				
+				// Check if the candidates are a valid swap
+				if (
+						// Is the taskExec2 valid when allocated to the user/at the time of taskExec1?
+						!te1UncomplAllocTasksExcl.isValid(te2ToTe1Candidate) ||
+
+						// Is the taskExec1 valid when allocated to the user/at the time of taskExec2?
+						!te2UncomplAllocTasksExcl.isValid(te1ToTe2Candidate)
+				) {
+					new ExceptionDialog("Cannot swap tasks, as swapped task allocations would overlap with other allocated tasks");
+					return;
+				}
+				
+				// If so, do swap
+				taskExec1.setAllocation(te2ToTe1Candidate.caretaker());
+				taskExec1.setPeriod(te2ToTe1Candidate.getPeriod());
+
+				taskExec2.setAllocation(te1ToTe2Candidate.caretaker());
+				taskExec2.setPeriod(te1ToTe2Candidate.getPeriod());
+				
+				// Flush both to DB
+				db.submitTaskExecution(taskExec1);
+				db.submitTaskExecution(taskExec2);
+			}
+
+		// Swap an allocated and unallocated task
+		} else if (allocSelIndexes.length == 1 && unallocSelIndexes.length == 1) {
+			//
+
+		// 'Swap' an allocated task to deallocate it
+		} else if (allocSelIndexes.length == 1 && unallocSelIndexes.length == 0) {
+			//
+			
+		// 'Swap' an unallocated task to allocate it
+		} else if (allocSelIndexes.length == 0 && unallocSelIndexes.length == 1) {
+			//
+			
+		// Invalid swap
+		} else {
+			//
+		}
+	}
+
 	/**
 	 * Class for allocation candidates.
 	 * 
