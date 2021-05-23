@@ -236,15 +236,15 @@ public class AllocateTasks extends JScrollPane {
 		gbc_buttonPanel.gridy = 1;
 		listsPanel.add(buttonPanel, gbc_buttonPanel);
 		
-		JButton btnAllocate = new JButton("↑ Allocate ↑");
+		JButton btnAllocate = new JButton("^  Allocate");
 		btnAllocate.addActionListener((e) -> this.allocateSelected());
 		buttonPanel.add(btnAllocate);
 
-		JButton btnSwap = new JButton("⟳ Swap ⟳");
+		JButton btnSwap = new JButton("Swap");
 		btnSwap.addActionListener((e) -> this.swapAllocations());
 		buttonPanel.add(btnSwap);
 
-		JButton btnDeallocate = new JButton("↓  Deallocate  ↓");
+		JButton btnDeallocate = new JButton("Deallocate  V");
 		btnDeallocate.addActionListener((e) -> this.deallocateSelected());
 		buttonPanel.add(btnDeallocate);
 
