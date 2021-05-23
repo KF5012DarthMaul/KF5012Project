@@ -50,6 +50,7 @@ public class TestUser {
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_ACCOUNT);
 		expectedPermissions.add(PermissionManager.Permission.MANAGE_TASKS);
 		expectedPermissions.add(PermissionManager.Permission.VIEW_REPORTS);
+		expectedPermissions.add(PermissionManager.Permission.REMOVE_TASKS);
 
 		try {
 			User user = new User("test","test", PermissionManager.AccountType.MANAGER);
@@ -124,7 +125,7 @@ public class TestUser {
 		assertNull(PermissionManager.getAccountType(Integer.MAX_VALUE));
 		assertNull(PermissionManager.getAccountType(Integer.MIN_VALUE));
 		assertEquals(AccountType.HR_PERSONNEL, PermissionManager.getAccountType(0));
-		assertEquals(AccountType.ESTATE, PermissionManager.getAccountType(AccountType.values().length - 1));
+		assertEquals(AccountType.SU, PermissionManager.getAccountType(AccountType.values().length - 1));
 	}
 	
 }
