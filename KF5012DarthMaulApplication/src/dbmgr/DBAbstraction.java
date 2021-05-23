@@ -74,7 +74,14 @@ public final class DBAbstraction
     /* Utilities
      * -------------------- */
     
-    // Convert from 2 Epoch seconds of type Long to a Period object
+    /** 
+     * Convert from 2 Epoch seconds of type Long to a {@link Period} object.<p>
+     * If the second parameter is 0 or null, the {@link Period} is initialized with only the start.<p>
+     * The first parameeter cannot be null.<p>
+     * @param start
+     * @param end
+     * @return A new {@link Period} Object
+     */
     private Period periodFromEpoch(Long start, Long end)
     {
         LocalDateTime dtStart = LocalDateTime.ofEpochSecond(start, 0, ZoneOffset.UTC);
@@ -84,11 +91,17 @@ public final class DBAbstraction
         return new Period(dtStart, dtEnd);
     }
 
-    // Unwrapper class that converts Period to Epoch seconds of type Long
+    /** 
+     * Unwrapper class that converts Period to Epoch seconds of type Long
+     */
     private final class PeriodUnwrapper
     {
         Long start;
         Long end;
+        /**
+         * Unwraps a {@link Period} into 2 long integers.
+         * @param p The {@link Period} to unwrap
+         */
         PeriodUnwrapper(Period p)
         {
             start = p.start().toEpochSecond(ZoneOffset.UTC);
@@ -99,6 +112,12 @@ public final class DBAbstraction
         }
     }
     
+    /**
+     * Creates a list of type T containing a single item of type T.
+     * @param <T> The type
+     * @param item The item that the {@link List} will contain.
+     * @return A {@link List} of type T containing that item
+     */
     private <T> List<T> listOfSingleItem(T item)
     {
         List<T> l = new ArrayList<>();
@@ -110,9 +129,9 @@ public final class DBAbstraction
      * -------------------- */
     
     /**
-     * Attempts to create a new user in the Database.
-     * If the user already exists, this function will return false.
-     * @param user The user object with data.
+     * Attempts to create a new {@link User} in the Database.<p>
+     * If the {@link User} already exists, this function will return false.
+     * @param user The {@link User} object with data.
      * @param hashedPassword A password (encrypted).
      * @return A boolean representing success.
      * @throws UserAlreadyExistsException
@@ -123,11 +142,12 @@ public final class DBAbstraction
     }
 
     /**
-     * Attempts to create a new user in the Database.If the user already exists, this function will return false.
-     * @param username The username of the new user.
-     * @param name The user's display name
+     * Attempts to create a new {@link User} in the Database.<p>
+     * If the {@link User} already exists, this function will return false.
+     * @param username The username of the new {@link User}.
+     * @param name The {@link User}'s display name
      * @param hashedPassword A password (encrypted).
-     * @param accountType The Account type of the user
+     * @param accountType The Account type of the {@link User}
      * @return A boolean representing success.
      * @throws UserAlreadyExistsException
      */
@@ -161,9 +181,9 @@ public final class DBAbstraction
     }
 
     /**
-     * Tests whether a user exists inside the database.
-     * @param user The user to test.
-     * @return Returns true if the user exists in the database, false if it doesn't.
+     * Tests whether a {@link User} exists inside the database.
+     * @param user The {@link User} to test.
+     * @return Returns true if the {@link User} exists in the database, false if it doesn't.
      */
     public boolean doesUserExist(User user)
     {
@@ -189,10 +209,10 @@ public final class DBAbstraction
     }
 
     /**
-     * Gets all fields of a user from the database.<p>
-     * Populates a new User object and returns it.
-     * @param username The user whose data to retrieve.
-     * @return Returns the new user object.
+     * Gets all fields of a {@link User} from the database.<p>
+     * Populates a new {@link User} object and returns it.
+     * @param username The {@link User} whose data to retrieve.
+     * @return Returns the new {@link User} object.
      * @throws  UserDoesNotExistException
      */
     public User getUser(String username) throws UserDoesNotExistException
@@ -209,7 +229,7 @@ public final class DBAbstraction
     }
 
     /**
-     * Gets the password (encrpyted) for a key username from the database.
+     * Gets the password (encrpyted) for a key {@link User} from the database.
      * @param username The username whose password to retrieve.
      * @return A string containing the password (encrypted).
      * @throws UserDoesNotExistException
@@ -236,8 +256,8 @@ public final class DBAbstraction
     }
 
      /**
-     * Gets the password (encrpyted) for a user from the database.
-     * @param user The user whose password to retrieve.
+     * Gets the password (encrpyted) for a {@link User} from the database.
+     * @param user The {@link User} whose password to retrieve.
      * @return A string containing the password (encrypted).
      * @throws UserDoesNotExistException
      */
@@ -276,7 +296,7 @@ public final class DBAbstraction
     }
 
     /**
-     * Sets a new password (encrypted) for a user.
+     * Sets a new password (encrypted) for a {@link User}.
      * @param user The user whose password (encrypted) to set.
      * @param hashedPassword The password (encrypted) to set.
      * @return A boolean representing success.
@@ -287,7 +307,10 @@ public final class DBAbstraction
         return setHashedPassword(user.getUsername(), hashedPassword);
     }
     
-    // Internally fill up the list of immutable User objects
+    /**
+     * Used to internally fill up the list of immutable {@link User} objects
+     * @return The {@link ArrayList} of users.
+     */
     private List<User> getAllUsersInternal()
     {
         List<User> allUsers = new ArrayList<>();
@@ -311,8 +334,8 @@ public final class DBAbstraction
     }
     
     /**
-     * Gets a list containing all users currently registered in the database.
-     * @return The list of users.
+     * Gets an {@link ArrayList} containing all {@link User}s currently registered in the database.
+     * @return The {@link ArrayList} of {@link User}s.
      */
     public ArrayList<User> getAllUsers()
     {
@@ -321,10 +344,11 @@ public final class DBAbstraction
     }
 
     /**
-     * Update all fields for a user.
-     * @param user The user object with data to update the database with.
+     * Update all fields for a {@link User}.
+     * @param user The {@link User} object with data to update the database with.
      * @return A boolean representing success.
      * @throws UserDoesNotExistException 
+     * @bug Breaks references to user objects with the same username.
      */
     public boolean updateUser(User user) throws UserDoesNotExistException
     {
@@ -355,8 +379,8 @@ public final class DBAbstraction
     }
 
     /**
-     * Deletes a user from the database.
-     * @param user The user to delete.
+     * Deletes a {@link User} from the database.
+     * @param user The {@link User} to delete.
      * @return A boolean representing success.
      */
     public boolean deleteUser(User user)
@@ -377,14 +401,18 @@ public final class DBAbstraction
     }
     
     
-    // Gets the last sequence integer for an auto-incremented primary key in a given table
-    private int getAutoIncrement(String s)
+    /** 
+     * Gets the last sequence integer for an auto-incremented primary key in a given table
+     * @param s The name of the table
+     * @return Integer
+     */
+    private int getAutoIncrement(String table)
     {
         try {
             DBPreparedStatement stmt = db.prepareStatement(
                     "SELECT seq FROM sqlite_sequence"
                             + " WHERE name = ?");
-            stmt.add(s);
+            stmt.add(table);
             ResultSet res = stmt.executePreparedQuery();
             if(!res.isClosed())
                 return res.getInt(1);
@@ -397,31 +425,46 @@ public final class DBAbstraction
         return -1;
     }
 
-    // Retrieve the last inserted task's ID
+    /**
+     * Retrieve the last inserted task's ID
+     * @return int
+     */
     private int getLastTaskID()
     {
         return getAutoIncrement("tblTasks");
     }
 
-    // Retrieve the last inserted task's ID
+    /**
+     * Retrieve the last inserted verification's ID
+     * @return int
+     */
     private int getLastVerificationID()
     {
         return getAutoIncrement("tblVerifications");
     }
     
-    // Retrieve the last completion ID
+    /**
+     * Retrieve the last inserted completion's ID
+     * @return int
+     */
     private int getLastCompletionID()
     {
         return getAutoIncrement("tblCompletions");
     }
     
-    // Retrieve the last verification execution ID
+    /**
+     * Retrieve the last inserted verification execution's ID
+     * @return int
+     */
     private int getLastVerificationExecutionID()
     {
         return getAutoIncrement("tblVerfExecutions");
     }
     
-    // Retrieve the last task execution ID
+    /**
+     * Retrieve the last inserted task execution's ID
+     * @return int
+     */
     private int getLastTaskExecutionID()
     {
         return getAutoIncrement("tblTaskExecutions");
@@ -429,9 +472,9 @@ public final class DBAbstraction
     
     /**
      * Internally fills up a cache.<p>
-     * Returns the list of non-deleted tasks from the database, including all temporal rules<p>
-     * user preference and verification objects.<p>
-     * @return The list of tasks with all valid fields populated.
+     * Returns the {@link List} of non-deleted {@link Task}s from the database, including all temporal rules<p>
+     * user preference and {@link Verification} objects.<p>
+     * @return The list of {@link Task}s with all valid fields populated.
      */
     public List<Task> getTaskList()
     {
@@ -471,10 +514,10 @@ public final class DBAbstraction
                         }
                     }
 
-                    while(res.next())
+                    while(res.next()) // Iterate over all retrieved tasks
                     {
                         int taskID = res.getInt(1);
-                        if (!taskCache.containsKey(taskID)) 
+                        if (!taskCache.containsKey(taskID)) // Might prevent overriding
                         {
                             String taskName = res.getString(2);
                             String taskDesc = res.getString(3);
@@ -499,7 +542,7 @@ public final class DBAbstraction
                             User allocationConstraint = res.wasNull() ? null : getUser(caretaker);
 
                             int verification_id = res.getInt(12);
-                            Verification verification = verificationCache.get(verification_id);
+                            Verification verification = verificationCache.get(verification_id); // get the verification or null
                             
                             IntervaledPeriodSet periodSet = new IntervaledPeriodSet(taskPeriodSetPeriod, taskPeriodSetInterval);
                             ConstrainedIntervaledPeriodSet schedule = new ConstrainedIntervaledPeriodSet(periodSet, periodSetConstraint);
@@ -555,7 +598,9 @@ public final class DBAbstraction
         return allTasks;
     }
 
-    // Gets the list of all completions
+    /**
+     * Fills up the internal cache of {@link Completion} objects to be referenced in other methods.
+     */
     private void fillCompletionCache()
     {
         try 
@@ -586,6 +631,10 @@ public final class DBAbstraction
         }
     }
 
+    /**
+     * Gets all {@link VerificationExecution} objects from the database.
+     * @return A {@link Map} mapping Integers to {@link VerificationExecution}.
+     */
     private Map<Integer, VerificationExecution> getVerificationExecutionList()
     {
         try 
@@ -622,6 +671,11 @@ public final class DBAbstraction
 
     // GET TASK EXECUTIONS
     
+    /**
+     * Gets an {@link ArrayList} containing all {@link TaskExecution} objects and their respective<p>
+     * {@link Task}, {@link Completion}, {@link VerificationExecution} and {@link User} objects.
+     * @return An {@link ArrayList} containing all {@link TaskExecution} objects.
+     */
     public ArrayList<TaskExecution> getTaskExecutionList()
     {
         if(!execsCached)
@@ -679,9 +733,11 @@ public final class DBAbstraction
     // SUBMISSIONS
 
     /**
-     * Adds a new task to the database. Allows for duplicates.<p>
-     * Automatically sets the ID of Task, so that TaskExecutions can reference it.
-     * Automatically submits Verifications.
+     * Adds a new or updates an existing {@link Task} in the database database. Allows for duplicate names.<p>
+     * Automatically sets the ID of {@link Task}, so that {@link TaskExecution} objects can reference it.<p>
+     * Automatically submits a linked {@link Verification}.<p>
+     * Insert and updates are determined by:<p>
+     * {@code statement = task.getID() == null ? insertStatement : updateStatement;}
      * @param task The task object containing all task-related information.
      * @return A boolean representing success.
      */
@@ -789,13 +845,30 @@ public final class DBAbstraction
         }
     }
     
-    // Insert a new taskexecution
+    /**
+     * Adds a new or updates an existing {@link TaskExecution} in the database database.<p>
+     * Automatically sets the ID of {@link TaskExecution}.<p>
+     * Automatically submits the linked {@link VerificationExecution} and {@link Completion} objects.<p>
+     * Insert and updates are determined by:<p>
+     * {@code statement = exe.getID() == null ? insertStatement : updateStatement;}
+     * @param exe The {@link TaskExecution} object containing all {@link TaskExecution}-related information.
+     * @return A boolean representing success.
+     */
     public boolean submitTaskExecution(TaskExecution exe)
     {
         return submitTaskExecutions(listOfSingleItem(exe));
     }
 
-    // Insert all new taskexecutions in one go
+    /**
+     * Adds new or updates existing {@link TaskExecution}s in the database database from the {@link List}.<p>
+     * Automatically sets the ID of {@link TaskExecution}s.<p>
+     * Automatically submits the linked {@link VerificationExecution} and {@link Completion} objects.<p>
+     * Insert and updates are determined by:<p>
+     * {@code for(TaskExecution exe: exes)}<p>
+     * {@code statement = exe.getID() == null ? insertStatement : updateStatement;}
+     * @param exes The {@link List} of {@link TaskExecution} objects containing all {@link TaskExecution}-related information.
+     * @return A boolean representing success.
+     */
     public boolean submitTaskExecutions(List<TaskExecution> exes)
     {
         try 
@@ -891,6 +964,14 @@ public final class DBAbstraction
         }
     }
 
+    /**
+     * Adds a new or updates an existing {@link Verification} in the database database.<p>
+     * Automatically sets the ID of the {@link Verification}.<p>
+     * Insert and updates are determined by:<p>
+     * {@code statement = verf.getID() == null ? insertStatement : updateStatement;}
+     * @param verf The {@link List} of {@link Verification} objects containing all {@link Verification}-related information.
+     * @return A boolean representing success.
+     */
     private boolean submitVerification(Verification verf)
     {
         try 
@@ -941,6 +1022,16 @@ public final class DBAbstraction
         return false;
     }
 
+    /**
+     * Adds new or updates existing {@link VerificationExecution}s in the database database from the {@link List}.<p>
+     * Automatically sets the ID of {@link VerificationExecution}s.<p>
+     * Automatically submits the linked {@link Completion} objects.<p>
+     * Insert and updates are determined by:<p>
+     * {@code for(VerificationExecution verf: verfs)}<p>
+     * {@code statement = verf.getID() == null ? insertStatement : updateStatement;}
+     * @param exes The {@link List} of {@link VerificationExecution} objects containing all {@link VerificationExecution}-related information.
+     * @return A boolean representing success.
+     */
     private boolean submitVerificationExecutions(List<VerificationExecution> verfs)
     {
         try 
@@ -1008,7 +1099,15 @@ public final class DBAbstraction
             return false;
         }
     }
-
+    /**
+     * Adds new or updates existing {@link Completion}s in the database database from the {@link List}.<p>
+     * Automatically sets the ID of {@link Completion}s.<p>
+     * Insert and updates are determined by:<p>
+     * {@code for(Completion comp: completions)}<p>
+     * {@code statement = comp.getID() == null ? insertStatement : updateStatement;}
+     * @param exes The {@link List} of {@link Completion} objects containing all {@link Completion}-related information.
+     * @return A boolean representing success.
+     */
     private boolean submitCompletions(List<Completion> completions)
     {
         try 
@@ -1050,12 +1149,21 @@ public final class DBAbstraction
         }
     }
     
-    // Delete Task
+   /**
+    * Marks a {@link Task} as deleted in the database.
+    * @param t The task to mark as deleted.
+    * @return A boolean representing success.
+    */
     public boolean deleteTask(Task t)
     {
         return deleteTasks(listOfSingleItem(t));
     }
     
+    /**
+     * Marks all {@link Task}s in a {@link List} as deleted.
+     * @param tasks The {@link List} of tasks to mark as deleted.
+     * @return A boolean representing success.
+     */
     public boolean deleteTasks(List<Task> tasks)
     {
         try 
@@ -1086,6 +1194,11 @@ public final class DBAbstraction
         return deleteTaskExecutions(listOfSingleItem(exe));
     }
     
+    /**
+     * Delete all {@link TaskExecution}s and linked {@link VerificationExecution}s in a {@link List} from the database.
+     * @param execs The {@link List} of {@link TaskExecution}s and associated {@link VerificationExecution}s to delete.
+     * @return A boolean representing success.
+     */
     public boolean deleteTaskExecutions(List<TaskExecution> execs)
     {
         try 
