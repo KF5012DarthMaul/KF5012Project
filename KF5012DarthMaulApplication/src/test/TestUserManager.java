@@ -6,14 +6,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-
 import org.junit.Test;
-
 
 import dbmgr.DBAbstraction;
 import dbmgr.DBExceptions.FailedToConnectException;

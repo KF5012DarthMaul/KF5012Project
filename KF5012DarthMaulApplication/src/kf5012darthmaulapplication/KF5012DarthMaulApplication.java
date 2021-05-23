@@ -1,8 +1,6 @@
 package kf5012darthmaulapplication;
 
 import java.security.Security;
-
-import dbmgr.DBAbstraction;
 import guicomponents.LoginForm;
 
 public class KF5012DarthMaulApplication {

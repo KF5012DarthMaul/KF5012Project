@@ -9,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import dbmgr.DBAbstraction;
-import dbmgr.DBMgr;
 import kf5012darthmaulapplication.ErrorDialog;
 import kf5012darthmaulapplication.SecurityManager;
 import kf5012darthmaulapplication.User;
@@ -26,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.event.ActionEvent;
 
+@SuppressWarnings("serial")
 public class LoginForm extends JFrame {
 
 	private JPanel contentPane;
@@ -57,7 +57,7 @@ public class LoginForm extends JFrame {
 		try {
 			db = DBAbstraction.getInstance();
 		}catch(Exception ex) {
-            Logger.getLogger(DBMgr.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		setType(Type.UTILITY);
 		setTitle("Login");

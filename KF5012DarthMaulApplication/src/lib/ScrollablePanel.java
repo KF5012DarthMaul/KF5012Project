@@ -21,6 +21,7 @@ import javax.swing.*;
  *  components added to the panel will be size to fill the area available,
  *  based on the rules of the applicable layout manager of course.
  */
+@SuppressWarnings("serial")
 public class ScrollablePanel extends JPanel
 	implements Scrollable, SwingConstants
 {

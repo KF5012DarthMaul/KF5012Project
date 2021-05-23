@@ -1,4 +1,5 @@
 package dbmgr;
+
 import dbmgr.DBExceptions.FailedToConnectException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,13 +8,11 @@ import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
-/**
- *
- * @author Emanuel Oliveira W19029581
- */
 
 /**
  * Singleton DB connection handler
+ * 
+ * @author Emanuel Oliveira W19029581
  */
 public final class DBConnection 
 {
