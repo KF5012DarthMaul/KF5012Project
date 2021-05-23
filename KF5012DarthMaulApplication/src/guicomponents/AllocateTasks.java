@@ -132,7 +132,7 @@ public class AllocateTasks extends JScrollPane {
 		gbc_panel.gridy = 1;
 		content.add(panel, gbc_panel);
 		
-		JButton btnPreviewAllocations = new JButton("Preview Allocations");
+		JButton btnPreviewAllocations = new JButton("Auto-Allocate (Preview)");
 		btnPreviewAllocations.addActionListener((e) -> this.previewAllocations());
 		panel.add(btnPreviewAllocations);
 		
@@ -140,11 +140,11 @@ public class AllocateTasks extends JScrollPane {
 		btnConfirmAllocations.addActionListener((e) -> this.confirmAllocations());
 		panel.add(btnConfirmAllocations);
 		
-		JButton btnRemoveAllocations = new JButton("Remove All");
+		JButton btnRemoveAllocations = new JButton("Remove All Candidates");
 		btnRemoveAllocations.addActionListener((e) -> this.removeAllAllocations());
 		panel.add(btnRemoveAllocations);
 		
-		JButton btnRemoveSelected = new JButton("Remove Selected");
+		JButton btnRemoveSelected = new JButton("Remove Selected Candidates");
 		btnRemoveSelected.addActionListener((e) -> this.removeSelectedAllocationCandidates());
 		panel.add(btnRemoveSelected);
 
@@ -228,15 +228,15 @@ public class AllocateTasks extends JScrollPane {
 		gbc_buttonPanel.gridy = 1;
 		listsPanel.add(buttonPanel, gbc_buttonPanel);
 		
-		JButton btnAllocate = new JButton("← Allocate");
+		JButton btnAllocate = new JButton("↑ Allocate ↑");
 		btnAllocate.addActionListener((e) -> this.allocateSelected());
 		buttonPanel.add(btnAllocate);
 
-		JButton btnSwap = new JButton("⟳ Swap");
+		JButton btnSwap = new JButton("⟳ Swap ⟳");
 		btnSwap.addActionListener((e) -> this.swapAllocations());
 		buttonPanel.add(btnSwap);
 
-		JButton btnDeallocate = new JButton("Deallocate →");
+		JButton btnDeallocate = new JButton("↓  Deallocate  ↓");
 		btnDeallocate.addActionListener((e) -> this.deallocateSelected());
 		buttonPanel.add(btnDeallocate);
 
