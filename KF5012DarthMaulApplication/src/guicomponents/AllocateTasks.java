@@ -82,6 +82,10 @@ public class AllocateTasks extends JScrollPane {
 	private Map<User, List<ChartableEvent>> allCaretakerAllocs;
 	private Map<User, TemporalList<ChartableEvent>> allCareTakerAllocsTmprl;
 	
+	// Start and end times of a few things
+	private LocalDateTime allocStartTime;
+	private LocalDateTime allocEndTime;
+	
 	// Timeline
 	private TimelinePanel timelinePanel;
 	
@@ -254,6 +258,9 @@ public class AllocateTasks extends JScrollPane {
 		this.fetch();
 		this.refresh();
 	}
+	
+	/* Main Lifecycle
+	 * -------------------------------------------------- */
 
 	private void fetch() {
 		if (db == null) {
@@ -277,6 +284,10 @@ public class AllocateTasks extends JScrollPane {
 		
 		// Get all task executions split by allocation
 		allTaskExecutions = db.getTaskExecutionList();
+
+		// The start and end times for the allocation
+		LocalDateTime allocStartTime = LocalDateTime.now();
+		LocalDateTime allocEndTime = lsteEndTime.getObject();
 
 		/* Split into task exec lists based on current status
 		 * -------------------------------------------------- */
@@ -424,10 +435,6 @@ public class AllocateTasks extends JScrollPane {
 		// Fetch data
 		this.fetch();
 
-		// The start and end times for the allocation
-		LocalDateTime allocStartTime = LocalDateTime.now();
-		LocalDateTime allocEndTime = lsteEndTime.getObject();
-
 		// Build the list of tasks to allocate (then allocate them at the end)
 		allAllocCandidates = new ArrayList<>();
 
@@ -442,200 +449,6 @@ public class AllocateTasks extends JScrollPane {
 		// based on historical data.
 		this.updateUserEfficiencies(allTaskExecutions);
 
-		/* Define allocator
-		 * -------------------------------------------------- */
-		
-		// Define the allocation function (encloses variables above)
-		Consumer<List<TaskExecution>> findAllocCandidates = (unallocUncomplTaskExecs) -> {
-			// Filter the list of uncompleted/unallocated task executions to
-			// only those in the current range.
-			TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocUncomplTaskExecs);
-			List<TaskExecution> unallocUncomplTaskExecsBefore = taskExecListTmprl.getBefore(
-				allocEndTime, Event.byStartTime, true
-			);
-
-			// Try allocating each task execution
-			for (TaskExecution unallocUncomplTaskExec : unallocUncomplTaskExecsBefore) {
-				/* Check constraints
-				 * -------------------- */
-				
-				// If there is a constraint, use it, otherwise check all caretakers
-				User allocConst = unallocUncomplTaskExec.getTask().getAllocationConstraint();
-				List<User> candidates;
-				if (allocConst != null) {
-					candidates = listOfSingleItem(allocConst);
-				} else {
-					candidates = allCaretakers;
-				}
-
-				/* Define what the 'best' candidate means
-				 * -------------------- */
-				
-				CandidateContainer bestCandidate = new CandidateContainer();
-
-				/**
-				 * A function that checks if a particular allocation candidate
-				 * slot (ie. user + temporal gap) is the best candidate slot
-				 * across all users (so far), and returns the Candidate that
-				 * represents the actual allocation if it is. Otherwise returns
-				 * Candidate.NO_CANDIDATE.
-				 */
-				Function<Candidate, Candidate> getIfBestCandidate = (c) -> {
-					Duration gapLen = Duration.between(c.startTime(), c.endTime());
-					Duration taskExecLength =
-						c.taskExecution().getTask().getEfficiencyMap().get(c.caretaker());
-					if (
-							// Is the gap big enough?
-							gapLen.compareTo(taskExecLength) >= 0 &&
-							
-							// Found a slot! Is it the best slot so far?
-							(
-							bestCandidate.candidate == Candidate.NO_CANDIDATE ||
-							c.startTime().isBefore(bestCandidate.candidate.startTime())
-							)
-					) {
-						return new Candidate(
-							c.taskExecution(),
-							c.caretaker(),
-							c.startTime(),
-							c.startTime().plus(taskExecLength)
-						);
-					}
-					return Candidate.NO_CANDIDATE;
-				};
-
-				/* Find the best candidate user + period to allocate
-				 * -------------------- */
-
-				for (User candidateUser : candidates) {
-					// Just declare this here
-					Candidate possiblyBestCandidate;
-					
-					// Find bounds for this task exec's allocation
-					LocalDateTime thisAllocStartTime = allocStartTime;
-					LocalDateTime thisAllocEndTime = allocEndTime;
-
-					Period pc = unallocUncomplTaskExec.getPeriodConstraint();
-					if (pc.start().isAfter(thisAllocStartTime)) {
-						thisAllocStartTime = pc.start();
-					}
-					if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
-						thisAllocStartTime = pc.end();
-					}
-					
-					// Filter the list to get all allocations between the
-					// allocation start and end times (ie. now and the time the
-					// user selected).
-					List<? extends Event> allocToUserBetween =
-						allCareTakerAllocsTmprl.get(candidateUser).getBetween(
-							thisAllocStartTime, thisAllocEndTime,
-							
-							// Include any that start before now but continue to
-							// at least now, and any that end after the date
-							// selected, but that start before it.
-							Event.byPeriodDefaultInf, true, true
-						);
-					
-					// Each end time is a potential point that another task
-					// could be slotted in, so go through them in order of end
-					// time (ie. potential start time).
-					Collections.sort(allocToUserBetween, Event.byEndTime);
-
-					// If this user has nothing on their schedule, then check
-					// the entire requested allocation period.
-					if (allocToUserBetween.size() == 0) {
-						// If this user has nothing to do, how about now?
-						possiblyBestCandidate = getIfBestCandidate.apply(
-							new Candidate(
-								unallocUncomplTaskExec,
-								candidateUser,
-								allocStartTime, allocEndTime
-							)
-						);
-						if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
-							bestCandidate.candidate = possiblyBestCandidate;
-						}
-						continue; // Next candidate user
-					}
-					
-					// Search this user's schedule - are there any gaps large
-					// enough for this task?
-					// Note 1: This algorithm doesn't do any shifting of tasks
-					//         to make space for other tasks.
-
-					int i = 0;
-					
-					// First, check between the allocation start date and the
-					// first event found (by end time).
-					possiblyBestCandidate = getIfBestCandidate.apply(
-						new Candidate(
-							unallocUncomplTaskExec,
-							candidateUser,
-							allocStartTime,
-							allocToUserBetween.get(i).getPeriod().start()
-						)
-					);
-					if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
-						bestCandidate.candidate = possiblyBestCandidate;
-					}
-					
-					// Second, check between the gaps of all other events.
-					// Note: allocToUserBetween is guaranteed to be an exclusive
-					//       list, by the definition of 'exclusive' in
-					//       ExclusiveTemporalMap (ie. periods don't overlap,
-					//       except possibly at a single point in time). Eg.
-					//               Couldn't have been allocated to this user
-					// t1:           |2|    |4|    |X| <-'
-					// t2:   | 1 |      | 3 |      | 5 |
-					for (i++; i < allocToUserBetween.size(); i++) {
-						// FIXME[?]: prevEnd shouldn't be null for allocated tasks
-						possiblyBestCandidate = getIfBestCandidate.apply(
-							new Candidate(
-								unallocUncomplTaskExec,
-								candidateUser,
-								allocToUserBetween.get(i-1).getPeriod().end(),
-								allocToUserBetween.get(i).getPeriod().start()
-							)
-						);
-						if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
-							bestCandidate.candidate = possiblyBestCandidate;
-							break; // Next candidate
-						}
-					}
-					
-					// Finally, check the gap between the last candidate and
-					// the end of the allocation period.
-					// FIXME[?]: prevEnd shouldn't be null for allocated tasks
-					possiblyBestCandidate = getIfBestCandidate.apply(
-						new Candidate(
-							unallocUncomplTaskExec,
-							candidateUser,
-							allocToUserBetween.get(i-1).getPeriod().end(),
-							allocEndTime
-						)
-					);
-					if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
-						bestCandidate.candidate = possiblyBestCandidate;
-					}
-				}
-
-				/* If there is a best candidate, allocate it
-				 * -------------------- */
-				
-				Candidate candidate = bestCandidate.candidate;
-				if (candidate != Candidate.NO_CANDIDATE) {
-					allAllocCandidates.add(candidate);
-					
-					// Add it to the list of allocated tasks to use it as a time
-					// constraint. ENSURE it maintains start time sort order,
-					// because this is the list underlying the TemporalList.
-					List<ChartableEvent> allocTasks = allCaretakerAllocs.get(candidate.caretaker());
-					allocTasks.add(candidate); // Add the candidate, not the task exec
-					allocTasks.sort(Event.byStartTime);
-				}
-				// else, the task can't be allocated (using this algo)
-			}
-		};
 
 		/* Split by priority and do allocation
 		 * -------------------------------------------------- */
@@ -650,9 +463,9 @@ public class AllocateTasks extends JScrollPane {
 		}
 
 		// Allocate for each task priority, in order
-		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.HIGH));
-		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.NORMAL));
-		findAllocCandidates.accept(unallocPriorityTasks.get(TaskPriority.LOW));
+		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.HIGH));
+		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.NORMAL));
+		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.LOW));
 		
 		this.refresh();
 	}
@@ -706,6 +519,200 @@ public class AllocateTasks extends JScrollPane {
 		// Re-fetch/refresh
 		this.fetch();
 		this.refresh();
+	}
+
+	/* Allocation Algorithm
+	 * -------------------------------------------------- */
+
+	private void findAllocCandidates(List<TaskExecution> unallocUncomplTaskExecs) {
+		// Filter the list of uncompleted/unallocated task executions to
+		// only those in the current range.
+		TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocUncomplTaskExecs);
+		List<TaskExecution> unallocUncomplTaskExecsBefore = taskExecListTmprl.getBefore(
+			allocEndTime, Event.byStartTime, true
+		);
+
+		// Try allocating each task execution
+		for (TaskExecution unallocUncomplTaskExec : unallocUncomplTaskExecsBefore) {
+			/* Check constraints
+			 * -------------------- */
+			
+			// If there is a constraint, use it, otherwise check all caretakers
+			User allocConst = unallocUncomplTaskExec.getTask().getAllocationConstraint();
+			List<User> candidates;
+			if (allocConst != null) {
+				candidates = listOfSingleItem(allocConst);
+			} else {
+				candidates = allCaretakers;
+			}
+
+			/* Define what the 'best' candidate means
+			 * -------------------- */
+			
+			CandidateContainer bestCandidate = new CandidateContainer();
+
+			/**
+			 * A function that checks if a particular allocation candidate
+			 * slot (ie. user + temporal gap) is the best candidate slot
+			 * across all users (so far), and returns the Candidate that
+			 * represents the actual allocation if it is. Otherwise returns
+			 * Candidate.NO_CANDIDATE.
+			 */
+			Function<Candidate, Candidate> getIfBestCandidate = (c) -> {
+				Duration gapLen = Duration.between(c.startTime(), c.endTime());
+				Duration taskExecLength =
+					c.taskExecution().getTask().getEfficiencyMap().get(c.caretaker());
+				if (
+						// Is the gap big enough?
+						gapLen.compareTo(taskExecLength) >= 0 &&
+						
+						// Found a slot! Is it the best slot so far?
+						(
+						bestCandidate.candidate == Candidate.NO_CANDIDATE ||
+						c.startTime().isBefore(bestCandidate.candidate.startTime())
+						)
+				) {
+					return new Candidate(
+						c.taskExecution(),
+						c.caretaker(),
+						c.startTime(),
+						c.startTime().plus(taskExecLength)
+					);
+				}
+				return Candidate.NO_CANDIDATE;
+			};
+
+			/* Find the best candidate user + period to allocate
+			 * -------------------- */
+
+			for (User candidateUser : candidates) {
+				// Just declare this here
+				Candidate possiblyBestCandidate;
+				
+				// Find bounds for this task exec's allocation
+				LocalDateTime thisAllocStartTime = allocStartTime;
+				LocalDateTime thisAllocEndTime = allocEndTime;
+
+				Period pc = unallocUncomplTaskExec.getPeriodConstraint();
+				if (pc.start().isAfter(thisAllocStartTime)) {
+					thisAllocStartTime = pc.start();
+				}
+				if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
+					thisAllocStartTime = pc.end();
+				}
+				
+				// Filter the list to get all allocations between the
+				// allocation start and end times (ie. now and the time the
+				// user selected).
+				List<? extends Event> allocToUserBetween =
+					allCareTakerAllocsTmprl.get(candidateUser).getBetween(
+						thisAllocStartTime, thisAllocEndTime,
+						
+						// Include any that start before now but continue to
+						// at least now, and any that end after the date
+						// selected, but that start before it.
+						Event.byPeriodDefaultInf, true, true
+					);
+				
+				// Each end time is a potential point that another task
+				// could be slotted in, so go through them in order of end
+				// time (ie. potential start time).
+				Collections.sort(allocToUserBetween, Event.byEndTime);
+
+				// If this user has nothing on their schedule, then check
+				// the entire requested allocation period.
+				if (allocToUserBetween.size() == 0) {
+					// If this user has nothing to do, how about now?
+					possiblyBestCandidate = getIfBestCandidate.apply(
+						new Candidate(
+							unallocUncomplTaskExec,
+							candidateUser,
+							allocStartTime, allocEndTime
+						)
+					);
+					if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
+						bestCandidate.candidate = possiblyBestCandidate;
+					}
+					continue; // Next candidate user
+				}
+				
+				// Search this user's schedule - are there any gaps large
+				// enough for this task?
+				// Note 1: This algorithm doesn't do any shifting of tasks
+				//         to make space for other tasks.
+
+				int i = 0;
+				
+				// First, check between the allocation start date and the
+				// first event found (by end time).
+				possiblyBestCandidate = getIfBestCandidate.apply(
+					new Candidate(
+						unallocUncomplTaskExec,
+						candidateUser,
+						allocStartTime,
+						allocToUserBetween.get(i).getPeriod().start()
+					)
+				);
+				if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
+					bestCandidate.candidate = possiblyBestCandidate;
+				}
+				
+				// Second, check between the gaps of all other events.
+				// Note: allocToUserBetween is guaranteed to be an exclusive
+				//       list, by the definition of 'exclusive' in
+				//       ExclusiveTemporalMap (ie. periods don't overlap,
+				//       except possibly at a single point in time). Eg.
+				//               Couldn't have been allocated to this user
+				// t1:           |2|    |4|    |X| <-'
+				// t2:   | 1 |      | 3 |      | 5 |
+				for (i++; i < allocToUserBetween.size(); i++) {
+					// FIXME[?]: prevEnd shouldn't be null for allocated tasks
+					possiblyBestCandidate = getIfBestCandidate.apply(
+						new Candidate(
+							unallocUncomplTaskExec,
+							candidateUser,
+							allocToUserBetween.get(i-1).getPeriod().end(),
+							allocToUserBetween.get(i).getPeriod().start()
+						)
+					);
+					if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
+						bestCandidate.candidate = possiblyBestCandidate;
+						break; // Next candidate
+					}
+				}
+				
+				// Finally, check the gap between the last candidate and
+				// the end of the allocation period.
+				// FIXME[?]: prevEnd shouldn't be null for allocated tasks
+				possiblyBestCandidate = getIfBestCandidate.apply(
+					new Candidate(
+						unallocUncomplTaskExec,
+						candidateUser,
+						allocToUserBetween.get(i-1).getPeriod().end(),
+						allocEndTime
+					)
+				);
+				if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
+					bestCandidate.candidate = possiblyBestCandidate;
+				}
+			}
+
+			/* If there is a best candidate, allocate it
+			 * -------------------- */
+			
+			Candidate candidate = bestCandidate.candidate;
+			if (candidate != Candidate.NO_CANDIDATE) {
+				allAllocCandidates.add(candidate);
+				
+				// Add it to the list of allocated tasks to use it as a time
+				// constraint. ENSURE it maintains start time sort order,
+				// because this is the list underlying the TemporalList.
+				List<ChartableEvent> allocTasks = allCaretakerAllocs.get(candidate.caretaker());
+				allocTasks.add(candidate); // Add the candidate, not the task exec
+				allocTasks.sort(Event.byStartTime);
+			}
+			// else, the task can't be allocated (using this algo)
+		}
 	}
 
 	private void trySwap() {
@@ -792,15 +799,26 @@ public class AllocateTasks extends JScrollPane {
 
 		// 'Swap' an allocated task to deallocate it
 		} else if (allocSelIndexes.length == 1 && unallocSelIndexes.length == 0) {
-			//
+			Event event = (Event) allocModel.get(allocSelIndexes[0]);
+			if (event instanceof TaskExecution) {
+				TaskExecution taskExec = (TaskExecution) event;
+				taskExec.setAllocation(null);
+				taskExec.setPeriod(new Period(
+					taskExec.getPeriodConstraint().start(),
+					Duration.ofMinutes(0)
+				));
+			}
 			
-		// 'Swap' an unallocated task to allocate it
+		// 'Swap' an unallocated task to try to allocate it
 		} else if (allocSelIndexes.length == 0 && unallocSelIndexes.length == 1) {
-			//
+			Event event = (Event) allocModel.get(allocSelIndexes[0]);
+			if (event instanceof TaskExecution) {
+				findAllocCandidates(listOfSingleItem((TaskExecution) event));
+			}
 			
 		// Invalid swap
 		} else {
-			//
+			new ExceptionDialog("Incorrect number of allocated and/or unallocated tasks selected. See manual for details.");
 		}
 	}
 
