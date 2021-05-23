@@ -474,6 +474,8 @@ public class AllocateTasks extends JScrollPane {
 				taskExec.getPeriodConstraint().start(),
 				Duration.ofMinutes(0)
 			));
+			
+			db.submitTaskExecution(taskExec);
 		}
 		
 		initTaskExecSplit();
