@@ -145,7 +145,7 @@ public class AllocateTasks extends JScrollPane {
 		panel.add(btnRemoveAllocations);
 		
 		JButton btnRemoveSelected = new JButton("Remove Selected");
-		btnRemoveSelected.addActionListener((e) -> this.removeSelectedAllocations());
+		btnRemoveSelected.addActionListener((e) -> this.removeSelectedAllocationCandidates());
 		panel.add(btnRemoveSelected);
 
 		JSeparator sep1 = new JSeparator();
@@ -271,12 +271,16 @@ public class AllocateTasks extends JScrollPane {
 	
 	/* Data Lifecycle
 	 * -------------------------------------------------- */
+	
+	/* Groups of methods
+	 * -------------------- */
 
 	/**
 	 * Fully (re-)initialise the allocation data model and GUI.
 	 */
 	private void initialise() {
 		fetch();
+		initUserEfficiencies(); // Only do this on init, not reinit
 		reinitialise();
 	}
 	
@@ -291,7 +295,10 @@ public class AllocateTasks extends JScrollPane {
 		fetchGUI();
 		refreshGUI();
 	}
-	
+
+	/* Initialisations
+	 * -------------------- */
+
 	/**
 	 * Fetch data from DB and cache it.
 	 */
@@ -315,154 +322,18 @@ public class AllocateTasks extends JScrollPane {
 		// Get all task executions split by allocation
 		allTaskExecutions = db.getTaskExecutionList();
 	}
-	
-	/**
-	 * Retrieve current allocation start and end dates and cache them.
-	 */
-	private void fetchGUI() {
-		// The start and end times for the allocation
-		allocStartTime = LocalDateTime.now();
-		allocEndTime = lsteEndTime.getObject();
-	}
-	
-	/**
-	 * Split task executions into lists based on their allocation and completion
-	 * status.
-	 */
-	private void initTaskExecSplit() {
-		// All allocated + complete tasks
-		// All unallocated + incomplete tasks
-		
-		complAllocList = new ArrayList<>();
-		uncomplAllocList = new ArrayList<>();
-		uncomplUnallocList = new ArrayList<>();
-		for (TaskExecution taskExec : allTaskExecutions) {
-			if (taskExec.getAllocation() != null) {
-				if (taskExec.getCompletion() != null) {
-					complAllocList.add(taskExec);
-				} else {
-					uncomplAllocList.add(taskExec);
-				}
-			} else {
-				if (taskExec.getCompletion() == null) {
-					uncomplUnallocList.add(taskExec);
-				}
-			}
-		}
-	}
 
 	/**
-	 * Initialise the list of candidate caretaker allocations.
-	 */
-	private void initCaretakerAllocCandidates() {
-		allAllocCandidates = new ArrayList<>();
-	}
-
-	/**
-	 * Add from the list of candidate carataker allocations - use this to
-	 * ensure all other model data and GUI elements are updated appropriately
-	 * after the model update.
+	 * Calculate and update the efficiencies (average time taken per user) for
+	 * all users for all tasks, then flush the updates to the DB.
 	 * 
-	 * @param allocCandidates The list of candidates to add.
+	 * Note: This is a computationally expensive operation - O(n^2) with a
+	 *       potentially large n - so try to avoid doing it often.
 	 */
-	private void addAllocCandidates(List<Candidate> delAllocCandidates) {
-		// Add all and refresh
-		allAllocCandidates.addAll(delAllocCandidates);
-		initAllCaretakerAllocs();
-		refreshGUI();
-	}
-
-	/**
-	 * Remove from the list of candidate carataker allocations - use this to
-	 * ensure all other model data and GUI elements are updated appropriately
-	 * after the model update.
-	 * 
-	 * @param allocCandidates The list of candidates to remove.
-	 */
-	private void removeAllocCandidates(List<Candidate> delAllocCandidates) {
-		// Remove all and refresh
-		allAllocCandidates.removeAll(delAllocCandidates);
-		initAllCaretakerAllocs();
-		refreshGUI();
-	}
-
-	/**
-	 * Initialise each user's list of current and candidate caretaker
-	 * allocations.
-	 */
-	private void initAllCaretakerAllocs() {
-		// Split allocated task executions by caretaker
-		allCaretakerAllocs = new HashMap<>();
-		for (User user : allCaretakers) {
-			allCaretakerAllocs.put(user, new ArrayList<>());
-		}
-		for (TaskExecution taskExec : uncomplAllocList) {
-			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
-		}
-		for (Candidate candidate : allAllocCandidates) {
-			allCaretakerAllocs.get(candidate.caretaker()).add(candidate);
-		}
-
-		// Make temporal lists from these (will sort them by start date)
-		allCareTakerAllocsTmprl = new HashMap<>();
-		for (User user : allCaretakers) {
-			allCareTakerAllocsTmprl.put(user, new TemporalList<ChartableEvent>(allCaretakerAllocs.get(user)));
-		}
-	}
-
-	/**
-	 * Refresh the entire GUI with the current data in the data model.
-	 */
-	private void refreshGUI() {
-		DefaultListModel<Object> model;
-
-		// Update the models
-		model = (DefaultListModel<Object>) (allocatedList.getModel());
-		model.removeAllElements();
-		model.addAll(uncomplAllocList);
-		model.addAll(allAllocCandidates);
-
-		model = (DefaultListModel<Object>) (unallocatedList.getModel());
-		model.removeAllElements();
-		model.addAll(uncomplUnallocList);
-
-		// Update the timeline - set both preferred and min to ensure it
-		// displays the right size
-		Dimension dim = new Dimension(
-			this.getPreferredSize().width,
-			80 + allCaretakers.size() * 20
-		);
-		timelinePanel.setMinimumSize(dim);
-		timelinePanel.setPreferredSize(dim);
-		
-		this.refreshTimeline();
-	}
-	
-	/**
-	 * Refresh just the graphical timeline with cached data.
-	 */
-	private void refreshTimeline() {
-		// Make a list of maps in order of display name
-		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
-		for (User caretaker : allCaretakers) {
-			maps.add(allCareTakerAllocsTmprl.get(caretaker));
-		}
-		timelinePanel.setTimeline(new Timeline<>(maps));
-		timelinePanel.showBetween(LocalDateTime.now(), lsteEndTime.getObject());
-	}
-	
-	// Separate method that is called when needed
-	
-	/**
-	 * Mutate all Task objects linked to all task executions given based on the
-	 * task executions given.
-	 * 
-	 * It would be reasonable to give task executions that have been allocated.
-	 */
-	private void updateUserEfficiencies(List<TaskExecution> taskExecs) {
+	private void initUserEfficiencies() {
 		// Get all task executions by task
 		Map<Task, List<TaskExecution>> taskExecsByTask = new HashMap<>();
-		for (TaskExecution taskExec : taskExecs) {
+		for (TaskExecution taskExec : allTaskExecutions) {
 			// Include deleted tasks as well - makes no difference here
 			Task task = taskExec.getTask();
 			
@@ -515,7 +386,157 @@ public class AllocateTasks extends JScrollPane {
 					}
 				}
 			}
+			
+			// Flush to DB
+			db.submitTask(task);
 		}
+	}
+
+	/**
+	 * Split task executions into lists based on their allocation and completion
+	 * status.
+	 */
+	private void initTaskExecSplit() {
+		// All allocated + complete tasks
+		// All unallocated + incomplete tasks
+		
+		complAllocList = new ArrayList<>();
+		uncomplAllocList = new ArrayList<>();
+		uncomplUnallocList = new ArrayList<>();
+		for (TaskExecution taskExec : allTaskExecutions) {
+			if (taskExec.getAllocation() != null) {
+				if (taskExec.getCompletion() != null) {
+					complAllocList.add(taskExec);
+				} else {
+					uncomplAllocList.add(taskExec);
+				}
+			} else {
+				if (taskExec.getCompletion() == null) {
+					uncomplUnallocList.add(taskExec);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Initialise the list of candidate caretaker allocations.
+	 */
+	private void initCaretakerAllocCandidates() {
+		allAllocCandidates = new ArrayList<>();
+	}
+
+	/**
+	 * Initialise each user's list of current and candidate caretaker
+	 * allocations.
+	 */
+	private void initAllCaretakerAllocs() {
+		// Split allocated task executions by caretaker
+		allCaretakerAllocs = new HashMap<>();
+		for (User user : allCaretakers) {
+			allCaretakerAllocs.put(user, new ArrayList<>());
+		}
+		for (TaskExecution taskExec : uncomplAllocList) {
+			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
+		}
+		for (Candidate candidate : allAllocCandidates) {
+			allCaretakerAllocs.get(candidate.caretaker()).add(candidate);
+		}
+
+		// Make temporal lists from these (will sort them by start date)
+		allCareTakerAllocsTmprl = new HashMap<>();
+		for (User user : allCaretakers) {
+			allCareTakerAllocsTmprl.put(user, new TemporalList<ChartableEvent>(allCaretakerAllocs.get(user)));
+		}
+	}
+
+	/**
+	 * Retrieve current allocation start and end dates and cache them.
+	 */
+	private void fetchGUI() {
+		// The start and end times for the allocation
+		allocStartTime = LocalDateTime.now();
+		allocEndTime = lsteEndTime.getObject();
+	}
+
+	/* Data Mutation
+	 * -------------------- */
+
+	// Allocation uses genAllocCandidates()
+	
+	private void deallocate(List<Event> events) {
+		for (Event event : events)
+		if (event instanceof TaskExecution) {
+			TaskExecution taskExec = (TaskExecution) event;
+			
+			// 'Deallocate' = set allocated user to null and period to zero duration
+			taskExec.setAllocation(null);
+			taskExec.setPeriod(new Period(
+				taskExec.getPeriodConstraint().start(),
+				Duration.ofMinutes(0)
+			));
+		}
+		
+		initTaskExecSplit();
+		initAllCaretakerAllocs();
+		refreshGUI();
+	}
+	
+	/**
+	 * Remove from the list of candidate carataker allocations - use this to
+	 * ensure all other model data and GUI elements are updated appropriately
+	 * after the model update.
+	 * 
+	 * @param allocCandidates The list of candidates to remove.
+	 */
+	private void removeAllocCandidates(List<Candidate> delAllocCandidates) {
+		// Remove all and refresh
+		allAllocCandidates.removeAll(delAllocCandidates);
+		initAllCaretakerAllocs();
+		refreshGUI();
+	}
+
+	/* Updating the GUI
+	 * -------------------- */
+
+	/**
+	 * Refresh the entire GUI with the current data in the data model.
+	 */
+	private void refreshGUI() {
+		DefaultListModel<Object> model;
+
+		// Update the models
+		model = (DefaultListModel<Object>) (allocatedList.getModel());
+		model.removeAllElements();
+		model.addAll(uncomplAllocList);
+		model.addAll(allAllocCandidates);
+
+		model = (DefaultListModel<Object>) (unallocatedList.getModel());
+		model.removeAllElements();
+		model.addAll(uncomplUnallocList);
+
+		// Update the timeline - set both preferred and min to ensure it
+		// displays the right size
+		Dimension dim = new Dimension(
+			this.getPreferredSize().width,
+			80 + allCaretakers.size() * 20
+		);
+		timelinePanel.setMinimumSize(dim);
+		timelinePanel.setPreferredSize(dim);
+		
+		this.refreshTimeline();
+	}
+	
+	/**
+	 * Refresh just the graphical timeline with cached data.
+	 */
+	private void refreshTimeline() {
+		// Make a list of maps in order of display name
+		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
+		for (User caretaker : allCaretakers) {
+			maps.add(allCareTakerAllocsTmprl.get(caretaker));
+		}
+		timelinePanel.setTimeline(new Timeline<>(maps));
+		timelinePanel.showBetween(LocalDateTime.now(), lsteEndTime.getObject());
 	}
 
 	/* Main Lifecycle
@@ -528,17 +549,6 @@ public class AllocateTasks extends JScrollPane {
 	private void previewAllocations() {
 		fetchGUI();
 		
-		/* Update calculated fields of tasks
-		 * -------------------- */
-		
-		// TODO: Might want to do this separately to allocation, as it's an
-		//       intensive process? Or at least have a progress indicator for
-		//       the user.
-		
-		// Do this before the filter to the specified range, as this must be
-		// based on historical data.
-		this.updateUserEfficiencies(allTaskExecutions);
-
 		/* Split by priority and do allocation
 		 * -------------------- */
 
@@ -561,7 +571,7 @@ public class AllocateTasks extends JScrollPane {
 	 * Remove selected allocation candidates and refresh relevant parts of the
 	 * data model and GUI.
 	 */
-	private void removeSelectedAllocations() {
+	private void removeSelectedAllocationCandidates() {
 		List<Candidate> delAllocCandidates = new ArrayList<>();
 
 		// Build the list to remove
@@ -609,7 +619,7 @@ public class AllocateTasks extends JScrollPane {
 		db.submitTaskExecutions(allAllocTasks);
 
 		// Reinitialise
-		// Note: don't need to fetch, as the above will have mutated the cached
+		// Note: Don't need to fetch, as the above will have mutated the cached
 		//       task executions.
 		reinitialise();
 	}
@@ -621,37 +631,33 @@ public class AllocateTasks extends JScrollPane {
 	 * selected task(s).
 	 */
 	private void allocateSelected() {
+		List<TaskExecution> allocList = new ArrayList<>();
+		
 		DefaultListModel<Object> unallocModel = (DefaultListModel<Object>) unallocatedList.getModel();
 		int[] unallocSelIndexes = unallocatedList.getSelectedIndices();
 		for (int selIndex : unallocSelIndexes) {
 			Event event = (Event) unallocModel.get(selIndex);
 			if (event instanceof TaskExecution) {
-				genAllocCandidates(listOfSingleItem((TaskExecution) event));
+				allocList.add((TaskExecution) event);
 			}
 		}
+		
+		genAllocCandidates(allocList);
 	}
 
 	/**
 	 * Deallocate selected allocated task(s).
 	 */
 	private void deallocateSelected() {
-		// TODO: Should I create `makeDeallocCandidates(List<TaskExecution> taskExecs)`?
+		List<Event> deallocList = new ArrayList<>();
 		
 		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
 		int[] allocSelIndexes = allocatedList.getSelectedIndices();
 		for (int selIndex : allocSelIndexes) {
-			Event event = (Event) allocModel.get(selIndex);
-			if (event instanceof TaskExecution) {
-				TaskExecution taskExec = (TaskExecution) event;
-				
-				// 'Deallocate' = set allocated user to null and period to zero duration
-				taskExec.setAllocation(null);
-				taskExec.setPeriod(new Period(
-					taskExec.getPeriodConstraint().start(),
-					Duration.ofMinutes(0)
-				));
-			}
+			deallocList.add((Event) allocModel.get(selIndex));
 		}
+		
+		deallocate(deallocList);
 	}
 
 	/**
