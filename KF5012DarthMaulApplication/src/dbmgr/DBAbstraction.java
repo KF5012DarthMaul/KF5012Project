@@ -794,11 +794,11 @@ public final class DBAbstraction
     }
 
     // Insert all new taskexecutions in one go
-    public boolean submitTaskExecutions(List<TaskExecution> tasks)
+    public boolean submitTaskExecutions(List<TaskExecution> exes)
     {
         try 
         {
-            if(tasks == null || tasks.isEmpty())
+            if(exes == null || exes.isEmpty())
                 return false;
             DBPreparedStatement insertStatement = db.prepareStatement("INSERT INTO tblTaskExecutions (task_id, exe_notes, exe_prio, start_datetime, end_datetime, caretaker, compl_id, verf_exe_id)"
                     + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -809,7 +809,7 @@ public final class DBAbstraction
             int completionID = getLastCompletionID()+1;
             ArrayList<VerificationExecution> verfExecutions = new ArrayList<>();
             ArrayList<Completion> completions = new ArrayList<>();
-            for(TaskExecution exe: tasks)
+            for(TaskExecution exe: exes)
             {
                 DBPreparedStatement stmt = exe.getID() == null ? insertStatement : updateStatement;
                 stmt.add(exe.getTask().getID());
@@ -1073,9 +1073,9 @@ public final class DBAbstraction
     }
     
     // Delete Task Execution?
-    public boolean deleteTaskExecution(TaskExecution t)
+    public boolean deleteTaskExecution(TaskExecution exe)
     {
-        return deleteTaskExecutions(listOfSingleItem(t));
+        return deleteTaskExecutions(listOfSingleItem(exe));
     }
     
     public boolean deleteTaskExecutions(List<TaskExecution> execs)

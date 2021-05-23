@@ -98,7 +98,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		gbc_lblName.gridy = 0;
 		formPanel.add(lblName, gbc_lblName);
 		
-		txteName = new TextEditor((s) -> !s.isEmpty()); // Must be non-empty
+		txteName = new TextEditor((s) -> !s.isBlank()); // Must be non-empty
 		GridBagConstraints gbc_txteName = new GridBagConstraints();
 		gbc_txteName.anchor = GridBagConstraints.WEST;
 		gbc_txteName.insets = new Insets(5, 5, 5, 0);
@@ -597,6 +597,7 @@ public class TaskEditor extends JScrollPane implements ObjectEditor<Task> {
 		
 		// Update the timeline to use the new name/cips
 		this.updateTimeline(task);
+                this.validateFields();
 	}
 
 	/**
