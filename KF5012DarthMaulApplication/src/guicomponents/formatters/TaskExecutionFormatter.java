@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 
 import domain.Completion;
 import domain.TaskExecution;
+import domain.TaskPriority;
 import domain.VerificationExecution;
+import kf5012darthmaulapplication.User;
 import temporal.Period;
 
 /**
@@ -19,6 +21,15 @@ public class TaskExecutionFormatter implements Formatter<TaskExecution> {
 	private static final Formatter<LocalDateTime> dtFormatter =
 			new LocalDateTimeFormatter("h:mma d/M/yyyy");
 	private static final Formatter<Duration> durFormatter = new DurationFormatter();
+
+	// Standard formatters for task allocation
+	private static final Formatter<String> highPrio = new ColorFormatter("orange");
+	private static final Formatter<String> normalPrio = new IdentityFormatter();
+	private static final Formatter<String> lowPrio = new IdentityFormatter();
+	
+	// Standard formatters for task allocation
+	private static final Formatter<String> taskUnalloc = new ColorFormatter("orange");
+	private static final Formatter<String> taskAlloc = new IdentityFormatter();
 	
 	// Standard formatters for task statuses
 	private static final Formatter<String> taskStatusNormal = new IdentityFormatter();
@@ -42,7 +53,22 @@ public class TaskExecutionFormatter implements Formatter<TaskExecution> {
 		}
 		
 		// Priority
-		String priority = taskExec.getPriority().toString();
+		TaskPriority priority = taskExec.getPriority();
+		String priorityStr = priority.toString();
+		if (priority == TaskPriority.HIGH) {
+			priorityStr = highPrio.apply(priorityStr);
+		} else if (priority == TaskPriority.NORMAL) {
+			priorityStr = normalPrio.apply(priorityStr);
+		} else if (priority == TaskPriority.LOW) {
+			priorityStr = lowPrio.apply(priorityStr);
+		}
+		
+		// Allocation
+		User alloc = taskExec.getAllocation();
+		String allocStr = taskUnalloc.apply("Not Allocated");
+		if (alloc != null) {
+			allocStr = taskAlloc.apply(alloc.getDisplayName());
+		}
 		
 		// Completion / Overdue
 		String completionStatus = formatCompletionStatus(
@@ -61,21 +87,28 @@ public class TaskExecutionFormatter implements Formatter<TaskExecution> {
 				verDurationStr = durFormatter.apply(verDuration);
 			}
 			
+			// Alloc
+			User verAlloc = verification.getAllocation();
+			String verAllocStr = taskUnalloc.apply("Not Allocated");
+			if (verAlloc != null) {
+				verAllocStr = taskAlloc.apply(verAlloc.getDisplayName());
+			}
+			
 			// Completion / Overdue
 			String verCompletionStatus = formatCompletionStatus(
 				verPeriod, verCompletion);
 			
 			// Glue together
 			verificationStr = String.format(
-				" [verification (%s) - %s]",
-				verDurationStr, verCompletionStatus
+				" <strong>[verification]</strong>: %s, alloc: %s, status: %s",
+				verDurationStr, verAllocStr, verCompletionStatus
 			);
 		}
 
 		// Glue together
 		return String.format(
-			"%s (%s | priority: %s) - %s%s",
-			start, durationStr, priority, completionStatus,
+			"%s, %s, priority: %s, alloc: %s, status: %s%s",
+			start, durationStr, priorityStr, allocStr, completionStatus,
 			verificationStr
 		);
 	}

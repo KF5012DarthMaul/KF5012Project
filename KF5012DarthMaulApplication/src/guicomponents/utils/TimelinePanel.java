@@ -261,9 +261,9 @@ public class TimelinePanel extends JPanel {
 
 	private void drawXAxis(Graphics2D g2d) {
 		if (
-				tickInterval.isZero() &&
-				hangingStartTickInterval.isZero() &&
-				hangingEndTickInterval.isZero()
+				numTicks == 0 &&
+				hangingStartTick == false &&
+				hangingEndTick == false
 		) {
 			return; // Nothing to draw
 		}

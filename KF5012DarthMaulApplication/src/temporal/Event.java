@@ -114,7 +114,7 @@ public interface Event extends Comparable<Event> {
 	    		return -1;
 	    		
 	    	} else if ( // o1 is after the end of o2
-	    			(p2e != null || p1s.compareTo(p2e) > 0) &&
+	    			(p2e != null && p1s.compareTo(p2e) > 0) &&
 
 	    			// (inf, inf) -> false - must overlap at some point
 	    			// (fx, inf) -> false - nothing is > inf

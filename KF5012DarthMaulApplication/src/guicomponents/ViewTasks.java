@@ -1,5 +1,7 @@
 package guicomponents;
 
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -15,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
@@ -35,6 +38,8 @@ import javax.swing.BoxLayout;
 
 @SuppressWarnings("serial")
 public class ViewTasks extends JPanel {
+	private static final Font LIST_FONT = new Font("Arial", Font.PLAIN, 12);
+	
 	private static final Formatter<TaskExecution> TASK_EXEC_FORMATTER =
 		new HTMLFormatter<>(new TaskExecutionFormatter());
 
@@ -104,16 +109,24 @@ public class ViewTasks extends JPanel {
 
 		this.taskJTreeRoot = new DefaultMutableTreeNode();
 		this.taskJTreeModel = new DefaultTreeModel(this.taskJTreeRoot);
-		this.taskJTree = new JTree(this.taskJTreeModel) {
+		this.taskJTree = new JTree(this.taskJTreeModel);
+		this.taskJTree.setCellRenderer(new DefaultTreeCellRenderer() {
 			@SuppressWarnings("unchecked")
 			@Override
-			public String convertValueToText(
-					Object value, boolean sel, boolean expanded, boolean leaf,
-					int row, boolean hasFocus
+			public Component getTreeCellRendererComponent(
+					JTree tree, Object value, boolean sel, boolean expanded,
+                    boolean leaf, int row, boolean hasFocus
 			) {
+				// Set stuff related to isSelected and cellHasFocus
+				super.getTreeCellRendererComponent(
+					tree, value, sel, expanded, leaf, row, hasFocus);
+
+				this.setFont(LIST_FONT);
+				
 				Object nodeObj = ((DefaultMutableTreeNode) value).getUserObject();
 				if (nodeObj == null) {
-					return ""; // Root node
+					setText(""); // Root node
+					return this;
 				}
 
 				Map<String, Object> map = (Map<String, Object>) nodeObj;
@@ -121,17 +134,18 @@ public class ViewTasks extends JPanel {
 				Object item = map.get("obj");
 				if (item instanceof Task) {
 					Formatter<Task> formatter = (Formatter<Task>) map.get("formatter");
-					return formatter.apply((Task) item);
+					setText(formatter.apply((Task) item));
 
 				} else if (item instanceof TaskExecution) {
 					Formatter<TaskExecution> formatter = (Formatter<TaskExecution>) map.get("formatter");
-					return formatter.apply((TaskExecution) item);
+					setText(formatter.apply((TaskExecution) item));
 
 				} else {
 					throw new TaskManagerExceptions.InvalidTaskTypeException();
 				}
+				return this;
 			}
-		};
+		});
 		this.taskJTree.setRootVisible(false);
 		taskTreeScrollPane.setViewportView(this.taskJTree);
 	}

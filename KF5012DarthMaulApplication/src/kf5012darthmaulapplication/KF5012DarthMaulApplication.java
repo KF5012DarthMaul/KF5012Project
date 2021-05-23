@@ -1,7 +1,6 @@
 package kf5012darthmaulapplication;
 
 import java.security.Security;
-import org.bouncycastle.jce.provider.*;
 
 import dbmgr.DBAbstraction;
 import guicomponents.LoginForm;
@@ -9,7 +8,6 @@ import guicomponents.LoginForm;
 public class KF5012DarthMaulApplication {
 	public static void main(String[] args) {
 		try {
-			Security.addProvider(new BouncyCastleProvider());
 			Security.setProperty("crypto.policy", "unlimited");
 			
 			LoginForm LoginForm = new LoginForm();

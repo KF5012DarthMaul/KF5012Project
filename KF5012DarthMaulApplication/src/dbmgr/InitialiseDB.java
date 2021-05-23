@@ -162,6 +162,8 @@ public class InitialiseDB {
                         task_id INTEGER NOT NULL,
                         exe_notes TEXT,
                         exe_prio INTEGER NOT NULL,
+                        period_constraint_start INTEGER NOT NULL,
+                        period_constraint_end INTEGER,
                         start_datetime INTEGER NOT NULL,
                         end_datetime INTEGER,
                         caretaker TEXT,
@@ -302,36 +304,50 @@ public class InitialiseDB {
             allTasks.add(t_repeating);
             
             // Some on the 9th
+            LocalDateTime start;
+            
+            start = dt("9:45am 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("9:45am 9/5/2021"), dt("10:00am 9/5/2021")),
+                new Period(start, dt("10:00am 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 myUser, null, null
             ));
+            start = dt("11:45am 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("11:45am 9/5/2021"), dt("12:00pm 9/5/2021")),
+                new Period(start, dt("12:00pm 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 myUser, null, null
             ));
+            start = dt("1:45pm 9/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("1:45pm 9/5/2021"), dt("2:00pm 9/5/2021")),
+                new Period(start, dt("2:00pm 9/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
 
             // Some on the 10th
+            start = dt("9:45am 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("9:45am 10/5/2021"), dt("10:00am 10/5/2021")),
+                new Period(start, dt("10:00am 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("11:45am 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("11:45am 10/5/2021"), dt("12:00pm 10/5/2021")),
+                new Period(start, dt("12:00pm 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
+            start = dt("1:45pm 10/5/2021");
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
-                new Period(dt("1:45pm 10/5/2021"), dt("2:00pm 10/5/2021")),
+                new Period(start, dt("2:00pm 10/5/2021")),
+                new Period(start, Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -341,16 +357,19 @@ public class InitialiseDB {
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(10), startOfToday.plusHours(11)),
+                new Period(startOfToday.plusHours(10), Duration.ofMinutes(0)),
                 null, null, null
             ));
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(12), startOfToday.plusHours(13)),
+                new Period(startOfToday.plusHours(12), Duration.ofMinutes(0)),
                 null, null, null
             ));
             allTaskExecs.add(new TaskExecution(
                 null, t_repeating, "", TaskPriority.NORMAL,
                 new Period(startOfToday.plusHours(14), startOfToday.plusHours(15)),
+                new Period(startOfToday.plusHours(14), Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -375,6 +394,7 @@ public class InitialiseDB {
             allTaskExecs.add(new TaskExecution(
                 null, t_noDeadline, "", TaskPriority.LOW,
                 new Period(dt("1:00pm 9/5/2021"), dt("3:00pm 9/5/2021")),
+                new Period(dt("1:00pm 9/5/2021"), Duration.ofMinutes(0)),
                 null, null, null
             ));
 
@@ -403,8 +423,6 @@ public class InitialiseDB {
             
             allTasks.add(t_noExecs);
 
-            // A high-priority one-off task with deadline and verification.            
-            Verification verification = new Verification(null, null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
             Task t_requiresVerif = new Task(
                 null,
                 "Fix Broken Pipe",
@@ -418,8 +436,10 @@ public class InitialiseDB {
                     null
                 ),
                 null,
-                verification
+                null
             );
+            Verification verification = new Verification(null, null, "", TaskPriority.HIGH, Duration.ofHours(3), null);
+            t_requiresVerif.setVerification(verification);
 
             allTasks.add(t_requiresVerif);
             
@@ -427,6 +447,7 @@ public class InitialiseDB {
             TaskExecution t3Exec = new TaskExecution(
                 null, t_requiresVerif, "", TaskPriority.HIGH,
                 new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                new Period(dt("3:30pm 9/5/2021"), Duration.ofMinutes(0)),
                 myUser,
                 null, null
             );
@@ -466,13 +487,81 @@ public class InitialiseDB {
             TaskExecution tCompleteExec = new TaskExecution(
                 null, t_complete, "", TaskPriority.HIGH,
                 new Period(dt("3:30pm 9/5/2021"), dt("4:15pm 9/5/2021")),
+                new Period(dt("3:30pm 9/5/2021"), Duration.ofMinutes(0)),
                 null,
                 new Completion(null, myUser, LocalDateTime.now(), LocalDateTime.now(), TaskCompletionQuality.ADEQUATE, "test completion"), 
                 null
                 
             );
             allTaskExecs.add(tCompleteExec);
+
+            // Add some recurring tasks of different lengths (and a null length)
+            // with no execs.
+            Task t_onceAWeek = new Task(
+                null,
+                "Clean windowsills",
+                "Because completed 5 days a week this task is not.",
+                null, null, null,
+                TaskPriority.NORMAL,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("1:00pm 10/5/2021"), dt("5:00pm 10/5/2021")),
+                        Duration.ofHours(24)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("12:00pm 14/5/2021"), dt("12:00pm 15/5/2021")),
+                        Duration.ofHours(24*7)
+                    )
+                ),
+                null,
+                null
+            );
+            allTasks.add(t_onceAWeek);
+
+            Verification checkAntennaVer = new Verification(null, null, "", TaskPriority.NORMAL, Duration.ofHours(1), null);
+            Task t_onceADay = new Task(
+                null,
+                "Check antenna",
+                "Needs to be checked every day. Usually done in the early afternoon.",
+                null, null, null,
+                TaskPriority.NORMAL,
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("1:00pm 12/5/2021"), dt("3:00pm 12/5/2021")),
+                        Duration.ofHours(24)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("12:00pm 10/5/2021"), dt("12:00pm 15/5/2021")),
+                        Duration.ofHours(24*7)
+                    )
+                ),
+                null,
+                checkAntennaVer
+            );
+            checkAntennaVer.setTask(t_onceADay);
+            allTasks.add(t_onceADay);
             
+            Task t_covidCleaning = new Task(
+                null,
+                "Wipe surfaces",
+                "Should wipe commonly touched surfaces regularly",
+                null, null, null,
+                TaskPriority.LOW, // Eh, meh.
+                new ConstrainedIntervaledPeriodSet(
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:00am 17/5/2021"), dt("9:30am 17/5/2021")),
+                        Duration.ofHours(3)
+                    ),
+                    new IntervaledPeriodSet(
+                        new Period(dt("9:00am 17/5/2021"), dt("5:00pm 17/5/2021")),
+                        Duration.ofHours(24)
+                    )
+                ),
+                null,
+                null
+            );
+            allTasks.add(t_covidCleaning);
+        
             /* Add Tasks and Task Executions
              * -------------------- */
             
