@@ -99,9 +99,9 @@ public class AllocateTasks extends JScrollPane {
 		content.setScrollableWidth(ScrollablePanel.ScrollableSizeHint.FIT);
 		setViewportView(content);
 		GridBagLayout gbl_allocateTasks = new GridBagLayout();
-		gbl_allocateTasks.columnWidths = new int[]{0, 0};
+		gbl_allocateTasks.columnWidths = new int[]{0, 0, 0};
 		gbl_allocateTasks.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0};
-		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0};
+		gbl_allocateTasks.columnWeights = new double[]{0.0, 1.0, 0.0};
 		gbl_allocateTasks.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		content.setLayout(gbl_allocateTasks);
 
@@ -121,12 +121,21 @@ public class AllocateTasks extends JScrollPane {
 		gbc_lsteEndTime.gridx = 1;
 		gbc_lsteEndTime.gridy = 0;
 		content.add(lsteEndTime, gbc_lsteEndTime);
+
+		JButton btnReload = new JButton("Reload");
+		btnReload.addActionListener((e) -> this.initialise()); // full reload
+		GridBagConstraints gbc_btnPreviewAllocations = new GridBagConstraints();
+		gbc_btnPreviewAllocations.anchor = GridBagConstraints.EAST;
+		gbc_btnPreviewAllocations.insets = new Insets(5, 5, 5, 5);
+		gbc_btnPreviewAllocations.gridx = 2;
+		gbc_btnPreviewAllocations.gridy = 0;
+		content.add(btnReload, gbc_btnPreviewAllocations);
 		
 		JPanel panel = new JPanel();
 		GridBagConstraints gbc_panel = new GridBagConstraints();
 		gbc_panel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_panel.insets = new Insets(5, 5, 5, 5);
-		gbc_panel.gridwidth = 2;
+		gbc_panel.gridwidth = 3;
 		gbc_panel.gridx = 0;
 		gbc_panel.gridy = 1;
 		content.add(panel, gbc_panel);
@@ -151,7 +160,7 @@ public class AllocateTasks extends JScrollPane {
 		GridBagConstraints gbc_sep1 = new GridBagConstraints();
 		gbc_sep1.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sep1.insets = new Insets(5, 5, 5, 5);
-		gbc_sep1.gridwidth = 2;
+		gbc_sep1.gridwidth = 3;
 		gbc_sep1.gridx = 0;
 		gbc_sep1.gridy = 2;
 		content.add(sep1, gbc_sep1);
@@ -160,7 +169,7 @@ public class AllocateTasks extends JScrollPane {
 		GridBagConstraints gbc_timelinePanel = new GridBagConstraints();
 		gbc_timelinePanel.fill = GridBagConstraints.HORIZONTAL;
 		gbc_timelinePanel.insets = new Insets(0, 5, 5, 0);
-		gbc_timelinePanel.gridwidth = 2;
+		gbc_timelinePanel.gridwidth = 3;
 		gbc_timelinePanel.gridx = 0;
 		gbc_timelinePanel.gridy = 3;
 		content.add(timelinePanel, gbc_timelinePanel);
@@ -169,7 +178,7 @@ public class AllocateTasks extends JScrollPane {
 		GridBagConstraints gbc_sep2 = new GridBagConstraints();
 		gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
 		gbc_sep2.insets = new Insets(5, 5, 5, 5);
-		gbc_sep2.gridwidth = 2;
+		gbc_sep2.gridwidth = 3;
 		gbc_sep2.gridx = 0;
 		gbc_sep2.gridy = 4;
 		content.add(sep2, gbc_sep2);
@@ -178,7 +187,7 @@ public class AllocateTasks extends JScrollPane {
 		GridBagConstraints gbc_listsPanel = new GridBagConstraints();
 		gbc_listsPanel.fill = GridBagConstraints.BOTH;
 		gbc_listsPanel.insets = new Insets(5, 5, 5, 5);
-		gbc_listsPanel.gridwidth = 2;
+		gbc_listsPanel.gridwidth = 3;
 		gbc_listsPanel.gridx = 0;
 		gbc_listsPanel.gridy = 5;
 		content.add(listsPanel, gbc_listsPanel);
@@ -227,15 +236,15 @@ public class AllocateTasks extends JScrollPane {
 		gbc_buttonPanel.gridy = 1;
 		listsPanel.add(buttonPanel, gbc_buttonPanel);
 		
-		JButton btnAllocate = new JButton("↑ Allocate ↑");
+		JButton btnAllocate = new JButton("^  Allocate");
 		btnAllocate.addActionListener((e) -> this.allocateSelected());
 		buttonPanel.add(btnAllocate);
 
-		JButton btnSwap = new JButton("⟳ Swap ⟳");
+		JButton btnSwap = new JButton("Swap");
 		btnSwap.addActionListener((e) -> this.swapAllocations());
 		buttonPanel.add(btnSwap);
 
-		JButton btnDeallocate = new JButton("↓  Deallocate  ↓");
+		JButton btnDeallocate = new JButton("Deallocate  V");
 		btnDeallocate.addActionListener((e) -> this.deallocateSelected());
 		buttonPanel.add(btnDeallocate);
 
