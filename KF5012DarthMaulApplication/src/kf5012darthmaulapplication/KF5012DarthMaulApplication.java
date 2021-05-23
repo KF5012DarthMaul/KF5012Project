@@ -1,7 +1,6 @@
 package kf5012darthmaulapplication;
 
 import java.security.Security;
-import org.bouncycastle.jce.provider.*;
 
 import dbmgr.DBAbstraction;
 import guicomponents.LoginForm;
