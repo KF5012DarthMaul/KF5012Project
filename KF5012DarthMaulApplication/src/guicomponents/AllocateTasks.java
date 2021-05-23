@@ -80,7 +80,7 @@ public class AllocateTasks extends JScrollPane {
 	private List<TaskExecution> uncomplUnallocList = new ArrayList<>();
 	
 	private Map<User, List<ChartableEvent>> allCaretakerAllocs;
-	private Map<User, TemporalList<ChartableEvent>> allCareTakerAllocsTmprl;
+	private Map<User, TemporalList<ChartableEvent>> allCaretakerAllocsTmprl;
 	
 	// Start and end times of a few things
 	private LocalDateTime allocStartTime;
@@ -382,7 +382,7 @@ public class AllocateTasks extends JScrollPane {
 						// FIXME: This is silly - you can't do a task in
 						//        literally no time. It also means it can be
 						//        allocated anywhere.
-						task.setEfficiency(user, Duration.ofMinutes(0));
+						task.setEfficiency(user, Duration.ofSeconds(1));
 					}
 				}
 			}
@@ -443,9 +443,9 @@ public class AllocateTasks extends JScrollPane {
 		}
 
 		// Make temporal lists from these (will sort them by start date)
-		allCareTakerAllocsTmprl = new HashMap<>();
+		allCaretakerAllocsTmprl = new HashMap<>();
 		for (User user : allCaretakers) {
-			allCareTakerAllocsTmprl.put(user, new TemporalList<ChartableEvent>(allCaretakerAllocs.get(user)));
+			allCaretakerAllocsTmprl.put(user, new TemporalList<ChartableEvent>(allCaretakerAllocs.get(user)));
 		}
 	}
 
@@ -535,7 +535,7 @@ public class AllocateTasks extends JScrollPane {
 		// Make a list of maps in order of display name
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
 		for (User caretaker : allCaretakers) {
-			maps.add(allCareTakerAllocsTmprl.get(caretaker));
+			maps.add(allCaretakerAllocsTmprl.get(caretaker));
 		}
 		timelinePanel.setTimeline(new Timeline<>(maps));
 		timelinePanel.showBetween(LocalDateTime.now(), lsteEndTime.getObject());
@@ -852,8 +852,9 @@ public class AllocateTasks extends JScrollPane {
 				thisAllocEndTime = pc.end();
 			}
 			if (thisAllocEndTime.isBefore(thisAllocStartTime)) {
-				// If it ends up before, then set the period to zero length
-				thisAllocEndTime = thisAllocStartTime;
+				// If the times end up out of order, then the event is outside
+				// of the allocation range.
+				continue; // Next task exec
 			}
 			
 			/* Find the best candidate user + period to allocate
@@ -867,7 +868,7 @@ public class AllocateTasks extends JScrollPane {
 				// allocation start and end times (ie. now and the time the
 				// user selected).
 				List<? extends Event> allocToUserBetween =
-					allCareTakerAllocsTmprl.get(candidateUser).getBetween(
+					allCaretakerAllocsTmprl.get(candidateUser).getBetween(
 						thisAllocStartTime, thisAllocEndTime,
 						
 						// Include any that start before now but continue to
@@ -911,7 +912,7 @@ public class AllocateTasks extends JScrollPane {
 					new Candidate(
 						unallocUncomplTaskExec,
 						candidateUser,
-						allocStartTime,
+						thisAllocStartTime,
 						allocToUserBetween.get(i).getPeriod().start()
 					)
 				);
@@ -951,7 +952,7 @@ public class AllocateTasks extends JScrollPane {
 						unallocUncomplTaskExec,
 						candidateUser,
 						allocToUserBetween.get(i-1).getPeriod().end(),
-						allocEndTime
+						thisAllocEndTime
 					)
 				);
 				if (possiblyBestCandidate != Candidate.NO_CANDIDATE) {
