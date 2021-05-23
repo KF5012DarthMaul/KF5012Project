@@ -265,14 +265,36 @@ public class AllocateTasks extends JScrollPane {
 			}
 		});
 		unallocatedScrollPane.setViewportView(unallocatedList);
-		
-		this.fetch();
-		this.refresh();
+
+		initialise();
 	}
 	
-	/* Main Lifecycle
+	/* Data Lifecycle
 	 * -------------------------------------------------- */
 
+	/**
+	 * Fully (re-)initialise the allocation data model and GUI.
+	 */
+	private void initialise() {
+		fetch();
+		reinitialise();
+	}
+	
+	/**
+	 * Reinitialise data model based on current DB cache.
+	 */
+	private void reinitialise() {
+		initTaskExecSplit();
+		initCaretakerAllocCandidates();
+		initAllCaretakerAllocs();
+		
+		fetchGUI();
+		refreshGUI();
+	}
+	
+	/**
+	 * Fetch data from DB and cache it.
+	 */
 	private void fetch() {
 		if (db == null) {
 			try{
@@ -283,9 +305,6 @@ public class AllocateTasks extends JScrollPane {
 			}
 		}
 
-		/* Get data from DB & GUI
-		 * -------------------------------------------------- */
-		
 		// Get all users
 		allUsers = db.getAllUsers();
 		allUsers.sort((u1, u2) -> u1.getDisplayName().compareTo(u2.getDisplayName()));
@@ -295,14 +314,22 @@ public class AllocateTasks extends JScrollPane {
 		
 		// Get all task executions split by allocation
 		allTaskExecutions = db.getTaskExecutionList();
-
+	}
+	
+	/**
+	 * Retrieve current allocation start and end dates and cache them.
+	 */
+	private void fetchGUI() {
 		// The start and end times for the allocation
 		allocStartTime = LocalDateTime.now();
 		allocEndTime = lsteEndTime.getObject();
-
-		/* Split into task exec lists based on current status
-		 * -------------------------------------------------- */
-		
+	}
+	
+	/**
+	 * Split task executions into lists based on their allocation and completion
+	 * status.
+	 */
+	private void initTaskExecSplit() {
 		// All allocated + complete tasks
 		// All unallocated + incomplete tasks
 		
@@ -322,10 +349,48 @@ public class AllocateTasks extends JScrollPane {
 				}
 			}
 		}
+	}
 
-		/* Split (mutated by the allocation algorithm)
-		 * -------------------------------------------------- */
-		
+	/**
+	 * Initialise the list of candidate caretaker allocations.
+	 */
+	private void initCaretakerAllocCandidates() {
+		allAllocCandidates = new ArrayList<>();
+	}
+
+	/**
+	 * Add from the list of candidate carataker allocations - use this to
+	 * ensure all other model data and GUI elements are updated appropriately
+	 * after the model update.
+	 * 
+	 * @param allocCandidates The list of candidates to add.
+	 */
+	private void addAllocCandidates(List<Candidate> delAllocCandidates) {
+		// Add all and refresh
+		allAllocCandidates.addAll(delAllocCandidates);
+		initAllCaretakerAllocs();
+		refreshGUI();
+	}
+
+	/**
+	 * Remove from the list of candidate carataker allocations - use this to
+	 * ensure all other model data and GUI elements are updated appropriately
+	 * after the model update.
+	 * 
+	 * @param allocCandidates The list of candidates to remove.
+	 */
+	private void removeAllocCandidates(List<Candidate> delAllocCandidates) {
+		// Remove all and refresh
+		allAllocCandidates.removeAll(delAllocCandidates);
+		initAllCaretakerAllocs();
+		refreshGUI();
+	}
+
+	/**
+	 * Initialise each user's list of current and candidate caretaker
+	 * allocations.
+	 */
+	private void initAllCaretakerAllocs() {
 		// Split allocated task executions by caretaker
 		allCaretakerAllocs = new HashMap<>();
 		for (User user : allCaretakers) {
@@ -333,6 +398,9 @@ public class AllocateTasks extends JScrollPane {
 		}
 		for (TaskExecution taskExec : uncomplAllocList) {
 			allCaretakerAllocs.get(taskExec.getAllocation()).add(taskExec);
+		}
+		for (Candidate candidate : allAllocCandidates) {
+			allCaretakerAllocs.get(candidate.taskExecution().getAllocation()).add(candidate);
 		}
 
 		// Make temporal lists from these (will sort them by start date)
@@ -342,7 +410,10 @@ public class AllocateTasks extends JScrollPane {
 		}
 	}
 
-	private void refresh() {
+	/**
+	 * Refresh the entire GUI with the current data in the data model.
+	 */
+	private void refreshGUI() {
 		DefaultListModel<Object> model;
 
 		// Update the models
@@ -367,6 +438,9 @@ public class AllocateTasks extends JScrollPane {
 		this.refreshTimeline();
 	}
 	
+	/**
+	 * Refresh just the graphical timeline with cached data.
+	 */
 	private void refreshTimeline() {
 		// Make a list of maps in order of display name
 		List<TemporalMap<Integer, ChartableEvent>> maps = new ArrayList<>();
@@ -377,11 +451,13 @@ public class AllocateTasks extends JScrollPane {
 		timelinePanel.showBetween(LocalDateTime.now(), lsteEndTime.getObject());
 	}
 	
+	// Separate method that is called when needed
+	
 	/**
 	 * Mutate all Task objects linked to all task executions given based on the
 	 * task executions given.
 	 * 
-	 * It would be reasonable to give task executions that have been
+	 * It would be reasonable to give task executions that have been allocated.
 	 */
 	private void updateUserEfficiencies(List<TaskExecution> taskExecs) {
 		// Get all task executions by task
@@ -441,16 +517,17 @@ public class AllocateTasks extends JScrollPane {
 			}
 		}
 	}
-	
+
+	/* Main Lifecycle
+	 * -------------------------------------------------- */
+
+	/**
+	 * Attempt to allocate all unallocated tasks to caretakers in the specified
+	 * date range (now to when the user selects).
+	 */
 	private void previewAllocations() {
-		// Fetch data
-		this.fetch();
-
-		// Build the list of tasks to allocate (then allocate them at the end)
-		allAllocCandidates = new ArrayList<>();
-
 		/* Update calculated fields of tasks
-		 * -------------------------------------------------- */
+		 * -------------------- */
 		
 		// TODO: Might want to do this separately to allocation, as it's an
 		//       intensive process? Or at least have a progress indicator for
@@ -460,9 +537,8 @@ public class AllocateTasks extends JScrollPane {
 		// based on historical data.
 		this.updateUserEfficiencies(allTaskExecutions);
 
-
 		/* Split by priority and do allocation
-		 * -------------------------------------------------- */
+		 * -------------------- */
 
 		// Split unallocated tasks by priority
 		Map<TaskPriority, List<TaskExecution>> unallocPriorityTasks = new HashMap<>();
@@ -474,44 +550,47 @@ public class AllocateTasks extends JScrollPane {
 		}
 
 		// Allocate for each task priority, in order
-		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.HIGH));
-		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.NORMAL));
-		findAllocCandidates(unallocPriorityTasks.get(TaskPriority.LOW));
-		
-		this.refresh();
+		genAllocCandidates(unallocPriorityTasks.get(TaskPriority.HIGH));
+		genAllocCandidates(unallocPriorityTasks.get(TaskPriority.NORMAL));
+		genAllocCandidates(unallocPriorityTasks.get(TaskPriority.LOW));
 	}
-
+	
+	/**
+	 * Remove selected allocation candidates and refresh relevant parts of the
+	 * data model and GUI.
+	 */
 	private void removeSelectedAllocations() {
+		List<Candidate> delAllocCandidates = new ArrayList<>();
+
+		// Build the list to remove
 		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
 		int[] selectedIndexes = allocatedList.getSelectedIndices();
 		for (int i = selectedIndexes.length - 1; i >= 0; i--) {
 			if (model.get(selectedIndexes[i]) instanceof Candidate) { // Can only remove candidates
-				model.remove(selectedIndexes[i]);
+				delAllocCandidates.add((Candidate) model.get(selectedIndexes[i]));
 			}
 		}
+		
+		// Remove and refresh data/GUI
+		removeAllocCandidates(delAllocCandidates);
 	}
 
+	/**
+	 * Remove all allocation candidates and refresh relevant parts of the data
+	 * model and GUI.
+	 */
 	private void removeAllAllocations() {
-		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
-		for (int i = model.getSize() - 1; i >= 0; i--) {
-			if (model.get(i) instanceof Candidate) { // Can only remove candidates
-				model.remove(i);
-			}
-		}
+		removeAllocCandidates(allAllocCandidates);
 	}
 
+	/**
+	 * Confirm all allocation candidates - perform update to event objects and
+	 * flush changes to the DB.
+	 */
 	private void confirmAllocations() {
-		// Get List from JList
-		DefaultListModel<Object> model = (DefaultListModel<Object>) allocatedList.getModel();
-		List<Candidate> newAllAllocCandidates = new ArrayList<>();
-		for (int i = 0; i < model.getSize(); i++) {
-			if (model.get(i) instanceof Candidate) {
-				newAllAllocCandidates.add((Candidate) model.get(i));
-			}
-		}
-
-		// Wipe the alloc candidates
-		allAllocCandidates = new ArrayList<>();
+		// Store alloc candidates, then wipe the alloc candidate list
+		List<Candidate> newAllAllocCandidates = allAllocCandidates;
+		initCaretakerAllocCandidates();
 
 		// Update all task executions of these candidate allocations
 		List<TaskExecution> allAllocTasks = new ArrayList<>();
@@ -527,35 +606,43 @@ public class AllocateTasks extends JScrollPane {
 		// Flush to DB
 		db.submitTaskExecutions(allAllocTasks);
 
-		// Re-fetch/refresh
-		this.fetch();
-		this.refresh();
+		// Reinitialise
+		// Note: don't need to fetch, as the above will have mutated the cached
+		//       task executions.
+		reinitialise();
 	}
 
+	/**
+	 * Allocate selected unallocated task(s).
+	 * 
+	 * Uses the same mechanism as automatic allocation, but for only the
+	 * selected task(s).
+	 */
 	private void allocateSelected() {
-		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
-		int[] allocSelIndexes = allocatedList.getSelectedIndices();
+		DefaultListModel<Object> unallocModel = (DefaultListModel<Object>) unallocatedList.getModel();
 		int[] unallocSelIndexes = unallocatedList.getSelectedIndices();
-		
-		if (allocSelIndexes.length == 0 && unallocSelIndexes.length == 1) {
-			Event event = (Event) allocModel.get(allocSelIndexes[0]);
+		for (int selIndex : unallocSelIndexes) {
+			Event event = (Event) unallocModel.get(selIndex);
 			if (event instanceof TaskExecution) {
-				findAllocCandidates(listOfSingleItem((TaskExecution) event));
+				genAllocCandidates(listOfSingleItem((TaskExecution) event));
 			}
 		}
 	}
 
+	/**
+	 * Deallocate selected allocated task(s).
+	 */
 	private void deallocateSelected() {
 		// TODO: Should I create `makeDeallocCandidates(List<TaskExecution> taskExecs)`?
 		
 		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
 		int[] allocSelIndexes = allocatedList.getSelectedIndices();
-		int[] unallocSelIndexes = unallocatedList.getSelectedIndices();
-		
-		if (allocSelIndexes.length == 1 && unallocSelIndexes.length == 0) {
-			Event event = (Event) allocModel.get(allocSelIndexes[0]);
+		for (int selIndex : allocSelIndexes) {
+			Event event = (Event) allocModel.get(selIndex);
 			if (event instanceof TaskExecution) {
 				TaskExecution taskExec = (TaskExecution) event;
+				
+				// 'Deallocate' = set allocated user to null and period to zero duration
 				taskExec.setAllocation(null);
 				taskExec.setPeriod(new Period(
 					taskExec.getPeriodConstraint().start(),
@@ -565,6 +652,23 @@ public class AllocateTasks extends JScrollPane {
 		}
 	}
 
+	/**
+	 * Swap either two allocated tasks if two are selected, or the selected
+	 * allocated task and the selected unallocated task otherwise.
+	 * 
+	 * Before carrying out the swaps, check if the swap is viable. All newly
+	 * allocated tasks or reallocated tasks must be checked - ie. both tasks if
+	 * swapping two allocated tasks, or the unallocated task to be allocated if
+	 * swapping an unallocated task and an allocated task. For each newly
+	 * allocated/reallocated task, check that allocating the task to the current
+	 * allocated user of the task it is being swapped with would result in
+	 * overlapping with any other task that user has allocated. Note that each
+	 * user may take a different amount of time to complete the task, which is
+	 * factored in to the check.
+	 * 
+	 * If the check(s) are successful, then swap the task executions and flush
+	 * the changes to the DB.
+	 */
 	private void swapAllocations() {
 		DefaultListModel<Object> allocModel = (DefaultListModel<Object>) allocatedList.getModel();
 		int[] allocSelIndexes = allocatedList.getSelectedIndices();
@@ -647,11 +751,11 @@ public class AllocateTasks extends JScrollPane {
 			//
 		}
 	}
-
+	
 	/* Allocation Algorithm
 	 * -------------------------------------------------- */
 
-	private void findAllocCandidates(List<TaskExecution> unallocUncomplTaskExecs) {
+	private void genAllocCandidates(List<TaskExecution> unallocUncomplTaskExecs) {
 		// Filter the list of uncompleted/unallocated task executions to
 		// only those in the current range.
 		TemporalList<TaskExecution> taskExecListTmprl = new TemporalList<>(unallocUncomplTaskExecs);
@@ -664,7 +768,7 @@ public class AllocateTasks extends JScrollPane {
 			/* Check constraints
 			 * -------------------- */
 			
-			// If there is a constraint, use it, otherwise check all caretakers
+			// If there is a user constraint, use it, otherwise check all caretakers
 			User allocConst = unallocUncomplTaskExec.getTask().getAllocationConstraint();
 			List<User> candidates;
 			if (allocConst != null) {
@@ -726,6 +830,10 @@ public class AllocateTasks extends JScrollPane {
 				}
 				if (pc.end() != null && pc.end().isBefore(thisAllocEndTime)) {
 					thisAllocEndTime = pc.end();
+				}
+				if (thisAllocEndTime.isBefore(thisAllocStartTime)) {
+					// If it ends up before, then set the period to zero length
+					thisAllocEndTime = thisAllocStartTime;
 				}
 				
 				// Filter the list to get all allocations between the
@@ -831,6 +939,7 @@ public class AllocateTasks extends JScrollPane {
 			if (candidate != Candidate.NO_CANDIDATE) {
 				allAllocCandidates.add(candidate);
 				
+				// MUTATE allCaretakerAllocs during algo ...
 				// Add it to the list of allocated tasks to use it as a time
 				// constraint. ENSURE it maintains start time sort order,
 				// because this is the list underlying the TemporalList.
@@ -840,6 +949,9 @@ public class AllocateTasks extends JScrollPane {
 			}
 			// else, the task can't be allocated (using this algo)
 		}
+
+		// ... then update the GUI
+		refreshGUI();
 	}
 
 	/**
