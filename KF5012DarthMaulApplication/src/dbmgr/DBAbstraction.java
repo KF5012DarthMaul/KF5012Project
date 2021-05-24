@@ -390,14 +390,14 @@ public final class DBAbstraction
             DBPreparedStatement stmt = db.prepareStatement("DELETE FROM tblUsers WHERE username = ?");
             stmt.add(user.getUsername());
             boolean b = stmt.executePrepared();
-            userCache.remove(user);
+            userCache.remove(getUser(user.getUsername()));
             return b;
         }
-        catch (SQLException ex) 
+        catch (SQLException | UserDoesNotExistException ex) 
         {
             Logger.getLogger(DBAbstraction.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
         }
+        return false;
     }
     
     

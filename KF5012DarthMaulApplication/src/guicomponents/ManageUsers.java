@@ -144,7 +144,7 @@ public class ManageUsers extends JPanel {
 				if(selectedIndex != -1) {
 					String hashPass = null;
 					try {
-						hashPass = SecurityManager.generatePassword(passfield_newUser.getPassword().toString());
+						hashPass = SecurityManager.generatePassword(new String(passfield_newUser.getPassword()));
 					} catch (Exception e1) {
 						e1.printStackTrace();
 					}
@@ -169,7 +169,7 @@ public class ManageUsers extends JPanel {
 //				for(Action a : undoQueue) {
 //					System.out.println(a.getClass().getCanonicalName());
 //				}
-				if(undoQueue.size() !=0) {
+				if(!undoQueue.isEmpty()) {
 					undoQueue.get(undoQueue.size() - 1).run();
 					undoQueue.remove(undoQueue.size() - 1);
 				}
@@ -182,7 +182,7 @@ public class ManageUsers extends JPanel {
 		JButton btn_newUsersAddAll = new JButton("Add All");
 		btn_newUsersAddAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(usersToAdd.size() == 0) return; 
+				if(usersToAdd.isEmpty()) return; 
 				for(User u : usersToAdd) {
 					try {
 						db.createUser(u, passwordMap.get(u));
@@ -206,7 +206,7 @@ public class ManageUsers extends JPanel {
 		JButton btn_newUsersCancel = new JButton("Cancel");
 		btn_newUsersCancel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(usersToAdd.size() != 0) {
+				if(!usersToAdd.isEmpty()) {
 					int res = JOptionPane.showConfirmDialog(null, "You have unsaved changes, are you sure you want to cancel?","Unsaved Changes", JOptionPane.YES_NO_OPTION);
 					if(res == 0) {
 						usersToAdd.clear();
@@ -256,7 +256,7 @@ public class ManageUsers extends JPanel {
 		for(PermissionManager.AccountType at : PermissionManager.AccountType.values()) {
 			stringRoles.add(PermissionManager.AccountTypeToString(at));
 		}
-		
+		stringRoles.remove(stringRoles.size()-1);
 		JComboBox<?> comboBox_newUserAssignRole = new JComboBox<Object>(stringRoles.toArray());
 		panel_addUser.add(comboBox_newUserAssignRole, "cell 2 2,growx");
 		
@@ -274,7 +274,7 @@ public class ManageUsers extends JPanel {
 							txt_newUserUsername.setText("");								
 							User tempUser = new User(username, username, ac);
 							usersToAdd.add(tempUser);
-							passwordMap.put(tempUser , SecurityManager.generatePassword(passfield_newUser.getPassword().toString()));
+							passwordMap.put(tempUser , SecurityManager.generatePassword(new String(passfield_newUser.getPassword())));
 							updateTable(usersToAdd,tbl_addUsersTable);						
 							undoQueue.add(new UndoAdd(tempUser, usersToAdd, passwordMap, passwordMap.get(tempUser)));
 						} catch (Exception e1) {
@@ -330,8 +330,6 @@ public class ManageUsers extends JPanel {
 					updateTable(listWithoutSelf(db.getAllUsers(), selfUser), tbl_removeUsersAll);
 					updateTable(usersToRemove, tbl_removeUsersSelected);
 					updateTable(db.getAllUsers(), tbl_viewUsersTable);
-				}else {
-					return;
 				}
 			}
 		});
@@ -400,6 +398,7 @@ public class ManageUsers extends JPanel {
 		for(PermissionManager.AccountType at : PermissionManager.AccountType.values()) {
 			rolesAvailable.add(PermissionManager.AccountTypeToString(at));
 		}
+                rolesAvailable.remove(rolesAvailable.size()-1);
 		JComboBox<?> comboBox_roleTypes = new JComboBox<Object>(rolesAvailable.toArray());
 		comboBox_roleTypes.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -414,12 +413,12 @@ public class ManageUsers extends JPanel {
 		txt_searchField = new JTextField();
 		txt_searchField.addCaretListener(new CaretListener() {
 			public void caretUpdate(CaretEvent e) {
-				updateTable(filterListUsername(allUsersList, txt_searchField.getText().toString()), tbl_viewUsersTable);
+				updateTable(filterListUsername(allUsersList, txt_searchField.getText()), tbl_viewUsersTable);
 			}
 		});
 		txt_searchField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				updateTable(filterListUsername(allUsersList, txt_searchField.getText().toString()), tbl_viewUsersTable);
+				updateTable(filterListUsername(allUsersList, txt_searchField.getText()), tbl_viewUsersTable);
 			}
 		});
 		panel_topViewUsers.add(txt_searchField);
@@ -470,20 +469,13 @@ public class ManageUsers extends JPanel {
 	 */
 	private PermissionManager.AccountType comboBoxParser(JComboBox<?> combo) {
 		String selected = combo.getItemAt(combo.getSelectedIndex()).toString().toLowerCase();
-		if(selected == "all") return null;
-		else {
-			switch (selected) {
-			case "human resources":
-				return PermissionManager.AccountType.HR_PERSONNEL;
-			case "manager":
-				return PermissionManager.AccountType.MANAGER;
-			case "caretaker":
-				return PermissionManager.AccountType.CARETAKER;
-			case "estate":
-				return PermissionManager.AccountType.ESTATE;
-			}
-		}
-		return null;
+                return switch (selected) {
+                case "human resources" -> PermissionManager.AccountType.HR_PERSONNEL;
+                case "manager" -> PermissionManager.AccountType.MANAGER;
+                case "caretaker" -> PermissionManager.AccountType.CARETAKER;
+                case "estate" -> PermissionManager.AccountType.ESTATE;
+                default -> null;
+                };
 	}
 	/**
 	 * Filters based on an AccountType for AccountType matching

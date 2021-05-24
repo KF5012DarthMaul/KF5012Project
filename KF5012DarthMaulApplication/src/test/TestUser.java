@@ -125,7 +125,7 @@ public class TestUser {
 		assertNull(PermissionManager.getAccountType(Integer.MAX_VALUE));
 		assertNull(PermissionManager.getAccountType(Integer.MIN_VALUE));
 		assertEquals(AccountType.HR_PERSONNEL, PermissionManager.getAccountType(0));
-		assertEquals(AccountType.SU, PermissionManager.getAccountType(AccountType.values().length - 1));
+		assertEquals(AccountType.INITUSER, PermissionManager.getAccountType(AccountType.values().length - 1));
 	}
 	
 }

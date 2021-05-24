@@ -22,7 +22,7 @@ public class PermissionManager {
 		MANAGER(0b110110),
 		CARETAKER(0b001110),
 		ESTATE(0b000110),
-        SU(0b111111);
+                INITUSER(0b000011);
 		
 		/**
 		 * sets a value to the enum
@@ -130,24 +130,14 @@ public class PermissionManager {
 	 * @return
 	 */
 	public static String AccountTypeToString(AccountType type) {
-		String result = "";
-		switch(type) {
-		case CARETAKER:
-			result = "Caretaker";
-			break;
-		case ESTATE:
-			result = "Estate";
-			break;
-		case HR_PERSONNEL:
-			result = "Human Resources";
-			break;
-		case MANAGER:
-			result = "Manager";
-			break;
-		default:
-			result = "No role found!";
-			break;
-		}
-		return result;
+		return switch (type) {
+                case CARETAKER -> "Caretaker";
+                case ESTATE -> "Estate";
+                case HR_PERSONNEL -> "Human Resources";
+                case MANAGER -> "Manager";
+                case INITUSER -> "Default Init User";
+                default -> "No role found!";
+            };
+		
 	}
 }
