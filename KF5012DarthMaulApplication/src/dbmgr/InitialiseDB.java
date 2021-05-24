@@ -102,7 +102,6 @@ public class InitialiseDB {
 			dbConn.execute("DROP TABLE IF EXISTS tblTaskExecutions;");
 			dbConn.execute("DROP TABLE IF EXISTS tblVerfExecutions;");
 			dbConn.execute("DROP TABLE IF EXISTS tblCompletions;");
-			dbConn.execute("DROP TABLE IF EXISTS tblSystemLog;");
 			
     	} catch (Exception e) {
 			new ExceptionDialog("Could not create database tables.", e);
