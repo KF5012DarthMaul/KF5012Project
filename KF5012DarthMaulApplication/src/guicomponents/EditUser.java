@@ -110,7 +110,7 @@ public class EditUser extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if(SecurityManager.passwordStrengthValidator(passfield_resetPassword.getPassword())) {
 					try {
-						db.setHashedPassword(user, SecurityManager.generatePassword(passfield_resetPassword.getPassword().toString()));
+						db.setHashedPassword(user, SecurityManager.generatePassword(new String(passfield_resetPassword.getPassword())));
 						dispose();
 					} catch (UserDoesNotExistException e1) {
 						e1.printStackTrace();
