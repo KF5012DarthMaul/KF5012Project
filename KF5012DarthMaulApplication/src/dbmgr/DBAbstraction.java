@@ -651,7 +651,10 @@ public final class DBAbstraction
                     int verfID = res.getInt(2);
                     Verification verf = verificationCache.get(verfID);
                     String notes = res.getString(3);
-                    Duration d = Duration.ofMinutes(res.getInt(4));
+                    Duration d = null;
+                    int time = res.getInt(4);
+                    if(!res.wasNull())
+                        d = Duration.ofMinutes(time);
                     String caretaker = res.getString(5);
                     User u = res.wasNull() ? null : getUser(caretaker);
                     int compID = res.getInt(6);
@@ -1054,7 +1057,10 @@ public final class DBAbstraction
                     stmt.addNull();
 
                 stmt.add(verf.getNotes());
-                stmt.add(verf.getDeadline().toMinutes());
+                if(verf.getDeadline() != null)
+                    stmt.add(verf.getDeadline().toMinutes());
+                else
+                    stmt.addNull();
                 User u = verf.getAllocation();
                 if(u != null)
                     stmt.add(u.getUsername());

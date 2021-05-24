@@ -178,7 +178,7 @@ public class InitialiseDB {
                         exe_id INTEGER PRIMARY KEY AUTOINCREMENT,
                         verf_id INTEGER,
                         exe_notes TEXT,
-                        exe_duration INTEGER NOT NULL,
+                        exe_duration INTEGER,
                         caretaker TEXT,
                         compl_id INTEGER,
                         FOREIGN KEY (verf_id) REFERENCES tblVerifications(verf_id) ON DELETE CASCADE,

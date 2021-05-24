@@ -32,6 +32,8 @@ import guicomponents.formatters.Formatter;
 import guicomponents.formatters.HTMLFormatter;
 import guicomponents.formatters.NamedTaskExecutionFormatter;
 import guicomponents.ome.LocalDateTimeEditor;
+import java.util.HashMap;
+import java.util.Map;
 import temporal.Event;
 import temporal.GenerativeTemporalMap;
 import temporal.Period;
@@ -157,13 +159,26 @@ public class GenerateTasks extends JPanel {
 
 		// Get all tasks (maybe filtered on the DB end?)
 		List<Task> allTasks = db.getTaskList();
-
+                List<TaskExecution> allTaskExecutions = db.getTaskExecutionList();
 		// create generative temporal maps for all tasks and verifications
 		List<TemporalMap<Integer, TaskExecution>> taskMaps = new ArrayList<>();
-
+                Map<Task, List<TaskExecution>> taskExecsByTask = new HashMap<>();
+                for(Task t: allTasks)
+                {
+                    taskExecsByTask.put(t, new ArrayList<>());
+                }
+                
+		for (TaskExecution taskExec : allTaskExecutions) {
+			Task task = taskExec.getTask();
+			
+			if (taskExecsByTask.containsKey(task)) {
+                            taskExecsByTask.get(task).add(taskExec);
+                        }
+		}
+                
 		for (Task task : allTasks) {
 			taskMaps.add(new GenerativeTemporalMap<>(
-				new ArrayList<>(), // <all task executions for that task>,
+				taskExecsByTask.get(task), // <all task executions for that task>,
 				task,
 				(p) -> {
 					TaskExecution taskExec = new TaskExecution(

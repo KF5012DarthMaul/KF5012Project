@@ -14,7 +14,10 @@ import javax.swing.JPanel;
 
 import domain.VerificationExecution;
 import guicomponents.utils.ObjectEditor;
+import guicomponents.utils.ObjectManager;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import javax.swing.JCheckBox;
 import javax.swing.JSeparator;
 import kf5012darthmaulapplication.User;
 
@@ -32,15 +35,15 @@ public class VerificationExecutionEditor
         //Completion editor
         private CompletionEditor edtCompletion;
         private DomainObjectManager<Completion> omgCompletion;
-        
+        private ObjectManager<Duration> standardDeadlineManager;
 	/**
 	 * Create the panel.
 	 */
 	public VerificationExecutionEditor() {
 		GridBagLayout gridBagLayout = new GridBagLayout();
-		gridBagLayout.columnWidths = new int[]{0, 0, 0};
+		gridBagLayout.columnWidths = new int[]{0, 0, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 0, 0, 0, 0};
-		gridBagLayout.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
+		gridBagLayout.columnWeights = new double[]{0.0, 0.0, 1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		setLayout(gridBagLayout);
 		
@@ -58,6 +61,7 @@ public class VerificationExecutionEditor
 		GridBagConstraints gbc_txteNotes = new GridBagConstraints();
 		gbc_txteNotes.insets = new Insets(0, 5, 5, 5);
 		gbc_txteNotes.anchor = GridBagConstraints.WEST;
+                gbc_txteNotes.gridwidth = 2;
 		gbc_txteNotes.gridx = 1;
 		gbc_txteNotes.gridy = 0;
 		add(txteNotes, gbc_txteNotes);
@@ -73,12 +77,20 @@ public class VerificationExecutionEditor
 		gbc_lblStandardDeadline.gridx = 0;
 		gbc_lblStandardDeadline.gridy = 1;
 		add(lblStandardDeadline, gbc_lblStandardDeadline);
-
+                
+                JCheckBox chkStandardDeadline = new JCheckBox("");
+		GridBagConstraints gbc_chkStandardDeadline = new GridBagConstraints();
+		gbc_chkStandardDeadline.insets = new Insets(0, 0, 5, 5);
+		gbc_chkStandardDeadline.anchor = GridBagConstraints.WEST;
+		gbc_chkStandardDeadline.gridx = 1;
+		gbc_chkStandardDeadline.gridy = 1;
+		add(chkStandardDeadline, gbc_chkStandardDeadline);
+                
 		dureStandardDeadline = new DurationEditor();
 		GridBagConstraints gbc_dureStandardDeadline = new GridBagConstraints();
-		gbc_dureStandardDeadline.insets = new Insets(0, 5, 5, 5);
+		gbc_dureStandardDeadline.insets = new Insets(0, 0, 5, 5);
 		gbc_dureStandardDeadline.anchor = GridBagConstraints.WEST;
-		gbc_dureStandardDeadline.gridx = 1;
+		gbc_dureStandardDeadline.gridx = 2;
 		gbc_dureStandardDeadline.gridy = 1;
 		add(dureStandardDeadline, gbc_dureStandardDeadline);
                 
@@ -88,7 +100,7 @@ public class VerificationExecutionEditor
                 GridBagConstraints gbc_sep2 = new GridBagConstraints();
                 gbc_sep2.fill = GridBagConstraints.HORIZONTAL;
                 gbc_sep2.insets = new Insets(0, 5, 5, 5);
-                gbc_sep2.gridwidth = 2;
+                gbc_sep2.gridwidth = 3;
                 gbc_sep2.gridx = 0;
                 gbc_sep2.gridy = 2;
                 add(sep2, gbc_sep2);
@@ -112,10 +124,15 @@ public class VerificationExecutionEditor
                 GridBagConstraints gbc_compPanel = new GridBagConstraints();
                 gbc_compPanel.insets = new Insets(5, 5, 5, 5);
                 gbc_compPanel.anchor = GridBagConstraints.WEST;
-                gbc_compPanel.gridwidth = 2;
+                gbc_compPanel.gridwidth = 3;
                 gbc_compPanel.gridx = 0;
                 gbc_compPanel.gridy = 3;
                 add(omgCompletion, gbc_compPanel);
+                
+                standardDeadlineManager = new ObjectManager<>(
+			chkStandardDeadline, dureStandardDeadline,
+			() -> dureStandardDeadline.getObject()
+		);
 	}
 	
 	@Override
@@ -130,7 +147,7 @@ public class VerificationExecutionEditor
 		active = obj;
 		
 		txteNotes.setObject(obj.getNotes());
-		dureStandardDeadline.setObject(obj.getDeadline());
+		standardDeadlineManager.setObject(obj.getDeadline());
                 omgCompletion.getObjectManager().setObject(obj.getCompletion());
 	}
 
