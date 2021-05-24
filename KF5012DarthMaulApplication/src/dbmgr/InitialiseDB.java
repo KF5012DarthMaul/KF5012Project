@@ -195,12 +195,6 @@ public class InitialiseDB {
                         notes TEXT,
                         FOREIGN KEY(caretaker) REFERENCES tblUsers (username) ON DELETE CASCADE
                     );""");
-    		dbConn.execute("""
-                    CREATE TABLE IF NOT EXISTS tblSystemLog(
-                        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        log_info TEXT,
-                        log_timestamp INTEGER NOT NULL
-                   );""");
     	} catch (Exception e) {
 			new ExceptionDialog("Could not create database tables.", e);
     	}
